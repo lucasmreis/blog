@@ -1,0 +1,145 @@
+body {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 17px;
+  color: rgba(0,0,0,0.8);
+  line-height: 1.8em;
+}
+
+#container {
+  max-width: 34em;
+  padding: 0 15px;
+  margin: 50px auto;
+}
+
+header {
+  font-family: 'Lato', sans-serif;
+  margin: 20px 0 80px 0;
+}
+
+header a {
+  color: rgba(0,0,0,0.3);
+  text-decoration: none;
+}
+
+header li {
+  text-align: center;
+  display: inline;
+  width: 60px;
+  padding: 10px;
+  margin-right: 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+header li.active {
+  font-weight: 600;
+  color: rgba(0,0,0,0.8);
+  border-bottom: 1px solid rgba(0,0,0,0.8);
+}
+
+.myself {
+  width: 250px;
+  height: 250px;
+  border-radius: 125px;
+  -webkit-border-radius: 125px;
+  -moz-border-radius: 125px;
+  margin: 0 auto;
+  display: block;
+}
+
+.main-title {
+  text-align: center;
+}
+
+.secondary-title {
+  text-align: center;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Lato', sans-serif;
+  margin: 20px 0;
+}
+
+h1 {
+  font-weight: 900;
+  font-size: 36px;
+}
+
+h2 {
+  font-weight: 900;
+  font-size: 24px;
+}
+
+.lead {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: 24px;
+  margin: 20px 0 40px 0;
+}
+
+.signature {
+  font-family: 'Lato', sans-serif;
+  margin: 20px 0;
+}
+
+p {
+  margin: 20px 0;
+}
+
+p em {
+  font-style: italic;
+}
+
+p strong {
+  font-weight: bold;
+}
+
+ul {
+  list-style-type: disc;
+  list-style-position: inside;
+}
+
+ul {
+  list-style-type: decimal;
+  list-style-position: inside;
+}
+
+ul li {
+  margin-bottom: 10px;
+}
+
+pre, code {
+  font-family: 'Source Code Pro', Courier New, monospace;
+  margin: 20px 0;
+}
+
+p code {
+  background-color: #f0f0f0;
+  padding: 1px 5px 2px 5px;
+}
+
+pre {
+  font-size: 15px;
+}
+
+footer {
+  font-family: 'Lato', sans-serif;
+  color: rgba(0,0,0,0.3);
+  border-top: 1px solid rgba(0,0,0,0.3);
+  margin: 50px 0;
+}
+
+footer a {
+  color: rgba(0,0,0,0.3);
+}
+
+.index-list {
+  margin: 10px 0 10px 0;
+}
+
+.index-list .date {
+  font-family: 'Lato', sans-serif;
+}
+
+.index-list a {
+  font-family: 'Libre Baskerville', serif;
+}

@@ -1,43 +1,40 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Lucas Reis' Blog</title>
-    <link rel="stylesheet" href="css/reset.css" type="text/css">
-    <link rel="stylesheet" href="css/style.css" type="text/css">
-    <meta name="viewport" content="width=device-width, initial-sclae=1">
+    <title>Lucas Reis' Page</title>
+    <link rel="stylesheet" href="styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="styles/style.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:300,600' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
   </head>
   <body>
     <div id="container">
       <header>
         <ul>
-          <li class="active"><a href="#">Blog</a></li>
-          <li><a href="#">About</a></li>
+          <li><a href="/blog/">Blog</a></li>
+          <li class="active"><a href="#">About</a></li>
         </ul>
       </header>
       <div id="main-text">
-        <h1>First Title</h1>
-        <div class="date-pub">February 20th, 2015</div>
-        <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim.</p>
-        <p>Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus.</p>
-        <pre class="prettyprint">
-          var write = transit.writer("json", {
-              "handlers": transit.map([
-                  Point, (new PointHandler())        
-              ])
-          });
+        <img class="myself" src="assets/eu.jpg" alt="myself" />
+        <h1 class="main-title">Lucas Reis' page</h1>
+        <div class="lead secondary-title">Front End Developer</div>
 
-          var p = new Point(1.5,2.5);
+        <p>
+          I'm currently working at <a href="http://www.ideais.com.br/">Ideais</a>. Before that, I've been in different worlds - from music to math, from economics to consulting.
+        </p>
+        
+        <p>
+          I'm a senior developer at the Checkout session of the biggest e-commerce website in Brazil. We have a great team - very results oriented and open to new ideas. I'll try to collect in this blog some of those, so be welcome to read and comment! :)
+        </p>
 
-          console.log(writer.write([p, p, p]));
-        </pre>
-        <p>Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus.</p>
       </div>
       <footer>
-        Feito com amor, links e tal, Lucas Reis
+        by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
       </footer>
     </div>
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=javascript&skin=default"></script>
   </body>
 </html>

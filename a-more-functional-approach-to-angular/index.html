@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>A more functional approach to Angular | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="#">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>A more functional approach to Angular</h1>
+        <div class="lead">Keeping sanity while managing state</div>
+        <p>We all know the story: a project is started with all the current best practices and an elegant architecture. Everything is beautiful - until it is not anymore. As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question <em>what is happening to my application right now?</em> Or the even more important <em>what was happening when that crazy error occurred?</em> In this post, I propose a solution to this problem.</p>
+<p>One day I was googling ways to deal with this type of complexity, and I came across the talk <a href="http://www.infoq.com/presentations/Simple-Made-Easy">Simple Made Easy</a> by Rich Hickey and the paper <a href="https://github.com/papers-we-love/papers-we-love/tree/master/design/out-of-the-tar-pit.pdf">Out of the Tar Pit</a>, by Ben Moseley and Peter Marks. This material changed the way I think about programming, and everytime I come back to them, I learn a little bit more.</p>
+<p>Now I could see that most of that complexity was coming from the way I was storing and dealing with the <em>state</em> of my application. It was all over the place. I was getting information from the APIs and storing them in the services themselves. It wasn&#39;t clear who was reading that information, who was transforming it, or who was writing it. A lot of debugging was needed to understand what was happening at any point in time, and it was really difficult to write tests for everything.</p>
+<h2 id="the-solution">The Solution</h2>
+<p>In order to solve this problem, I will take a <em>functional</em> approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I&#39;ll store <em>all the application state in a single place</em> (some React frameworks work this way, like <a href="https://github.com/omcljs/om">Om</a> and <a href="https://github.com/moreartyjs/moreartyjs">Morearty</a>).</p>
+<p>Remark: the solution will be illustrated in Angular, but it could, with little work, be implemented in other frameworks (or even vanilla JS for that matter).</p>
+<p>So, the architecture is simple: all the State will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the State. And that&#39;s it! Let me explain it more, and illustrate with an example.</p>
+<p>The <code>State</code> object has two methods: <code>listen</code> and  <code>change</code>. <code>listen</code> is used to observe one part of the <code>State</code>. Every time the <code>change</code> method is called, the listeners will be updated.</p>
+<p>The controllers will have a <code>state</code> variable exposed to the views, which will be listening to the <code>State</code> object. It&#39;s important the that variable remain <em>immutable</em>; let&#39;s remember that the <code>State</code> should only be mutated via the <code>change</code> method:</p>
+<pre><code class="hljs javascript"><span class="hljs-comment">// INSIDE CONTROLLER</span>
+
+<span class="hljs-comment">// local variable to store the state values</span>
+<span class="hljs-keyword">var</span> state = {};
+
+<span class="hljs-comment">// every time AppStateService changes, </span>
+<span class="hljs-comment">// local state will change too:</span>
+AppStateService.listen(<span class="hljs-string">'somePart'</span>, 
+  <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(s)</span> </span>{ state.somePart = s; }); 
+<span class="hljs-comment">// =&gt; state = { somePart: null }</span>
+
+<span class="hljs-comment">// change AppStateService:</span>
+AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class="hljs-string">'someValue'</span>); 
+<span class="hljs-comment">// =&gt; state = { somePart: 'someValue' }</span></code></pre>
+
+<p>The <code>state</code> variable should be exposed to the views, together with pure functions to transform it: </p>
+<pre><code class="hljs javascript"><span class="hljs-comment">// using "Controller As" syntax</span>
+<span class="hljs-keyword">this</span>.state = state;
+<span class="hljs-keyword">this</span>.summary = SomeService.summary;</code></pre>
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"SomeController as ctrl"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Some Part: {{ ctrl.state.somePart }}<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Summary: {{ ctrl.summary(ctrl.state) }}<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
+
+<p>If the view has any input, the controller will have another variable called <code>form</code>, to take advantadge of Angular&#39;s two-way binding:</p>
+<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> form = { newFoo: <span class="hljs-string">'initial value'</span> };
+<span class="hljs-keyword">this</span>.form = form;</code></pre>
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
+  New Foo: <span class="hljs-tag">&lt;<span class="hljs-title">input</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text"</span> <span class="hljs-attribute">ng-model</span>=<span class="hljs-value">"c.form.newFoo"</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span></code></pre>
+
+<p>Now let&#39;s take this Foo example a little further, and start changing the <code>State</code>.</p>
+<h2 id="a-more-complete-example">A More Complete Example</h2>
+<p>Let&#39;s <code>AppStateService</code> hold a <code>foos</code> array. We want a view with an input and a button that, when pressed, add a new Foo to <code>foos</code>:</p>
+<pre><code class="hljs javascript">angular.module(<span class="hljs-string">'simpleStateApp'</span>)
+  .controller(<span class="hljs-string">'FooCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppStateService)</span> </span>{
+
+  <span class="hljs-comment">// using Ramda library</span>
+  <span class="hljs-keyword">var</span> compose = R.compose;
+  <span class="hljs-keyword">var</span> append = R.append;
+  <span class="hljs-keyword">var</span> get = R.get;
+
+  <span class="hljs-keyword">var</span> state = {};
+  <span class="hljs-keyword">var</span> form = {
+    newFoo: <span class="hljs-string">''</span>
+  };
+
+  AppStateService.listen(<span class="hljs-string">'foos'</span>, 
+    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(f)</span> </span>{ state.foos = f; });
+
+  <span class="hljs-comment">// change function is curried</span>
+  <span class="hljs-keyword">var</span> changeFoos = AppStateService.change(<span class="hljs-string">'foos'</span>);
+
+  <span class="hljs-keyword">var</span> addFoo = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(state, form)</span> </span>{
+    <span class="hljs-keyword">return</span> compose(
+      changeFoos,
+      append(form.newFoo),
+      get(<span class="hljs-string">'foos'</span>)
+      )(state);
+  };
+
+  <span class="hljs-comment">// exposed to the view:</span>
+  <span class="hljs-keyword">this</span>.state = state;
+  <span class="hljs-keyword">this</span>.form = form;
+
+  <span class="hljs-keyword">this</span>.addFoo = addFoo;
+});</code></pre>
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"FooCtrl as c"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">h3</span>&gt;</span>"Foo" form<span class="hljs-tag">&lt;/<span class="hljs-title">h3</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
+    New Foo: <span class="hljs-tag">&lt;<span class="hljs-title">input</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text"</span> <span class="hljs-attribute">ng-model</span>=<span class="hljs-value">"c.form.newFoo"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">button</span> <span class="hljs-attribute">ng-click</span>=<span class="hljs-value">"c.addFoo(c.state, c.form)"</span>&gt;</span>
+      Add Foo
+    <span class="hljs-tag">&lt;/<span class="hljs-title">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
+
+<p>So, now we have a <code>addFoo</code> function. It changes the State by appending <code>form.newFoo</code> to the <code>foos</code> array. The best part is: every part of the application listening to the <code>foos</code> array will be updated once the <code>changeFoos</code> function is called!</p>
+<p>I setup a small project illustrating that idea <a href="https://github.com/lucasmreis/simpleStateApp">on Github</a>. I think it illustrates well the benefits of using this approach:</p>
+<ol>
+<li>There&#39;s a &quot;read only&quot; controller, listening to both <code>foos</code> and <code>bars</code> arrays from <code>AppStateService</code>;</li>
+<li>There&#39;s a Foo controller;</li>
+<li>There&#39;s a Bar controller being used in <em>two</em> different views;</li>
+<li>The Bar controller also listens to <code>foos</code>, and the user can only add a Bar after a Foo named <code>requiredFoo</code> is created. This is used to illustrate how different controllers can interplay in intricate ways through the State;</li>
+<li>The application also listens to changes in State and save them on local storage.</li>
+</ol>
+<h2 id="conclusions">Conclusions</h2>
+<p>So, what have we gained from that architecture? In one word, <em>simplicity</em>. It&#39;s simple to reason about the whole application. Everything that changes with time is confined to <code>AppStateService</code>. You know exactly who changes and who listens to each part of it. </p>
+<p>In the example posted, I also implemented the method <code>AppStateService.get()</code>, that returns the whole state object. Inject it into the console, and you have an incredible debugging tool. It answers exactly the question we started this post: <em>what is happening to my application right now?</em></p>
+<h2 id="next-steps">Next Steps</h2>
+<p>This solution works really well in the project I&#39;m working now. I&#39;m sure it could be improved, and would appreciate any inputs! </p>
+<p>One feature I would love to see implemented: whenever a big problem happens, an error event is sent to the server with the State object, so the developers can see exactly where the user was when the error ocurred. That would be awesome.</p>
+<p>Here&#39;s the <a href="https://github.com/lucasmreis/simpleStateApp">working demo</a>.</p>
+
+        <div class="signature">February 22, 2015.</div>
+      </div>
+      <footer>
+        by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+  </body>
+</html>
