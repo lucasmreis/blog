@@ -22,30 +22,30 @@
         <h1>A more functional approach to Angular</h1>
         <div class="lead">Keeping sanity while managing state</div>
         <p>We all know the story: a project is started with all the current best practices and an elegant architecture. Everything is beautiful - until it is not anymore. As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question <em>what is happening to my application right now?</em> Or the even more important <em>what was happening when that crazy error occurred?</em> In this post, I propose a solution to this problem.</p>
-<p>One day I was googling ways to deal with this type of complexity, and I came across the talk <a href="http://www.infoq.com/presentations/Simple-Made-Easy">Simple Made Easy</a> by Rich Hickey and the paper <a href="https://github.com/papers-we-love/papers-we-love/tree/master/design/out-of-the-tar-pit.pdf">Out of the Tar Pit</a>, by Ben Moseley and Peter Marks. This material changed the way I think about programming, and everytime I come back to them, I learn a little bit more.</p>
-<p>Now I could see that most of that complexity was coming from the way I was storing and dealing with the <em>state</em> of my application. It was all over the place. I was getting information from the APIs and storing them in the services themselves. It wasn&#39;t clear who was reading that information, who was transforming it, or who was writing it. A lot of debugging was needed to understand what was happening at any point in time, and it was really difficult to write tests for everything.</p>
+<p>One day I was googling ways to deal with this type of complexity, and I came across the talk <a href="http://www.infoq.com/presentations/Simple-Made-Easy">Simple Made Easy</a> by Rich Hickey and the paper <a href="https://github.com/papers-we-love/papers-we-love/tree/master/design/out-of-the-tar-pit.pdf">Out of the Tar Pit</a>, by Ben Moseley and Peter Marks. This material changed the way I think about programming, and every time I come back to them, I learn a little bit more.</p>
+<p>I can see now that most of that complexity was coming from the way I was storing and dealing with the <em>state</em> of my application. It was all over the place. I was getting information from the APIs and storing them in the services themselves. It wasn&#39;t clear who was reading that information, who was transforming it, or who was writing it. A lot of debugging was needed to understand what was happening at any point in time, and it was really difficult to write tests for everything.</p>
 <h2 id="the-solution">The Solution</h2>
-<p>In order to solve this problem, I will take a <em>functional</em> approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I&#39;ll store <em>all the application state in a single place</em> (some React frameworks work this way, like <a href="https://github.com/omcljs/om">Om</a> and <a href="https://github.com/moreartyjs/moreartyjs">Morearty</a>).</p>
+<p>In order to solve this problem, I took a <em>functional</em> approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored <em>all the application state in a single place</em> (some React frameworks work this way, like <a href="https://github.com/omcljs/om">Om</a> and <a href="https://github.com/moreartyjs/moreartyjs">Morearty</a>).</p>
+<p>The architecture is simple: all the State will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the State. And that&#39;s it! Let me explain it more, and illustrate with an example.</p>
 <p>Remark: the solution will be illustrated in Angular, but it could, with little work, be implemented in other frameworks (or even vanilla JS for that matter).</p>
-<p>So, the architecture is simple: all the State will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the State. And that&#39;s it! Let me explain it more, and illustrate with an example.</p>
-<p>The <code>State</code> object has two methods: <code>listen</code> and  <code>change</code>. <code>listen</code> is used to observe one part of the <code>State</code>. Every time the <code>change</code> method is called, the listeners will be updated.</p>
-<p>The controllers will have a <code>state</code> variable exposed to the views, which will be listening to the <code>State</code> object. It&#39;s important the that variable remain <em>immutable</em>; let&#39;s remember that the <code>State</code> should only be mutated via the <code>change</code> method:</p>
+<p>The State will be stored in the <code>AppStateService</code> service. It has two methods: <code>listen</code> and  <code>change</code>. <code>listen</code> is used to observe one part of the State. Every time the <code>change</code> method is called, the listeners will be updated.</p>
+<p>The controllers will have a <code>state</code> variable exposed to the views, which will be listening to <code>AppStateService</code>. It&#39;s important the that variable remain <em>immutable</em>; let&#39;s remember that <code>AppStateService</code> should only be mutated via the <code>change</code> method:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// INSIDE CONTROLLER</span>
 
 <span class="hljs-comment">// local variable to store the state values</span>
 <span class="hljs-keyword">var</span> state = {};
 
-<span class="hljs-comment">// every time AppStateService changes, </span>
+<span class="hljs-comment">// every time AppStateService changes,</span>
 <span class="hljs-comment">// local state will change too:</span>
-AppStateService.listen(<span class="hljs-string">'somePart'</span>, 
-  <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(s)</span> </span>{ state.somePart = s; }); 
+AppStateService.listen(<span class="hljs-string">'somePart'</span>,
+  <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(s)</span> </span>{ state.somePart = s; });
 <span class="hljs-comment">// =&gt; state = { somePart: null }</span>
 
 <span class="hljs-comment">// change AppStateService:</span>
-AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class="hljs-string">'someValue'</span>); 
+AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class="hljs-string">'someValue'</span>);
 <span class="hljs-comment">// =&gt; state = { somePart: 'someValue' }</span></code></pre>
 
-<p>The <code>state</code> variable should be exposed to the views, together with pure functions to transform it: </p>
+<p>The <code>state</code> variable should be exposed to the views, together with pure functions to transform it:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// using "Controller As" syntax</span>
 <span class="hljs-keyword">this</span>.state = state;
 <span class="hljs-keyword">this</span>.summary = SomeService.summary;</code></pre>
@@ -63,9 +63,9 @@ AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class=
   New Foo: <span class="hljs-tag">&lt;<span class="hljs-title">input</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text"</span> <span class="hljs-attribute">ng-model</span>=<span class="hljs-value">"c.form.newFoo"</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span></code></pre>
 
-<p>Now let&#39;s take this Foo example a little further, and start changing the <code>State</code>.</p>
+<p>Now let&#39;s take this Foo example a little further, and start changing the State.</p>
 <h2 id="a-more-complete-example">A More Complete Example</h2>
-<p>Let&#39;s <code>AppStateService</code> hold a <code>foos</code> array. We want a view with an input and a button that, when pressed, add a new Foo to <code>foos</code>:</p>
+<p>Let <code>AppStateService</code> hold a <code>foos</code> array. We want a view with an input and a button that, when pressed, add a new Foo to <code>foos</code>:</p>
 <pre><code class="hljs javascript">angular.module(<span class="hljs-string">'simpleStateApp'</span>)
   .controller(<span class="hljs-string">'FooCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppStateService)</span> </span>{
 
@@ -79,7 +79,7 @@ AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class=
     newFoo: <span class="hljs-string">''</span>
   };
 
-  AppStateService.listen(<span class="hljs-string">'foos'</span>, 
+  AppStateService.listen(<span class="hljs-string">'foos'</span>,
     <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(f)</span> </span>{ state.foos = f; });
 
   <span class="hljs-comment">// change function is curried</span>
@@ -111,7 +111,7 @@ AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class=
 <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
 
 <p>So, now we have a <code>addFoo</code> function. It changes the State by appending <code>form.newFoo</code> to the <code>foos</code> array. The best part is: every part of the application listening to the <code>foos</code> array will be updated once the <code>changeFoos</code> function is called!</p>
-<p>I setup a small project illustrating that idea <a href="https://github.com/lucasmreis/simpleStateApp">on Github</a>. I think it illustrates well the benefits of using this approach:</p>
+<p>I setup a small project illustrating that idea <a href="https://github.com/lucasmreis/simpleStateApp">on Github</a>. It illustrates well the benefits of using this approach:</p>
 <ol>
 <li>There&#39;s a &quot;read only&quot; controller, listening to both <code>foos</code> and <code>bars</code> arrays from <code>AppStateService</code>;</li>
 <li>There&#39;s a Foo controller;</li>
@@ -120,11 +120,11 @@ AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class=
 <li>The application also listens to changes in State and save them on local storage.</li>
 </ol>
 <h2 id="conclusions">Conclusions</h2>
-<p>So, what have we gained from that architecture? In one word, <em>simplicity</em>. It&#39;s simple to reason about the whole application. Everything that changes with time is confined to <code>AppStateService</code>. You know exactly who changes and who listens to each part of it. </p>
-<p>In the example posted, I also implemented the method <code>AppStateService.get()</code>, that returns the whole state object. Inject it into the console, and you have an incredible debugging tool. It answers exactly the question we started this post: <em>what is happening to my application right now?</em></p>
+<p>So, what have we gained from this architecture? In one word, <em>simplicity</em>. The entire application becomes more easily understandable. It&#39;s simple to reason about the whole application. Everything that changes with time is confined to <code>AppStateService</code>. You know exactly who changes and who listens to each part of it.</p>
+<p>In the example posted, I also implemented the method <code>AppStateService.get()</code>, that returns the whole state object. Inject it into the console, and you have an incredible debugging tool. This answers the question we ask at the beginning of this post: <em>what is happening to my application right now?</em></p>
 <h2 id="next-steps">Next Steps</h2>
-<p>This solution works really well in the project I&#39;m working now. I&#39;m sure it could be improved, and would appreciate any inputs! </p>
-<p>One feature I would love to see implemented: whenever a big problem happens, an error event is sent to the server with the State object, so the developers can see exactly where the user was when the error ocurred. That would be awesome.</p>
+<p>This solution works really well for my current project, but, of course, I&#39;m sure it could be improved. I would appreciate any input!</p>
+<p>One feature I would love to see implemented: whenever a big problem happens, an error event would be sent to the server with the State object, so the developers can see exactly where the user was when the error ocurred. That would be awesome.</p>
 <p>Here&#39;s the <a href="https://github.com/lucasmreis/simpleStateApp">working demo</a>.</p>
 
         <div class="signature">February 21, 2015.</div>
