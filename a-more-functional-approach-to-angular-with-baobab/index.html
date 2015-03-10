@@ -21,10 +21,10 @@
       <div id="main-text">
         <h1>A more functional approach to Angular, with Baobab</h1>
         <div class="lead">Even simpler and more powerful</div>
-        <p><a href="http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular/">Last post</a> I described a simple way to deal with state in an Angular application. I didn&#39;t detail the actual <code>AppStateService</code> implementation, and was about to do it in a &quot;part 2&quot;. That&#39;s when I came across <em>Baobab</em>, a framework-agnostic library that actually implements the idea of a centralized state. In this post I&#39;ll recap a little bit on why the concept of a centralized state is important, then I&#39;ll present the Baobab library, and finally I&#39;ll describe an adaptation of the last post&#39;s sample app that uses it.</p>
+        <p>In my <a href="../a-more-functional-approach-to-angular/">last post</a> I described a simple way to deal with state in an Angular application. I didn&#39;t detail the actual <code>AppStateService</code> implementation, and was about to do it in a &quot;part 2&quot;.  I was about to do just that when I came across <a href="https://github.com/Yomguithereal/baobab">Baobab</a>, a framework-agnostic library that actually implements the idea of a centralized state. In this post I&#39;ll recap a little bit on why the concept of a centralized state is important, then I&#39;ll present the Baobab library, and finally I&#39;ll describe an adaptation of my last post&#39;s sample app which uses a centralized state.</p>
 <h2 id="why-is-having-a-central-state-important-">Why is having a central state important?</h2>
-<p>A <em>state</em> can be thought of a &quot;picture&quot;, or the &quot;value&quot;, of something in a certain point in time. I&#39;ll call <em>central state</em> the value of your <em>whole application</em> in a certain point in time. So, as your application changes, every little part of that change will be stored in this central place.</p>
-<p>Having present and past states stored in a single place makes it easier to implement new features in an application, and change old ones. It&#39;s easier to make sense of what&#39;s happening in it. And as I said in the <a href="http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular/">previously mentioned post</a>:</p>
+<p>A <em>state</em> can be thought as a &quot;picture&quot;, or the &quot;value&quot;, of something in a certain point in time. I&#39;ll call <em>central state</em> the value of your <em>whole application</em> at a certain point in time. So, as your application changes, every little part of that change will be stored in this central place.</p>
+<p>Having present and past states stored in a single place makes it easier to implement new features in an application, and change old ones. It also makes it easier to make sense of what&#39;s going on in your application at any given moment. As I said in the <a href="../a-more-functional-approach-to-angular/">previously mentioned post</a>:</p>
 <blockquote>
 <p>As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question <em>what is happening to my application right now?</em> Or the even more important <em>what was happening when that crazy error occurred?</em></p>
 </blockquote>
@@ -62,9 +62,9 @@ paymentOptionsCursor.on(<span class="hljs-string">'update'</span>, yetAnotherCal
 productCursor.push({ id: <span class="hljs-number">123</span> });
 <span class="hljs-comment">// only someCallback and anotherCallback will be called</span></code></pre>
 
-<p>What&#39;s so great about it? First, the &quot;listening&quot; part of your application does not need to know anything about the &quot;changing&quot; part. You just listen to updates to the tree, and act on it. Also, if you have a view that only needs to know about the products, just listen to updates on the products. No need to listen to the whole tree.</p>
+<p>So, what&#39;s so great about all that? First, the &quot;listening&quot; part of your application does not need to know anything about the &quot;changing&quot; part. You just listen to updates to the tree, and act on it. Also, if you have a view that only needs to know about the products, just listen to updates on the products. No need to listen to the whole tree.</p>
 <h2 id="a-sample-app">A sample app</h2>
-<p>Now let&#39;s use it on a sample application. In it, we&#39;ll have two arrays: Foos and Bars. Both will hold strings. To add a weird spec to the mix, the user should not be able to add any Bar unless Foos has the string <code>&#39;requiredFoo&#39;</code>. Let&#39;s implement it piece by piece, starting with the central state:</p>
+<p>Now let&#39;s use Baobab in a sample application. In the sample, we&#39;ll have two arrays: Foos and Bars. Both will hold strings. To add a weird spec to the mix, the user should not be able to add any Bar unless Foos has the string <code>&#39;requiredFoo&#39;</code>. Let&#39;s implement it piece by piece, starting with the central state:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// app.js</span>
 angular.module(<span class="hljs-string">'simpleStateApp'</span>, []);
 
@@ -80,7 +80,7 @@ angular.module(<span class="hljs-string">'simpleStateApp'</span>)
 
   <span class="hljs-keyword">return</span> state;</code></pre>
 
-<p>Simple and elegant. Don&#39;t we all like when that happens? :) Now let&#39;s implement <code>ReadOnlyCtrl</code>, a controller that only reads the central state values:</p>
+<p>Simple and elegant. Don&#39;t we like it when that happens? :) Now let&#39;s implement <code>ReadOnlyCtrl</code>, a controller that only reads the central state values:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// controllers/readOnlyController.js</span>
 angular.module(<span class="hljs-string">'simpleStateApp'</span>)
   .controller(<span class="hljs-string">'ReadOnlyCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppState)</span> </span>{
@@ -145,7 +145,7 @@ angular.module(<span class="hljs-string">'simpleStateApp'</span>)
   <span class="hljs-keyword">this</span>.addFoo = addFoo;
 });</code></pre>
 
-<p>Note the <code>form</code> variable. It holds the temporary values of the HTML inputs. The <code>addFoo</code> function receive this as the parameter, and change the value of the tree. We&#39;ll call <code>addFoo</code> with a button <code>ng-click</code>, but that&#39;s a design decision. It could also be on the input <code>ng-change</code>, for instance. Let&#39;s see the view code:</p>
+<p>Note the <code>form</code> variable. It holds the temporary values of the HTML inputs. The <code>addFoo</code> function receives this as the parameter, and changes the value of the tree. We&#39;ll call <code>addFoo</code> with a button <code>ng-click</code>, but that&#39;s a design decision. It could also be done with the input <code>ng-change</code>, for instance. Let&#39;s see the view code:</p>
 <pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"FooCtrl as c"</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-title">h3</span>&gt;</span>"Foo" form<span class="hljs-tag">&lt;/<span class="hljs-title">h3</span>&gt;</span>
   <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
@@ -154,7 +154,7 @@ angular.module(<span class="hljs-string">'simpleStateApp'</span>)
   <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
 
-<p><code>BarCtrl</code> has more features: <code>cannotAddBar</code>, the function that implements the weird spec, and <code>clearState</code>, the function that clears central state:</p>
+<p><code>BarCtrl</code> has more features: <code>cannotAddBar</code>, the function that that we used to implement the weird spec, and <code>clearState</code>, the function that clears central state:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// controllers/barController.js</span>
 angular.module(<span class="hljs-string">'simpleStateApp'</span>)
   .controller(<span class="hljs-string">'BarCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppState)</span> </span>{
@@ -209,7 +209,7 @@ angular.module(<span class="hljs-string">'simpleStateApp'</span>)
     <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
 
-<p>And that&#39;s it! But wait, there&#39;s a little problem we need to deal with. The views do not update as soon as the central state is updated. This happens because Angular&#39;s change detection mechanism is not triggered by an update in the central state. We can fix it by putting this piece of code inside <code>AppState</code>:</p>
+<p>And that&#39;s it! But wait, there&#39;s a little problem we need to deal with. The views do not update as soon as the central state is updated. This happens because Angular&#39;s change detection mechanism is not triggered by an update to the central state. We can fix this by putting the following piece of code inside <code>AppState</code>:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// services/appState.js</span>
 state.on(<span class="hljs-string">'update'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
   setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
@@ -219,16 +219,16 @@ state.on(<span class="hljs-string">'update'</span>, <span class="hljs-function">
 
 <p>And our application will run smoothly!</p>
 <h2 id="adding-features">Adding features</h2>
-<p>That&#39;s when this architecture shines. Because everything that  changes is stored in one place, we can easily plug new functionalities by interacting with the central state. </p>
-<p>Let&#39;s suppose we want to save our state in the local storage, so that every time the user go back to it, the last state will be loaded. </p>
-<p>The idea is to load the saved state when starting the app, and saving it on every change. Let&#39;s first implement a <code>save</code> and a <code>load</code> function in a service:</p>
+<p>Because everything that  changes is stored in one place, we can easily plug new functionalities by interacting with the central state. That&#39;s when this architecture shines.</p>
+<p>Let&#39;s suppose we want to save our state in the local storage, so that every time the user goes back to it, the last state will be loaded.</p>
+<p>The idea is to load the saved state when starting the app, and save it after every change. Let&#39;s first implement a <code>save</code> and a <code>load</code> function in a service:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// services/storageService.js</span>
 angular.module(<span class="hljs-string">'simpleStateApp'</span>)
   .factory(<span class="hljs-string">'StorageService'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
 
   <span class="hljs-keyword">var</span> save = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(prop, items)</span> </span>{
     <span class="hljs-built_in">window</span>.localStorage.setItem(
-      <span class="hljs-string">'baobab-app-'</span> + prop, 
+      <span class="hljs-string">'baobab-app-'</span> + prop,
       <span class="hljs-built_in">JSON</span>.stringify(items));
     <span class="hljs-keyword">return</span> items;
   };
@@ -258,41 +258,42 @@ angular.module(<span class="hljs-string">'simpleStateApp'</span>)
 <p>And let&#39;s use a <code>.run</code> to save the state on every update:</p>
 <pre><code class="hljs javascript">angular.module(<span class="hljs-string">'simpleStateApp'</span>, [])
   .run(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(StorageService, AppState)</span> </span>{
-    AppState.on(<span class="hljs-string">'update'</span>, 
-      <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ 
-        StorageService.save(<span class="hljs-string">'baobab'</span>, AppState.get()); 
+    AppState.on(<span class="hljs-string">'update'</span>,
+      <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        StorageService.save(<span class="hljs-string">'baobab'</span>, AppState.get());
       });
   });</code></pre>
 
-<p>And the new feature is added. It shined, didn&#39;t it? :)</p>
-<h2 id="one-little-baobab-bonus">One little Baobab bonus</h2>
-<p>Baobab does it work very well, and still gives us a free important and amazing bonus: undo. We just have to first pass a config to the constructor:</p>
+<p>And the new feature is added. It shines, doesn&#39;t it? :)</p>
+<h2 id="one-little-baobab-bonus">One Little Baobab Bonus</h2>
+<p>Baobab works very well, and still gives us a free important and amazing bonus: undo. We just have to first pass a config to the constructor:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// services/appState.js</span>
 <span class="hljs-keyword">var</span> state = <span class="hljs-keyword">new</span> Baobab(
   StorageService.load(<span class="hljs-string">'baobab'</span>, initial),
-  { 
+  {
     maxHistory: <span class="hljs-number">10</span>
   }
 );</code></pre>
 
 <p>And implement the <code>undo</code> function on the controller:</p>
 <pre><code class="hljs javascript"><span class="hljs-comment">// controllers/barController.js</span>
-<span class="hljs-keyword">var</span> undo = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ 
-  <span class="hljs-keyword">if</span> (AppState.hasHistory()) { 
-    AppState.undo(); 
+<span class="hljs-keyword">var</span> undo = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">if</span> (AppState.hasHistory()) {
+    AppState.undo();
   }
 };</code></pre>
 
 <p>And our undo is done.</p>
 <h2 id="conclusions">Conclusions</h2>
-<p>That was a lot for a post! But I hope I could show some benefits of having a centralized state application architecture. It&#39;s all about being very simple to add new features and change old ones, and, as was said before, answering the really important question <em>what is happening in my application right now?</em></p>
-<h2 id="next-steps">Next steps</h2>
+<p>That was a lot for one post! But I hope I could show some benefits of having a centralized state application architecture. It&#39;s all about having the ability to add new features and change old ones with ease, and, as was said before, being able to answer the really important question <em>what is happening in my application right now?</em></p>
+<h2 id="next-steps">Next Steps</h2>
 <p>Javascript is going through a big change now with ES6, and Angular 2 is on its way. I&#39;m looking forward to see how to implement a centralized state using these tools.</p>
-<p>React is a great framework, that&#39;s gaining a lot of traction. I knew about Baobab through <a href="http://christianalfoni.github.io/">Christian Alfoni</a>&#39;s amazing blog, and he wrote an amazing post on <a href="http://christianalfoni.github.io/javascript/2015/02/06/plant-a-baobab-tree-in-your-flux-application.html">how to use it with React</a>.</p>
+<p>React is a great framework, that&#39;s gaining a lot of traction. I knew about Baobab through <a href="http://christianalfoni.github.io/">Christian Alfoni</a>&#39;s amazing blog, and he wrote a post on <a href="http://christianalfoni.github.io/javascript/2015/02/06/plant-a-baobab-tree-in-your-flux-application.html">how to use it with React</a>.</p>
+<p>There&#39;s a new project experimenting with Baobab and Angular, <a href="https://github.com/christianalfoni/baobab-angular">baobab-angular</a>. I&#39;m definitely going to have a look at it.</p>
 <p>On another note, I will also implement the app in a <em>point-free functional</em> style. I try to write my functions point-free whenever I can; it&#39;s also a way to bring simplicity to the function level. More details in an upcoming post!</p>
 <p>The example presented in this post has a <a href="http://lucasmreis.github.io/baobabStateApp/">live demo here</a>. Complete source code can be found <a href="https://github.com/lucasmreis/baobabStateApp">here</a>.</p>
 
-        <div class="signature">March 10, 2015.</div>
+        <div class="signature">March 9, 2015.</div>
       </div>
 
       <!-- DISQUS -->
