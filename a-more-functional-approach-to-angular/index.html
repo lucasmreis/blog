@@ -25,7 +25,7 @@
 <p>One day I was googling ways to deal with this type of complexity, and I came across the talk <a href="http://www.infoq.com/presentations/Simple-Made-Easy">Simple Made Easy</a> by Rich Hickey and the paper <a href="https://github.com/papers-we-love/papers-we-love/tree/master/design/out-of-the-tar-pit.pdf">Out of the Tar Pit</a>, by Ben Moseley and Peter Marks. This material changed the way I think about programming, and every time I come back to them, I learn a little bit more.</p>
 <p>I can see now that most of that complexity was coming from the way I was storing and dealing with the <em>state</em> of my application. It was all over the place. I was getting information from the APIs and storing them in the services themselves. It wasn&#39;t clear who was reading that information, who was transforming it, or who was writing it. A lot of debugging was needed to understand what was happening at any point in time, and it was really difficult to write tests for everything.</p>
 <h2 id="the-solution">The Solution</h2>
-<p>In order to solve this problem, I took a <em>functional</em> approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored <em>all the application state in a single place</em> (some React frameworks work this way, like <a href="https://github.com/omcljs/om">Om</a> and <a href="https://github.com/moreartyjs/moreartyjs">Morearty</a>).</p>
+<p>In order to solve this problem, I took a more <em>functional</em> approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored <em>all the application state in a single place</em> (some React frameworks work this way, like <a href="https://github.com/omcljs/om">Om</a> and <a href="https://github.com/moreartyjs/moreartyjs">Morearty</a>).</p>
 <p>The architecture is simple: all the State will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the State. And that&#39;s it! Let me explain it more, and illustrate with an example.</p>
 <p>Remark: the solution will be illustrated in Angular, but it could, with little work, be implemented in other frameworks (or even vanilla JS for that matter).</p>
 <p>The State will be stored in the <code>AppStateService</code> service. It has two methods: <code>listen</code> and  <code>change</code>. <code>listen</code> is used to observe one part of the State. Every time the <code>change</code> method is called, the listeners will be updated.</p>
@@ -126,8 +126,9 @@ AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class=
 <p>This solution works really well for my current project, but, of course, I&#39;m sure it could be improved. I would appreciate any input!</p>
 <p>One feature I would love to see implemented: whenever a big problem happens, an error event would be sent to the server with the State object, so the developers can see exactly where the user was when the error ocurred. That would be awesome.</p>
 <p>Here&#39;s the <a href="https://github.com/lucasmreis/simpleStateApp">working demo</a>.</p>
+<p><strong>Update 2015-03-10</strong>: I illustrate again this idea in the <a href="../a-more-functional-approach-to-angular-with-baobab">next post</a>, this time using the Baobab library. Check it out, it even has <em>undo</em>! :)</p>
 
-        <div class="signature">February 21, 2015.</div>
+        <div class="signature">February 22, 2015.</div>
       </div>
 
       <!-- DISQUS -->
