@@ -20,8 +20,8 @@
       </header>
       <div id="main-text">
         <h1>Pointfree Javascript</h1>
-        <div class="lead">Modularity in the function level</div>
-        <p>Javascript is really a very flexible language. It has functional and object oriented characteristics, and it allows one to program in a lot of different styles. In this post I present what is called <em>pointfree</em> style programming, and I go through some common scenarios to show the benefits brought by it.</p>
+        <div class="lead">Modularity at the function level</div>
+        <p>Javascript is really a very flexible language. It has functional and object oriented characteristics, and it allows for programming in a lot of different styles. In this post I will present what is called <em>pointfree</em> style programming, and I will go through some common scenarios to demonstrate its benefits.</p>
 <h2 id="one-step-back">One Step Back</h2>
 <p>First, let me show the standard imperative way to extract information from an array - the for loop:</p>
 <pre><code class="hljs js"><span class="hljs-comment">// imperative style</span>
@@ -36,7 +36,7 @@
 }</code></pre>
 
 <p>What does this function do? Let&#39;s analyze it. I have an empty array. Then I go through every user. If a user&#39;s role is equal to <code>&#39;admin&#39;</code>, we add it&#39;s email to the array. Then we return that array.</p>
-<p>So, I just described the function&#39;s code, but it&#39;s still not very clear what it <em>does</em>. A much clearer way to say it would be: <em>it returns all the emails of the users with admin role</em>.</p>
+<p>I&#39;ve just described the function&#39;s code, but it&#39;s still not very clear what it <em>does</em>. A much clearer way to say it would be: <em>it returns all the emails of the users with admin role</em>.</p>
 <p>Let&#39;s rewrite the function in a functional style, using javascript&#39;s own <code>filter</code> and <code>map</code> functions (I&#39;m using ES6 syntax here - gotta love those arrow functions!):</p>
 <pre><code class="hljs js"><span class="hljs-keyword">var</span> getAdminEmails = users =&gt;
     users
@@ -44,11 +44,11 @@
       .map(u =&gt; u.email);</code></pre>
 
 <p>Analyzing this function is easier: we get the users, separate only the admins, and then get the emails. The first strong point of this style is that <em>the code of the function is closer to the description of what the function does</em>. This makes it easier to understand and reason about it, and to look into a new piece of code and understanding quickly what is supposed to happen.</p>
-<p>Filters and maps go through an array&#39;s elements, just like the for loop, but they have specific purposes: returning subsets and transforming elements, respectively. In contrast, anything can happen inside a for loop. That means that every time you bump into a for loop code, you have to investigate more to understand if you return a subset or not, if you transform any element, if you aggregate values, or any combination of those.</p>
-<p>When you use filters and maps, you have a quicker understanding of the function, and deepen that understanding little by little. I know <code>getAdminEmails</code> returns an array, since it has a filter and a map. On a second look, one sees that it first filters the users, then transforms them. One can now investigate <em>just the filter</em> to understand which elements are going to go through transformation. And then one can investigate what happens in the transformation itself.</p>
+<p>Filters and maps go through an array&#39;s elements, just like the for loop, but they have specific purposes: returning subsets and transforming elements, respectively. In contrast, anything can happen inside a for loop. That means that every time you bump into a for loop code, you have to investigate more to understand if a subset will be returned or not, if an element will be transformed, if values will be aggregated, or any combination of those outcomes.</p>
+<p>When you use filters and maps, you have a quicker understanding of the function, and you can deepen that understanding little by little as you need to. I know <code>getAdminEmails</code> returns an array, since it has a filter and a map. On a second look, one sees that it first filters the users, then transforms them. One can now investigate <em>just the filter</em> to understand which elements are going to be transformed. And then one can investigate what happens during the transformation itself.</p>
 <h2 id="composability">Composability</h2>
-<p>What I find very interesting in the functional version is that I could understand it piece by piece, in different layers. I&#39;ll try to make it even more clear now, and produce some reusable functions on the way!</p>
-<p>Let&#39;s start by trying to be even closer to what the function does. We want to transform a filtered list, so let&#39;s start by composing these two pieces:</p>
+<p>What I find very interesting in the functional version is that I could understand it piece by piece, in different layers. I&#39;ll try to make it even more clear now, and produce some reusable functions along the way!</p>
+<p>Let&#39;s start by trying to write the code as close as possible to what the function does. We want to transform a filtered list, so let&#39;s start by composing those two pieces:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">var</span> getAdminEmails = compose(
   getTheEmailsOf,
   onlyTheAdminRoleUsers);</code></pre>
@@ -56,7 +56,7 @@
 <p><code>compose</code> is a function that take two functions as parameters, and run one after the other:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">var</span> compose = (f, g) =&gt; x =&gt; f(g(x));</code></pre>
 
-<p>Now letś go to the two functions that are going to be composed. <code>getEmailsOf</code> is a function that transforms a list by returning the <code>email</code> property. &quot;Transforming a list&quot; is what map does. And getting a property from a object sounds like a very common task, so let&#39;s implement <code>map</code> from a different angle and <code>prop</code>:</p>
+<p>Now let&#39;s go to the two functions that are going to be composed. <code>getEmailsOf</code> is a function that transforms a list by returning the <code>email</code> property. &quot;Transforming a list&quot; is what map does. And getting a property from an object sounds like a very common task, so let&#39;s implement <code>map</code> from a different angle and <code>prop</code>:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">var</span> prop = p =&gt; x =&gt; x[p];
 
 <span class="hljs-keyword">var</span> map = f =&gt; list =&gt;
@@ -82,7 +82,7 @@
   filter(
     propEq(<span class="hljs-string">'admin'</span>)(<span class="hljs-string">'role'</span>)));</code></pre>
 
-<p>That is what is called <em>point-free programming</em>, or <em>tacit programming</em>. What is most amazing about this version is that it is <em>entirely composed of other smaller, generic and reusable functions</em>! These functions not only will help you with your next functions, but they will help you understanding quicker <em>any</em> function. After you know what <code>prop</code> does, it becomes faster to understand <code>prop(&#39;something&#39;)</code> than <code>obj =&gt; obj.something</code>, and we don&#39;t need to go into the &quot;stress&quot; of having to choose a name for the temporary <code>obj</code> variable! :)</p>
+<p>That is what is called <em>point-free programming</em>, or <em>tacit programming</em>. What is most amazing about this version is that it is <em>entirely composed of other smaller, generic and reusable functions</em>! These functions will not only will help you with your next functions, but they will help you understanding quicker <em>any</em> function. After you know what <code>prop</code> does, it becomes faster to understand <code>prop(&#39;something&#39;)</code> than <code>obj =&gt; obj.something</code>, and we don&#39;t need to go into the &quot;stress&quot; of having to choose a name for the temporary <code>obj</code> variable! :)</p>
 <p>Note: most of these smaller functions are generic and useful enough so that we could use them in almost every project. <a href="http://ramdajs.com/">Ramda</a> is a library that has exactly that: a bunch of really small and generic functions.</p>
 <h2 id="another-example">Another Example</h2>
 <p>I&#39;ll finish with another common situation:</p>
@@ -90,7 +90,7 @@
   getPromotions(cart.products[<span class="hljs-number">0</span>])
     .then(calculateTotal);</code></pre>
 
-<p>We can understand it quickly because of familiarity, but the code flow is all over. What it does is: <em>calculate the total of the promotions of the first product of the cart</em>. Look at the order of this last sentence, and compare the order of the code above with the following function:</p>
+<p>We can understand it quickly because of familiarity, but the code flow is all over the place. Here&#39;s what it does: <em>it calculates the total of the promotions of the first product of the cart</em>. Look at the order of this last sentence, and compare the order of the code above with the following function:</p>
 <pre><code class="hljs js"><span class="hljs-comment">// composeP is a compose that accepts Promises</span>
 <span class="hljs-keyword">var</span> calculateTotalPromotions = composeP(
   calculateTotal,
@@ -102,12 +102,12 @@
 <h2 id="conclusions">Conclusions</h2>
 <p>Pointfree programming is all about modularizing functions through composition. You use smaller, generic, well defined and well tested functions to build the functions you need. Inside a <code>compose</code> or <code>composeP</code>, one function is called, then the other, and that&#39;s how it goes, no matter if the function has 17 lines or 3. It works the same way, and <em>code complexity does not increase</em>.</p>
 <p>We also don&#39;t have to worry about temporary variables, which makes it easier to understand code and harder to introduce bugs. Also, it&#39;s easier to understand and test smaller parts of the code, which makes it more reliable.</p>
-<p>Of course it&#39;s not a silver bullet, and a lot of times I end up with a function that is not fully pointfree. I find its main weakness occurs when the function has more than one parameter; almost everytime it leads to having some non pointfree code. But, that said, my personal experience is that the pointfree part of the code is much more robust and they scream the errors earlier in the development phase. The bugs are almost never there! :)</p>
+<p>Of course it&#39;s not a silver bullet, and a lot of times I end up with a function that is not fully pointfree. I find its main weakness occurs when the function has more than one parameter; very often it leads to having some non pointfree code. But, that said, my personal experience is that the pointfree part of the code is much more robust and errors are identified earlier in the development phase. Bugs are almost never found in the pointfree code! :)</p>
 <h2 id="further-reading">Further Reading</h2>
-<p>The first place I heard about this programming style was in Frontend Masters <a href="https://frontendmasters.com/courses/functional-javascript/">Hardcore Functional Javascript</a>. It&#39;s totally worth the price!</p>
-<p><a href="https://jsleao.wordpress.com/">jsanchesleao</a> also wrote a nice post about <a href="https://jsleao.wordpress.com/2015/02/22/curry-and-compose-why-you-should-be-using-something-like-ramda-in-your-code/">why you should be using something like ramda in your code</a>.</p>
+<p>The first place I heard about this programming style was in Frontend Masters <a href="https://frontendmasters.com/courses/functional-javascript/">Hardcore Functional Javascript</a>. It&#39;s definitely worth the price.</p>
+<p><a href="https://jsleao.wordpress.com/">jsanchesleao</a> also wrote an interesting post about <a href="https://jsleao.wordpress.com/2015/02/22/curry-and-compose-why-you-should-be-using-something-like-ramda-in-your-code/">why you should be using something like ramda in your code</a>.</p>
 
-        <div class="signature">March 19, 2015.</div>
+        <div class="signature">March 20, 2015.</div>
       </div>
 
       <!-- DISQUS -->
