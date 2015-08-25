@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NPM is an amazing build tool | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>NPM is an amazing build tool</h1>
+        <div class="lead">And solves 90% of the build issues</div>
+        <p>I really like the &quot;build first approach&quot; to development, in which we automate common tasks and simplify workflow as quickly as possible. We lose a few minutes setting up the build tool, but save hours with the automation and have quicker feedback for errors and problems. No one argues with that these days.</p>
+<p>I read a really good book on the &quot;build first approach&quot; applied to javascript, <a href="http://www.manning.com/bevacqua/">Javascript Application Design</a>, which was published in January 2015. It describes good practices for building javascript applications, and illustrate the task automations with Grunt.</p>
+<p>But we know the javascript world, and now, in August 2015, Grunt is old enough to be in a museum. &quot;Gulp is the new thing, let&#39;s use it!&quot; Well, I&#39;ve worked with both, and I agree that the Gulp approach seems more sensible. But this time I want to talk about a third approach I&#39;ve come across: using <em>NPM itself</em> as the build tool. I&#39;ve found that it solves 90% of my project&#39;s build issues, and it&#39;s suitable for most projects we&#39;ll get involved with.</p>
+<h2 id="npm-scripts-tasks">Npm Scripts = Tasks</h2>
+<p>The <code>package.json</code> file has a <code>scripts</code> key, and that&#39;s where the tasks are registered. Each task is simply a command that will be run. For instance, let&#39;s suppose Mocha is being used as the testing framework, with <a href="https://babeljs.io/">Babel</a> transpiler. To use it, we run the command in the terminal:</p>
+<pre><code class="hljs"><span class="hljs-comment">$</span> <span class="hljs-comment">npm</span> <span class="hljs-comment">install</span> <span class="hljs-literal">-</span><span class="hljs-comment">g</span> <span class="hljs-comment">mocha</span>
+<span class="hljs-comment">$</span> <span class="hljs-comment">mocha</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">recursive</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">compilers</span> <span class="hljs-comment">js:babel/register</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">reporter</span> <span class="hljs-comment">spec</span></code></pre>
+
+<p>You&#39;ll have to install Mocha globally, and run this complex command everytime you want to run the tests. If we use npm scripts, that&#39;s how we would do it: first, edit the <code>package.json</code> file:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"test"</span>: <span class="hljs-string">"mocha --recursive --compilers js:babel/register --reporter spec"</span>
+}</code></pre>
+
+<p>And then we use it simply by runnig the command <code>npm test</code> in the terminal.</p>
+<p>There&#39;s a bonus for using the npm scripts: the packages do not have to be installed globally to be used in a script! That means that you only have to install Mocha by running <code>npm install --save-dev mocha</code>, and the <code>npm test</code> above will run. I find this is really good, since no global installing is needed, and every package used ends up listed in the <code>package.json</code>.</p>
+<h2 id="organizing-the-project">Organizing The Project</h2>
+<p>I like to organize my project with three folders: <code>src</code>, <code>test</code> and <code>dist</code>. The tests are all in <code>test</code>, and the source code in <code>src</code> gets compiled to <code>dist</code>. We already have the <code>npm test</code> task registered, let&#39;s register the task to compile javascript, using <a href="http://browserify.org/">Browserify</a>:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"js"</span>: <span class="hljs-string">"browserify src/scripts/index.js -t babelify --outfile dist/app.js"</span>
+}</code></pre>
+
+<p>Which we use by running:</p>
+<pre><code class="hljs">$ npm <span class="hljs-command">run</span> js</code></pre>
+
+<p><strong>Important:</strong> the <code>test</code> and <code>start</code> are &quot;default&quot; scripts, and can be called directly with <code>npm test</code> and <code>npm start</code>. The other scripts we are going to write need to be called with <code>npm run</code>.</p>
+<p>You can also call simple commands in scripts. For instance, sometimes we only need to copy files to <code>dist</code> folder:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"html"</span>:   <span class="hljs-string">"cp src/index.html dist/"</span>,
+  <span class="hljs-string">"assets"</span>: <span class="hljs-string">"cp -R src/assets/ dist/assets/"</span>
+}</code></pre>
+
+<p>You can also run npm scripts inside npm scripts! Let&#39;s create a first version of a complete <code>build</code> script, using the <code>js</code>, <code>html</code> and <code>assets</code> scripts:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"build"</span>: <span class="hljs-string">"npm run js &amp;&amp; npm run html &amp;&amp; npm run assets"</span>
+}</code></pre>
+
+<p>Simple and direct! :)</p>
+<h2 id="serving-static-files">Serving Static Files</h2>
+<p>I like to use the default script <code>npm start</code> to start a local server and serve the static files&quot;</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"start"</span>: <span class="hljs-string">"cd dist &amp;&amp; httpserver"</span>
+}</code></pre>
+
+<p>The <a href="https://www.npmjs.com/package/httpserver">httpserver</a> package is super simple: fire it, and it starts serving the files in the current directory. By using the script, we do not need to enter and exit the <code>dist</code> directory, and we do not need to install <code>httpserver</code> globally!</p>
+<h2 id="what-about-watching-files-">What About Watching Files?</h2>
+<p>A crucial part of a good build workflow is minimizing the time between editing and serving the files. That results in quick feedback, and errors can be spotted earlier. </p>
+<p>A lot of the packages we use to build our project already have support for listening to changes on source files. Let me illustrate it with the package <a href="https://github.com/sass/node-sass">node-sass</a>, which I&#39;ve been using to compile Sass files to CSS:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"css"</span>:       <span class="hljs-string">"node-sass src/styles/ -o dist/"</span>,
+  <span class="hljs-string">"css:watch"</span>: <span class="hljs-string">"node-sass -w src/styles/ -o dist/"</span>
+}</code></pre>
+
+<p>If a terminal command is being used, or there&#39;s no watch capabilities in the library used, one can use one of many watching packages available in npm. I&#39;ve been using <a href="https://github.com/Qard/onchange">onchange</a>:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"html"</span>:         <span class="hljs-string">"cp src/index.html dist/"</span>,
+  <span class="hljs-string">"html:watch"</span>:   <span class="hljs-string">"onchange 'src/*.html' -v -- npm run html"</span>,
+  <span class="hljs-string">"assets"</span>:       <span class="hljs-string">"cp -R src/assets/ dist/assets/"</span>,
+  <span class="hljs-string">"assets:watch"</span>: <span class="hljs-string">"onchange 'src/assets/*.*' -v -- npm run assets"</span>,
+}</code></pre>
+
+<p>After having all the <code>:watch</code> versions of the scripts, we can write our <code>build:watch</code> script. We could call all the scripts with <code>&amp;&amp;</code>, just like we did in <code>build</code>, but let&#39;s do something different this time: let&#39;s run the tasks in parallel! I&#39;ll use <a href="https://github.com/keithamus/parallelshell">parallelshell</a>:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"build:watch"</span>: <span class="hljs-string">"parallelshell 'npm run js:watch' 'npm run css:watch' 'npm run html:watch' 'npm run assets:watch'"</span>
+}</code></pre>
+
+<p>And there we have it: watching and compiling all the files, in parallel.</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>I personally like the approach of developing small building blocks, and I enjoy the fact that each script is a terminal command. I found these characteristics make npm scripts direct, easy and simple.</p>
+<p>These commands alse are definitely more perennial than Grunt and Gulp programming style. This makes npm builds mre robust to technology changes than the other two frameworks.</p>
+<p>Even if you do not use it to build, npm scripts can make our job easier when dealing with complex terminal commands. In our example, if we want to deploy our application to Github Pages, we need to push the <code>dist</code> directory as a root to the <code>gh-pages</code> branch. It&#39;s a complex git command, and we can automate it this way:</p>
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"deploy"</span>: <span class="hljs-string">"git subtree push --prefix dist origin gh-pages"</span>
+}</code></pre>
+
+<p>And that&#39;s it: a new tool to make our development life easier. </p>
+
+        <div class="signature">August 21, 2015.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'npm-is-an-amazing-build-tool';
+          var disqus_title = 'NPM is an amazing build tool';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>
