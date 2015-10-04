@@ -1,0 +1,1750 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title><![CDATA[Lucas Reis' Blog]]></title>
+        <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
+        <link>http://lucasmreis.github.io/blog/</link>
+        <generator>RSS for Node</generator>
+        <lastBuildDate>Sun, 04 Oct 2015 17:26:39 GMT</lastBuildDate>
+        <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
+        <language><![CDATA[English]]></language>
+        <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
+        <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[Using CSP As Application Architecture]]></title>
+            <description><![CDATA[
+Since I started studying and working on a Clojure project, I've been using the `core.async` library. It's a really simple and powerful way of dealing with concurrency, which is also used in the Go language. It's an implementation of [Communicating Sequential Processes](https://en.wikipedia.org/wiki/Communicating_sequential_processes), and now with ES6 generators we can use it in Javascript too! In this post, I'll be using [js-csp](https://github.com/ubolonton/js-csp).  Check out my [Introduction to CSP in Javascript](../quick-introduction-to-csp-in-javascript/) - it can be considered "Part 1" of this post.
+
+When I came across [Quiescent's](https://github.com/levand/quiescent) [TodoMVC implementation](https://github.com/levand/todomvc), I saw the power of CSP as a front end application framework *itself*. This post describes an expanded version of the architecture of that TodoMVC app.
+
+## The Architecture
+
+The application has an object called **state**. The state holds the information needed to render the screen. 
+
+There's a **render process**, that triggers a React render (or whatever view framework you want to use) whenever a new state object is put into the **render channel**.
+
+There are **update processes**, that transform state according to the data put into the **update channels**. After transforming the state, the update processes put the new state in the render channel.
+
+There are **complex actions processes**, that are asynchronous processes that can trigger multiple update processes. It usually involves communication with the server, or any action that takes time to complete.
+
+It's that simple. Those are the basic processes in the framework. Of course, it is possible to run more processes, like a router or websocket process, but let's start with the basic ones.
+
+## Application Config
+
+First of all let's create the application config object. An example would be:
+
+<pre><code class="hljs js"><span class="hljs-comment">// index.js</span>
+import {chan, go, take, put, putAsync, buffers} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">const</span> loadApp = () =&gt; ({
+  state: {
+    words: [<span class="hljs-string">'first'</span>, <span class="hljs-string">'second'</span>, <span class="hljs-string">'last'</span>],
+    current: <span class="hljs-number">0</span>,
+    loading: <span class="hljs-literal">false</span>
+  },
+  updates: {
+    channels: {
+      view: chan(),
+      add: chan(),
+      loading: chan()
+    },
+    consumers: {
+      view: Updates.view,
+      add: Updates.add,
+      loading: Updates.loading
+    }
+  },
+  complexActions: {
+    channels: {
+      dbInsert: chan()
+    },
+    consumers: {
+      dbInsert: ComplexActions.dbInsert
+    }
+  },
+  renderCh: chan()
+});</code></pre>
+ 
+And our `start` function:
+
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app <span class="hljs-comment">// for debugging</span>
+};
+
+start();</code></pre>
+
+The config object has the `state`, the render channel `renderCh`, and the `updates` and `complexActions` channels and consumers. I'm going to explain those later.
+
+The `start` function loads the config, and will start all the processes. I like to put the loaded app in the `window` object, so I can play with it in the browser console, very much like Clojure's command line.
+
+Get your build flow running (I like to use [npm as a build tool](../npm-is-an-amazing-build-tool/)) and let's dive into the update processes.
+
+## Updates
+
+Let's pick one functionality in our app: adding a new word to the `state.words` list. First, let's implement the function that receives the old state and the word to add, and then returns the new state with the word added:
+
+<pre><code class="hljs js"><span class="hljs-comment">// updates.js</span>
+
+<span class="hljs-comment">// util functions</span>
+<span class="hljs-keyword">const</span> clone = obj =&gt; <span class="hljs-built_in">JSON</span>.parse(<span class="hljs-built_in">JSON</span>.stringify(obj)); <span class="hljs-comment">// naive but cool!</span>
+
+<span class="hljs-keyword">const</span> assoc = (obj, prop, value) =&gt; {
+  <span class="hljs-keyword">const</span> cl = clone(obj);
+  cl[prop] = value;
+  <span class="hljs-keyword">return</span> cl;
+};
+
+<span class="hljs-comment">// update function</span>
+export <span class="hljs-keyword">const</span> loading = (state, loadingState) =&gt;
+  assoc(state, <span class="hljs-string">'loading'</span>, loadingState);</code></pre>
+
+Every update function will receive two parameters: the state and the data used in the transformation.  Then it will return a new state. Since it's a pure function, *it's very simple to unit test*.
+
+Now let's write a function to initiate a process that takes data from the `updates.channels.loading` channel, and transforms `state`:
+
+<pre><code class="hljs js"><span class="hljs-comment">// index.js</span>
+
+<span class="hljs-keyword">const</span> initLoadingUpdate = app =&gt; {
+  <span class="hljs-keyword">const</span> updateFn = app.updates.consumers.loading;
+  <span class="hljs-keyword">const</span> ch = app.updates.channels.loading;
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+    <span class="hljs-comment">// the process will go on forever</span>
+    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+      <span class="hljs-comment">// the process pauses waiting for a</span>
+      <span class="hljs-comment">// value to be put in the channel</span>
+      <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
+
+      <span class="hljs-comment">// logging</span>
+      <span class="hljs-built_in">console</span>.log(`On update channel [ loading ] received value [ ${<span class="hljs-built_in">JSON</span>.stringify(value)} ]`);
+
+      <span class="hljs-comment">// updates the state</span>
+      app.state = updateFn(app.state, value);
+    }
+  });
+};</code></pre>
+
+And we can call it in the `start` function:
+
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app <span class="hljs-comment">// for debugging</span>
+
+  initLoadingUpdate(app);
+};
+
+start();
+
+<span class="hljs-comment">// for debugging</span>
+<span class="hljs-built_in">window</span>.csp = <span class="hljs-built_in">require</span>(<span class="hljs-string">'js-csp'</span>);</code></pre>
+
+Let's test it in the browser. Write in the console:
+
+<pre><code class="hljs js">&gt; app.state.loading
+&lt; <span class="hljs-literal">false</span>
+
+&gt; csp.putAsync(app.updates.channels.loading, <span class="hljs-literal">true</span>)
+&lt; On update channel [ loading ] received value [ <span class="hljs-literal">true</span> ]
+
+&gt; app.state.loading
+&lt; <span class="hljs-literal">true</span></code></pre>
+
+It works! :)
+
+But we'll have many update processes. In this application we have three: `view`, `add` and `loading`. The first changes the word being shown in the screen (by changing `state.current`), and the second adds a new word. First, the functions:
+
+<pre><code class="hljs js"><span class="hljs-comment">// update.js</span>
+
+<span class="hljs-comment">// util function</span>
+<span class="hljs-keyword">const</span> append = (array, value) =&gt; {
+  <span class="hljs-keyword">const</span> cl = clone(array);
+  cl.push(value);
+  <span class="hljs-keyword">return</span> cl;
+};
+
+<span class="hljs-comment">// update functions</span>
+export <span class="hljs-keyword">const</span> view = (state, direction) =&gt; {
+  <span class="hljs-keyword">const</span> nextCurrent = direction === <span class="hljs-string">'next'</span> ?
+    <span class="hljs-built_in">Math</span>.min(state.current + <span class="hljs-number">1</span>, state.words.length - <span class="hljs-number">1</span>) :
+    <span class="hljs-built_in">Math</span>.max(state.current - <span class="hljs-number">1</span>, <span class="hljs-number">0</span>);
+
+  <span class="hljs-keyword">return</span> assoc(state, <span class="hljs-string">'current'</span>, nextCurrent);
+};
+
+export <span class="hljs-keyword">const</span> add = (state, newWord) =&gt;
+  assoc(state, <span class="hljs-string">'words'</span>, append(state.words, newWord));</code></pre>
+
+And let's change `initLoadingUpdate` to `initUpdates`, which loads a process for each update:
+
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initUpdates = app =&gt; {
+  <span class="hljs-built_in">Object</span>.keys(app.updates.consumers).forEach(k =&gt; {
+    <span class="hljs-keyword">const</span> updateFn = app.updates.consumers[k];
+    <span class="hljs-keyword">const</span> ch = app.updates.channels[k];
+    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+        <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
+        <span class="hljs-built_in">console</span>.log(`On update channel [ ${k} ] received value [ ${<span class="hljs-built_in">JSON</span>.stringify(value)} ]`);
+        app.state = updateFn(app.state, value);
+      }
+    });
+  });
+};
+
+<span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app; <span class="hljs-comment">// for debugging and testing</span>
+
+  initUpdates(app);
+};</code></pre>
+
+In the console, use `csp.putAsync` to put data into channels and check the transformations being done in `app.state`!
+
+## Complex Actions
+
+Sometimes one action cannot be translated in a simple update function. Take, for example, an action that inserts data into a db through a web server. It will set loading to true, make the request, update the state, and set loading to false. 
+
+These are what I'm calling *complex actions*: functions that call more than one update over a period of time. They also receive two parameters: the update channels and the data required for the action.
+
+For instance, let's think of the complex action that changes the nickname of person with a given person ID:
+
+<pre><code class="hljs js">export <span class="hljs-keyword">const</span> changeNickname = (updateChannels, {personId, newNickname}) =&gt; {
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+    <span class="hljs-comment">// do stuff and put in update channels</span>
+  });
+};</code></pre>
+
+For now, let's implement a "fake" complex action:
+
+<pre><code class="hljs js"><span class="hljs-comment">// complexActions.js</span>
+import {go, put, timeout} from <span class="hljs-string">'js-csp'</span>;
+
+export <span class="hljs-keyword">const</span> dbInsert = (updateChannels, newWord) =&gt; {
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">yield</span> put(updateChannels.loading, <span class="hljs-literal">true</span>);
+
+    <span class="hljs-comment">// do something costly</span>
+    <span class="hljs-keyword">yield</span> timeout(<span class="hljs-number">1000</span>);
+    <span class="hljs-keyword">yield</span> put(updateChannels.add, newWord);
+
+    <span class="hljs-keyword">yield</span> put(updateChannels.loading, <span class="hljs-literal">false</span>);
+  });
+};</code></pre>
+
+It's not as simple to unit test a complex action, but it's not complicated either. You just create the update channels and check the values passed to them. 
+
+And now let's take a look at the `initComplexActions`, which is very similar to `initUpdates`:
+
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initComplexActions = app =&gt; {
+  <span class="hljs-built_in">Object</span>.keys(app.complexActions.consumers).forEach(k =&gt; {
+    <span class="hljs-keyword">const</span> complexActionFn = app.complexActions.consumers[k];
+    <span class="hljs-keyword">const</span> ch = app.complexActions.channels[k];
+    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+      <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+        <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
+        <span class="hljs-built_in">console</span>.log(`On complex action channel [ ${k} ] received value [ ${<span class="hljs-built_in">JSON</span>.stringify(value)} ]`);
+        complexActionFn(app.updates.channels, value);
+      }
+    });
+  });
+};
+
+<span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app;
+
+  initUpdates(app);
+  initComplexActions(app);
+};</code></pre>
+
+Now go to the browser console and type:
+
+<pre><code class="hljs js">&gt; csp.putAsync(app.complexActions.channels.dbInsert, <span class="hljs-string">'another'</span>)
+&lt; On complex action channel [ dbInsert ] received value [ <span class="hljs-string">"another"</span> ]
+&lt; On update channel [ loading ] received value [ <span class="hljs-literal">true</span> ]
+<span class="hljs-comment">// after 1000 miliseconds...</span>
+&lt; On update channel [ add ] received value [ <span class="hljs-string">"another"</span> ]
+&lt; On update channel [ loading ] received value [ <span class="hljs-literal">false</span> ]
+
+&gt; app.state.words
+&lt; [<span class="hljs-string">"first"</span>, <span class="hljs-string">"second"</span>, <span class="hljs-string">"last"</span>, <span class="hljs-string">"another"</span>]</code></pre>
+
+And that's exactly what we wanted. 
+
+## Rendering
+
+Rendering process works as follows:
+
+1. When a state is received in the `app.renderCh` channel, it triggers the rendering function. In our case it will be React, but it could be any other view framework.
+2. The process will be "busy" until the next animation frame. That means it will not trigger the rendering function if a new state is received and rendering is taking place.
+3. If a new state is put in the channel, and there's already a state waiting to be rendered, the older state will be discarded, and only the new state will be rendered. 
+
+Let's start with number 3. That logic is ready for us in the `js-csp` library (and in `core async` too). Change the definition of `app.renderCh` to:
+
+<pre><code class="hljs js">renderCh: chan(buffers.sliding(<span class="hljs-number">1</span>))</code></pre>
+
+This means that the channel will hold 1 value at a time, and, if another value is put in the channel, the last one will be discarded and the new value will be available. This is the *sliding strategy*.
+
+Now, to the render process:
+
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initRender = (app, element) =&gt; {
+  <span class="hljs-comment">// render initial state</span>
+  putAsync(app.renderCh, app.state);
+
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>) {
+      <span class="hljs-keyword">const</span> state = <span class="hljs-keyword">yield</span> take(app.renderCh);
+      
+      <span class="hljs-comment">// little trick to "synchronize" async functions,</span>
+      <span class="hljs-comment">// explained below</span>
+      <span class="hljs-keyword">const</span> finishRender = chan();
+
+      <span class="hljs-comment">// render passing state and channels, so</span>
+      <span class="hljs-comment">// the user can trigger updates and </span>
+      <span class="hljs-comment">// complex actions from the interface</span>
+      React.render(
+        
+        <span class="hljs-comment">// main component</span>
+        &lt;Main
+          appState = {app.state}
+          updateChannels = {app.updates.channels}
+          complexActionsChannels = {app.complexActions.channels} /&gt;,
+
+        <span class="hljs-comment">// DOM element to mount</span>
+        element,
+
+        <span class="hljs-comment">// callback to rendering, explained below</span>
+        () =&gt; <span class="hljs-built_in">window</span>.requestAnimationFrame(() =&gt; putAsync(finishRender, {})));
+      <span class="hljs-comment">// waits for a value in the finishRender channel</span>
+      <span class="hljs-keyword">yield</span> take(finishRender);
+    }
+  });
+};</code></pre>
+
+The first thing the process does is to take a value from the render channel. Then, the `finishRender` channel is created. This is a trick so the process wait for the `React.render` and `window.requestAnimationFrame` functions to continue.
+
+Both functions are async, and don't block the main thread when called. That means that right after `React.render` is called, the expression `yield take(finishRender);` will be evaluated. That way the process will be paused until any value is put in the `finishRender` channel.
+
+`React.render` accepts a callback, and then calls `window.requestAnimationFrame`. This function waits for the next browser rendering frame and calls another callback.
+
+Whenever the render is started, it waits for the next animation frame to get a new state to render. This way we make sure no unnecessary renders are triggered! Cool, isn't it?
+
+A little modification is needed in the `initUpdates` process: the new state should be put in the render channel:
+
+<pre><code class="hljs js"><span class="hljs-comment">// ...</span>
+app.state = updateFn(app.state, value);
+<span class="hljs-keyword">yield</span> put(app.renderCh, app.state);
+<span class="hljs-comment">// ...</span></code></pre>
+
+We start `initRender` by calling it in the `start` function:
+
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app;
+
+  initUpdates(app);
+  initComplexActions(app);
+  initRender(app, <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'main'</span>));
+};</code></pre>
+
+Go to the console and write the following command to add a thousand new words, and see how efficiently it's rendered:
+
+<pre><code class="hljs js">&gt; <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">1000</span>; i++) 
+  { csp.putAsync(app.updates.channels.add, <span class="hljs-string">'word'</span> + i); }</code></pre>
+
+## The Finished Application
+
+The code for the final application can be seen [here](https://github.com/lucasmreis/csp-architecture/tree/master/src), and it can be seen running [here](http://lucasmreis.github.io/csp-architecture/#). Be sure to open the console, inspect the `app` object, and play with the channels!
+
+## Conclusion
+
+CSP is a simple, powerful and time-tested way of dealing with asynchronous programming. Using it as an application framework is very rewarding. The architecture is robust, and seems to scale well. I'm certainly going to use it in other projects, and I encourage everyone to try it!
+
+## Next Steps
+
+I'd like to battle test the framework within a bigger project, to really get a sense of how it will behave. 
+
+Most client-side application demands could be translated as an update or complex action, at least the ones triggered by the user. But some could be implemented as ever running processes, initiated in the `start` function. For instance, a simple router could be written as:
+
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initHistory = app =&gt; {
+  <span class="hljs-comment">// a nav channel could handle</span>
+  <span class="hljs-comment">// the state transformations</span>
+  <span class="hljs-comment">// caused by changing the route.</span>
+  <span class="hljs-comment">//</span>
+  <span class="hljs-comment">// hash changes =&gt; nav channel</span>
+  <span class="hljs-built_in">window</span>.addEventListener(<span class="hljs-string">'hashchange'</span>, () =&gt; {
+    <span class="hljs-keyword">const</span> screen = <span class="hljs-built_in">window</span>.location.hash.slice(<span class="hljs-number">2</span>);
+    <span class="hljs-keyword">const</span> current = get(app.state, <span class="hljs-string">'screen'</span>);
+    <span class="hljs-keyword">if</span> (screen !== current) {
+      putAsync(app.updates.channels.nav, screen);
+    }
+  });
+}</code></pre>
+
+I would also like to experiment this way with web sockets.
+
+If any of you want to exchange some ideas about using CSP as a framework with javascript, or any other flavor of front end programming, feel free to email me at [lucasmreis@gmail.com](mailto:lucasmreis@gmail.com).
+
+
+
+
+
+
+
+
+
+
+]]></description>
+            <guid isPermaLink="false">Using CSP As Application Architecture</guid>
+            <pubDate>Sat, 03 Oct 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Quick Introduction To CSP In Javascript]]></title>
+            <description><![CDATA[
+*What is CSP?* In practice, it's a way of writing concurrent code. The language Go uses it natively, Clojure has core.async which achieves it by using macros, and now we can use it in Javascript because of generators, which were included in ES6.
+
+*Why should I bother?* Because it's very powerful, efficient and simple. What more do you want? :)
+
+*Ok, let's do it. How do I start using it?* We will use [js-csp](https://github.com/ubolonton/js-csp), and we will need need generators, which are only included in ES6.  That means you'll have to use Node 4 or superior, or transpile your browser code with [babel](https://babeljs.io/) (or any other transpile tool that supports generators).
+
+Enough talking, let's go to the examples!
+
+## Example 1: The Process
+
+A process is the first concept we're gonna learn. It runs code. And it's as simple as that. :)
+
+This is the syntax to start a process: just pass a generator as a parameter to the `go` function. 
+
+<pre><code class="hljs js">import {go} from <span class="hljs-string">'js-csp'</span>;
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something!'</span>);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; something!</span></code></pre>
+
+## Example 2: The Process Can Pause
+
+By using the `yield` keyword, you can pause a process, freeing the main thread:
+
+<pre><code class="hljs js">import {go, timeout} from <span class="hljs-string">'js-csp'</span>;
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> timeout(<span class="hljs-number">1000</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something else after 1 second!'</span>);
+});
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something!'</span>);
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; something!</span>
+<span class="hljs-comment">// =&gt; something else after 1 second!</span></code></pre>
+
+## Example 3: Processes Wait For Values In Channels
+
+The channels are the second and last concept we're gonna learn. They are queues, and whenever process calls `take` on a channel, it pauses until a value is `put` into that channel. 
+
+<pre><code class="hljs js">import {go, chan, take, putAsync} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> ch = chan();
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> received = <span class="hljs-keyword">yield</span> take(ch);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'RECEIVED:'</span>, received);
+});
+
+<span class="hljs-keyword">const</span> text = <span class="hljs-string">'something'</span>;
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'SENDING:'</span>, text);
+
+<span class="hljs-comment">// use putAsync to put a value in a</span>
+<span class="hljs-comment">// channel from outside a process</span>
+putAsync(ch, text);
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; SENDING: something</span>
+<span class="hljs-comment">// =&gt; RECEIVED: something</span></code></pre>
+
+## Example 4: Processes Communicate Through Channels
+
+On the other side, processes that `put` a value on a channel also pause until some other process uses `take`. 
+
+This example is a little bit more complex, try to follow the flow of the main thread, and check it with the terminal output!
+
+<pre><code class="hljs js">import {go, chan, take, put} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> chA = chan();
+<span class="hljs-keyword">let</span> chB = chan();
+
+<span class="hljs-comment">// Process A</span>
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> receivedFirst = <span class="hljs-keyword">yield</span> take(chA);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, receivedFirst);
+
+  <span class="hljs-keyword">const</span> sending = <span class="hljs-string">'cat'</span>;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; SENDING:'</span>, sending);
+  <span class="hljs-keyword">yield</span> put(chB, sending);
+
+  <span class="hljs-keyword">const</span> receivedSecond = <span class="hljs-keyword">yield</span> take(chA);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, receivedSecond);
+});
+
+<span class="hljs-comment">// Process B</span>
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> sendingFirst = <span class="hljs-string">'dog'</span>;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; SENDING:'</span>, sendingFirst);
+  <span class="hljs-keyword">yield</span> put(chA, sendingFirst);
+
+  <span class="hljs-keyword">const</span> received = <span class="hljs-keyword">yield</span> take(chB);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; RECEIVED:'</span>, received);
+
+  <span class="hljs-keyword">const</span> sendingSecond = <span class="hljs-string">'another dog'</span>;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; SENDING:'</span>, sendingSecond);
+  <span class="hljs-keyword">yield</span> put(chA, sendingSecond);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; B &gt; SENDING: dog</span>
+<span class="hljs-comment">// =&gt; A &gt; RECEIVED: dog</span>
+<span class="hljs-comment">// =&gt; A &gt; SENDING: cat</span>
+<span class="hljs-comment">// =&gt; B &gt; RECEIVED: cat</span>
+<span class="hljs-comment">// =&gt; B &gt; SENDING: another dog</span>
+<span class="hljs-comment">// =&gt; A &gt; RECEIVED: another dog</span></code></pre>
+
+## Example 5: Channel Are Queues
+
+Because channels are queues, when a process takes from a channel, the value will not be available for other processes to take. One process puts, one process takes. 
+
+In the example below you can check that the second process will never print `B > RECEIVED: dog`, because the value was already taken by the first process.
+
+<pre><code class="hljs js">import {go, chan, take, put} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> ch = chan();
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> text = <span class="hljs-keyword">yield</span> take(ch);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, text);
+});
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> text = <span class="hljs-keyword">yield</span> take(ch);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; RECEIVED:'</span>, text);
+});
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> text = <span class="hljs-string">'dog'</span>
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'C &gt; SENDING:'</span>, text);
+  <span class="hljs-keyword">yield</span> put(ch, text);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; C &gt; SENDING: dog</span>
+<span class="hljs-comment">// =&gt; A &gt; RECEIVED: dog</span></code></pre>
+
+## Example 6: Buffered Channels Don't Block On Put
+
+A channel can be buffered, which means that, for a given number of puts, a `put` will not make the process pause. 
+
+In the next example, even though no one called `take`, the first two puts will not block the process. But the channel has a buffer of size 2, so the third put will block the process, until someone takes from it.
+
+<pre><code class="hljs js">import {go, chan, put, buffers} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> ch = chan(buffers.fixed(<span class="hljs-number">2</span>));
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value A'</span>);
+  <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value B'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'I should print!'</span>);
+  <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value C'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'I should not print!'</span>);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; I should print!</span></code></pre>
+
+## Example 7: Dropping And Sliding Buffers
+
+Apart from the fixed buffer, which blocks after N puts, we have the dropping and sliding buffers too.
+
+The dropping buffer can hold up to N values. Any additional values that are put into a dropping buffer will be discarded.
+
+The sliding buffer can also hold up to N values. But, as opposed to the dropping buffer, when a new value is put into the sliding buffer, the first value put is dropped, and the buffer holds the new value.
+
+In the example below, `value B` and `value C` get dropped in the dropping channel, because it was holding `value A`. On the second process, as soon as `value B` is put in the channel, `value A` is dropped. And as soon as `value C` is put in the channel, `value B` is dropped.
+
+Because of the way they work, dropping and sliding buffers never block!
+
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> droppingCh = chan(buffers.dropping(<span class="hljs-number">1</span>));
+<span class="hljs-keyword">let</span> slidingCh  = chan(buffers.sliding(<span class="hljs-number">1</span>));
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value A'</span>);
+  <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value B'</span>);
+  <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value C'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'DROPPING:'</span>, <span class="hljs-keyword">yield</span> take(droppingCh));
+});
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value A'</span>);
+  <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value B'</span>);
+  <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value C'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'SLIDING:'</span>, <span class="hljs-keyword">yield</span> take(slidingCh));
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; DROPPING: value A</span>
+<span class="hljs-comment">// =&gt; SLIDING: value C</span></code></pre>
+
+## Conclusion
+
+After using CSP for a while, coding asynchronous code with callback or promises seems jurassic. I'm hopeful that with ES6 generators, CSP will become the standard in Javascript, as it is with Go and is starting to be with Clojure.
+
+## Next Steps
+
+Two other models also seem very interesting, and they could be considered more high level than CSP: *Functional Reactive Programming* and *Actors*, as they are used in Reactive Extensions and Erlang, respectively. I will definetely cover these these in future blog posts.
+
+I also believe that CSP could be an amazing *front end framework*.  To read more, check out my blog post [*Using CSP as Application Architecture*](../using-csp-as-application-architecture/).
+
+]]></description>
+            <guid isPermaLink="false">Quick Introduction To CSP In Javascript</guid>
+            <pubDate>Fri, 25 Sep 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[NPM is an amazing build tool]]></title>
+            <description><![CDATA[
+I really like the "build first approach" to development, in which we automate common tasks and simplify workflow as quickly as possible. We lose a few minutes setting up the build tool, but save hours with the automation and have quicker feedback for errors and problems. No one argues with that these days.
+
+I read a really good book on the "build first approach" applied to javascript, [Javascript Application Design](http://www.manning.com/bevacqua/), which was published in January 2015. It describes good practices for building javascript applications, and illustrate the task automations with Grunt.
+
+But we know the javascript world, and now, in August 2015, Grunt is old enough to be in a museum. "Gulp is the new thing, let's use it!" Well, I've worked with both, and I agree that the Gulp approach seems more sensible. But this time I want to talk about a third approach I've come across: using *NPM itself* as the build tool. I've found that it solves 90% of my project's build issues, and it's suitable for most projects we'll get involved with.
+
+## Npm Scripts = Tasks
+
+The `package.json` file has a `scripts` key, and that's where the tasks are registered. Each task is simply a command that will be run. For instance, let's suppose Mocha is being used as the testing framework, with [Babel](https://babeljs.io/) transpiler. To use it, we run the command in the terminal:
+
+<pre><code class="hljs"><span class="hljs-comment">$</span> <span class="hljs-comment">npm</span> <span class="hljs-comment">install</span> <span class="hljs-literal">-</span><span class="hljs-comment">g</span> <span class="hljs-comment">mocha</span>
+<span class="hljs-comment">$</span> <span class="hljs-comment">mocha</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">recursive</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">compilers</span> <span class="hljs-comment">js:babel/register</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">reporter</span> <span class="hljs-comment">spec</span></code></pre>
+
+You'll have to install Mocha globally, and run this complex command everytime you want to run the tests. If we use npm scripts, that's how we would do it: first, edit the `package.json` file:
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"test"</span>: <span class="hljs-string">"mocha --recursive --compilers js:babel/register --reporter spec"</span>
+}</code></pre>
+
+And then we use it simply by runnig the command `npm test` in the terminal.
+
+There's a bonus for using the npm scripts: the packages do not have to be installed globally to be used in a script! That means that you only have to install Mocha by running `npm install --save-dev mocha`, and the `npm test` above will run. I find this is really good, since no global installing is needed, and every package used ends up listed in the `package.json`.
+
+## Organizing The Project
+
+I like to organize my project with three folders: `src`, `test` and `dist`. The tests are all in `test`, and the source code in `src` gets compiled to `dist`. We already have the `npm test` task registered, let's register the task to compile javascript, using [Browserify](http://browserify.org/):
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"js"</span>: <span class="hljs-string">"browserify src/scripts/index.js -t babelify --outfile dist/app.js"</span>
+}</code></pre>
+
+Which we use by running:
+
+<pre><code class="hljs">$ npm <span class="hljs-command">run</span> js</code></pre>
+
+**Important:** the `test` and `start` are "default" scripts, and can be called directly with `npm test` and `npm start`. The other scripts we are going to write need to be called with `npm run`.
+
+You can also call simple commands in scripts. For instance, sometimes we only need to copy files to `dist` folder:
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"html"</span>:   <span class="hljs-string">"cp src/index.html dist/"</span>,
+  <span class="hljs-string">"assets"</span>: <span class="hljs-string">"cp -R src/assets/ dist/assets/"</span>
+}</code></pre>
+
+You can also run npm scripts inside npm scripts! Let's create a first version of a complete `build` script, using the `js`, `html` and `assets` scripts:
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"build"</span>: <span class="hljs-string">"npm run js &amp;&amp; npm run html &amp;&amp; npm run assets"</span>
+}</code></pre>
+
+Simple and direct! :)
+
+## Serving Static Files
+
+I like to use the default script `npm start` to start a local server and serve the static files"
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"start"</span>: <span class="hljs-string">"cd dist &amp;&amp; httpserver"</span>
+}</code></pre>
+
+The [httpserver](https://www.npmjs.com/package/httpserver) package is super simple: fire it, and it starts serving the files in the current directory. By using the script, we do not need to enter and exit the `dist` directory, and we do not need to install `httpserver` globally!
+
+## What About Watching Files?
+
+A crucial part of a good build workflow is minimizing the time between editing and serving the files. That results in quick feedback, and errors can be spotted earlier. 
+
+A lot of the packages we use to build our project already have support for listening to changes on source files. Let me illustrate it with the package [node-sass](https://github.com/sass/node-sass), which I've been using to compile Sass files to CSS:
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"css"</span>:       <span class="hljs-string">"node-sass src/styles/ -o dist/"</span>,
+  <span class="hljs-string">"css:watch"</span>: <span class="hljs-string">"node-sass -w src/styles/ -o dist/"</span>
+}</code></pre>
+
+If a terminal command is being used, or there's no watch capabilities in the library used, one can use one of many watching packages available in npm. I've been using [onchange](https://github.com/Qard/onchange):
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"html"</span>:         <span class="hljs-string">"cp src/index.html dist/"</span>,
+  <span class="hljs-string">"html:watch"</span>:   <span class="hljs-string">"onchange 'src/*.html' -v -- npm run html"</span>,
+  <span class="hljs-string">"assets"</span>:       <span class="hljs-string">"cp -R src/assets/ dist/assets/"</span>,
+  <span class="hljs-string">"assets:watch"</span>: <span class="hljs-string">"onchange 'src/assets/*.*' -v -- npm run assets"</span>,
+}</code></pre>
+
+After having all the `:watch` versions of the scripts, we can write our `build:watch` script. We could call all the scripts with `&&`, just like we did in `build`, but let's do something different this time: let's run the tasks in parallel! I'll use [parallelshell](https://github.com/keithamus/parallelshell):
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"build:watch"</span>: <span class="hljs-string">"parallelshell 'npm run js:watch' 'npm run css:watch' 'npm run html:watch' 'npm run assets:watch'"</span>
+}</code></pre>
+
+And there we have it: watching and compiling all the files, in parallel.
+
+## Conclusions
+
+I personally like the approach of developing small building blocks, and I enjoy the fact that each script is a terminal command. I found these characteristics make npm scripts direct, easy and simple.
+
+These commands alse are definitely more perennial than Grunt and Gulp programming style. This makes npm builds mre robust to technology changes than the other two frameworks.
+
+Even if you do not use it to build, npm scripts can make our job easier when dealing with complex terminal commands. In our example, if we want to deploy our application to Github Pages, we need to push the `dist` directory as a root to the `gh-pages` branch. It's a complex git command, and we can automate it this way:
+
+<pre><code class="hljs javascript"><span class="hljs-string">"scripts"</span>: {
+  <span class="hljs-string">"deploy"</span>: <span class="hljs-string">"git subtree push --prefix dist origin gh-pages"</span>
+}</code></pre>
+
+And that's it: a new tool to make our development life easier. 
+
+
+
+
+
+
+]]></description>
+            <guid isPermaLink="false">NPM is an amazing build tool</guid>
+            <pubDate>Sat, 22 Aug 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Immutable Data Structures and Javascript]]></title>
+            <description><![CDATA[
+One of the most difficult - perhaps *the* most difficult - issue in a complex front end application is state handling. I've written before about storing [all application state](http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular/) in a [single, centralized object](http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular-with-baobab/), and now I'll write about using *immutable data structures*.
+
+I found that working with immutable data structures has actually made implementation *much simpler*! How can a limitation make something more powerful, you may be asking yourself? Follow me and I'll explain.
+
+##Why did I try this immutable thing
+
+I've been watching a lot of Rich Hickey videos lately, and everything this guy says makes a lot of sense. According to Hickey, an immutable collection is not only an "array that cannot be modified", but it is an *array that can be treated as a value*.
+
+When we have two Numbers or two Strings, and we want to know if they are equal, we simply ask "are they equal?" by using the `===` operator. That's it - `2` always equals `2`, and if `a = 2` and `b = 2` we can say for sure that `a === b`. The same would be true for other values like `'this string' === 'this string'`.
+
+But, if we have two arrays or objects, `===` does not work the same way. It works by comparing references, so `[1, 2, 3] === [1, 2, 3]` is false, because they are actually *two different collections that happen to have the same values*.
+
+When working with immutable collections and objects, they are compared just like values. If they have the same elements, they are the same collection. Simple, isn't it? :)
+
+This is possible due to smart algorithms and data structure implementation made by libraries like [Mori](http://swannodette.github.io/mori/) and [Immutable.js](https://facebook.github.io/immutable-js/). I will not go into detail here, but here's what we need to know regarding these data structures:
+
+<pre><code class="hljs js">import Mori from <span class="hljs-string">'mori'</span>;
+
+<span class="hljs-comment">// a vector is an example of</span>
+<span class="hljs-comment">// immutable data structure</span>
+<span class="hljs-keyword">const</span> a = mori.vector(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>);
+
+<span class="hljs-comment">// conj appends a value to the</span>
+<span class="hljs-comment">// end of a vector, and returns</span>
+<span class="hljs-comment">// a new vector</span>
+<span class="hljs-keyword">const</span> b = mori.conj(a, <span class="hljs-number">4</span>);
+
+mori.equals(b, mori.vector(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>))
+<span class="hljs-comment">// =&gt; true</span>
+
+<span class="hljs-comment">// cool feature: the original vector is preserved</span>
+<span class="hljs-comment">//   (that's why they are also called</span>
+<span class="hljs-comment">//   persistent data structures)</span>
+mori.equals(a, mori.vector(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>))
+<span class="hljs-comment">// =&gt; true</span></code></pre>
+
+**Question 1.** Are the objects cloned every time I apply a transformation? **No.** And that's a key part of the reason why the  immutable data structures' performance is almost the same as their mutable counterparts. These libraries are implemented so that a transformed object *shares as much memory as possible* with the original object. ([more details here](http://hypirion.com/musings/understanding-persistent-vector-pt-1))
+
+**Question 2.** Does that mean that storing transformed versions of objects use less memory? **Yes!** If we have an one million elements conventional array that occupies 1GB of memory, clone it, append an element, and save both versions, we'll use 2GB of memory. If we use an immutable vector and `conj`, storing both versions will not occupy much more space than storing only one vectors.
+
+Pause a little bit to think about this last property of immutable objects, and think of how much awesomeness this "limitation" could bring to your code. :)
+
+##Back to application state
+
+The application will only consist of two lists, Foos and Bars. The user can add a new Foo or a new Bar using the app inputs. Foos and Bars are unique.
+
+Let's do it step by step:
+
+* The application state will be represented by a vector of hashmaps. The last hasmap will be the current state:
+
+<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
+<span class="hljs-keyword">const</span> initialValue = hashMap(
+  <span class="hljs-string">'foos'</span>, set([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]),
+  <span class="hljs-string">'bars'</span>, set([<span class="hljs-string">'a'</span>, <span class="hljs-string">'b'</span>, <span class="hljs-string">'c'</span>]));
+
+<span class="hljs-comment">// sets are unordered lists that have</span>
+<span class="hljs-comment">// unique elements</span>
+
+<span class="hljs-keyword">let</span> history = vector(initialValue);
+
+<span class="hljs-comment">// get current state</span>
+export <span class="hljs-keyword">const</span> currentState = () =&gt; peek(history);</code></pre>
+
+* To react to changes in the state, we register listeners. They consist of two functions: `listenTo`, which specifies a part/transformation of the state that will be listened to, and a `callback` to run if the state changes:
+
+<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
+<span class="hljs-keyword">let</span> listeners = vector();
+
+export <span class="hljs-keyword">const</span> listen = (listenTo, callback) =&gt; {
+  listeners = conj(listeners, hashMap(
+    <span class="hljs-string">'listenTo'</span>, listenTo,
+    <span class="hljs-string">'callback'</span>, callback
+  ));
+};</code></pre>
+
+Example of a `listen` call:
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> prop = key =&gt; o =&gt; Mori.get(o, key);
+listen(prop(<span class="hljs-string">'bars'</span>), renderSomething);</code></pre>
+
+This means that every time the property `bars` change, the function `renderSomething` will be run with `bars` as argument.
+
+* To change state, one calls the update function. It changes the state and calls all listeners if their new `listenTo` result are different from the previous state:
+
+<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
+
+<span class="hljs-comment">// callListener is called by the update</span>
+<span class="hljs-comment">// function for each listener registered, with</span>
+<span class="hljs-comment">// the previous and the new state value:</span>
+<span class="hljs-keyword">const</span> callListener =
+  (previousState, newState) =&gt; listener =&gt; {
+
+    <span class="hljs-keyword">const</span> listenTo =
+    get(listener, <span class="hljs-string">'listenTo'</span>);
+
+  <span class="hljs-keyword">const</span> previousListenTo =
+    listenTo(previousState);
+
+  <span class="hljs-keyword">const</span> newListenTo =
+    listenTo(newState);
+
+    <span class="hljs-comment">// if state does not change for</span>
+    <span class="hljs-comment">// listener, nothing happens.</span>
+    <span class="hljs-comment">// Remember 'equals' is super cheap! :)</span>
+  <span class="hljs-keyword">if</span> (!equals(
+    previousListenTo, newListenTo)) {
+        get(listener, <span class="hljs-string">'callback'</span>)(newListenTo);
+  }
+  };
+
+export <span class="hljs-keyword">const</span> update = fn =&gt; {
+  <span class="hljs-keyword">const</span> previousState = peek(history);
+
+  <span class="hljs-comment">// calculate new state</span>
+  <span class="hljs-keyword">const</span> newState = fn(previousState);
+
+  <span class="hljs-keyword">if</span> (!equals(previousState, newState)) {
+    <span class="hljs-comment">// add new state to history.</span>
+    <span class="hljs-comment">// Remember our data structures</span>
+    <span class="hljs-comment">// are persistent, and share</span>
+    <span class="hljs-comment">// memory space! :)</span>
+    history = conj(history, newState);
+
+    <span class="hljs-comment">// fire listener callbacks</span>
+    each(listeners, callListener(previousState, newState));
+  }
+};</code></pre>
+
+* Good bonus: undo!
+
+<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
+export <span class="hljs-keyword">const</span> undo = () =&gt; {
+  <span class="hljs-keyword">if</span> (count(history) &gt; <span class="hljs-number">1</span>) {
+
+    <span class="hljs-keyword">const</span> previousState =
+      peek(history);
+
+    history =
+      subvec(history, <span class="hljs-number">0</span>, count(history) - <span class="hljs-number">1</span>);
+
+    <span class="hljs-keyword">const</span> newState =
+      peek(history);
+
+    each(listeners,
+      callListener(previousState, newState));
+  }
+}</code></pre>
+
+* Views can be rendered by functions that take the state value as input. These render functions can also be used as callbacks:
+
+<pre><code class="hljs js"><span class="hljs-comment">// render.js</span>
+export <span class="hljs-keyword">let</span> renderList = elem =&gt; seq =&gt;
+  elem.innerHTML =
+    reduce(makeLi, <span class="hljs-string">'&lt;ul&gt;'</span>, seq) + <span class="hljs-string">'&lt;/ul&gt;'</span>;
+
+<span class="hljs-comment">// index.js</span>
+
+<span class="hljs-comment">// starts by rendering initial state:</span>
+<span class="hljs-keyword">const</span> initialState =
+  currentState();
+
+renderList
+  (foosElement)
+  (get(initialState, <span class="hljs-string">'foos'</span>));
+
+<span class="hljs-comment">// renders again on state change:</span>
+listen(prop(<span class="hljs-string">'foos'</span>),
+  renderList(foosElement));</code></pre>
+
+* User interactions will call the `update` function to change state. The argument passed is a function that will transform the current state. Let's call those transformations commands:
+
+<pre><code class="hljs js"><span class="hljs-comment">// command.js</span>
+<span class="hljs-keyword">const</span> conjItem = item =&gt; coll =&gt;
+  conj(coll, item);
+
+export <span class="hljs-keyword">const</span> addFoo = foo =&gt; state =&gt;
+  updateIn(state, [<span class="hljs-string">'foos'</span>], conjItem(foo));
+
+<span class="hljs-comment">// index.js</span>
+
+<span class="hljs-comment">// input</span>
+<span class="hljs-keyword">let</span> newFooElement =
+  <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'new-foo'</span>);
+
+<span class="hljs-comment">// button</span>
+<span class="hljs-keyword">let</span> addFooElement =
+  <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'add-foo'</span>);
+
+addFooElement.onclick = () =&gt;
+  update(addFoo(newFooElement.value));</code></pre>
+
+And that's it!
+
+The architecture is really simple, let's recap it:
+
+* The application state is represented by an immutable object.
+* The views are rendered according to the state object.
+* Listeners with callbacks are registered. Changes in state cause callbacks to be fired.
+* State is changed by calling the update function.
+* User interactions or any other event can call the update function.
+
+##And what did we gain by using immutable data structures?
+
+My first impression was: it's simple. After getting used to the Mori functions, it is very straightforward to manipulate the data structures. And the fact that Mori handles memory and performance very well makes the code very direct too.
+
+Immutable persistent data structures make comparison very cheap, and it proved to be very important to the update function. Memory sharing is also an amazing feature that practically gave "undo" for free.
+
+So, in the end immutable data structures made it easy, explicit and performant to implement application state as series of values.
+
+##Next steps
+
+I chose Mori because it's an interface for clojurescript native data structures. [Clojure](http://clojure.org/) is an amazing language, and I'm starting to study and experiment with it now.
+
+Staying in javascript, it would also be interesting to get a look at [immutable.js](https://facebook.github.io/immutable-js/). It's maintained by facebook, and seems to play very well with React.
+]]></description>
+            <guid isPermaLink="false">Immutable Data Structures and Javascript</guid>
+            <pubDate>Sat, 04 Jul 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Solve All Bugs Or Implement New Features?]]></title>
+            <description><![CDATA[
+Most projects have moments in which they have new features to implement and, at the same time, bugs to solve. A choice has to be made on whether to focus more time on solving those bugs and making sure they don't appear again - let's call this option *quality* - or implementing new features - *scope*.
+
+A lot of arguments have been made in favor of quality. One of my favorites is an argument presented by [Joel Spolsky in this already classic text](http://www.joelonsoftware.com/articles/fog0000000043.html).
+
+In this post I'll make the argument that, *even from business and financial* points of view, *focus on raising quality should always come a before focus on implementing new features*.
+
+## The concepts
+
+First of all, let me explain better what I mean when I talk about quality and scope. Let's say there's a demand for X new features to be implemented in a given period and we know there are currently Y open bugs. One could say:
+
+*"We are going to implement all X features and solve as many bugs as we can."*
+
+Or you could say:
+
+*"We are going to solve all Y bugs in their root causes, and we'll implement as many features as we can."*
+
+See the difference? It's a matter of explicitly stating what your priorities are. In the first example, we'll make sure everything we implement is well tested and well designed, but some bugs will not be considered due to time constraints.  In most cases, bugs will be listed in a spreadsheet or on a board with a "priority" property, and the business will choose which bugs should be solved  per sprint, based on a "financial" analysis (which I'll talk about in the next section).
+
+In the second case, a team will focus all of its energy on, at least, investigating every bug that appears. Whenever there's a decision not to solve a bug right away, it's because the developers diagnosed that the bug is not a manifestation of something that would stop the business, or incur a big loss.
+
+Those are what I'm calling in this post "a focus on scope" and "a focus on quality", respectively.
+
+## Losses due to lack of quality and scope
+
+One of the main criteria needed in order to choose between focusing on solving a bug or implementing a new feature is an analysis of the financial loss that the business will incur by *not* doing these things.
+
+It's impossible to know for sure the loss a business could have in the future, so we'll need to estimate it. And to do the estimation we'll need to deal with uncertainty. My point is that the uncertainty of a loss due to not solving a bug is *qualitatively different* from the uncertainty of a loss due to not implementing a new feature.
+
+To explain this difference, I'll briefly present two concepts introduced by author Nassim Taleb in his book [Black Swan](http://www.amazon.com/Black-Swan-Improbable-Robustness-Fragility/dp/081297381X/). I suggest this book to anyone interested in having their mind turned inside out. :)
+
+## Mediocristan and Extremistan
+
+Taleb argues that uncertainties can "come from two places". The first place is Mediocristan: observations do not vary very much, or vary in a somewhat predictable way. An example of an Mediocristan uncertainty is "the average height of a random group of a hundred people". After you measure five or six groups, you would have a very nice idea of what other averages will be. Even if one person in the group is the tallest man on Earth!
+
+Then there is Extremistan, a place where one observation can be very, very different from the others, which makes predictions very difficult, sometimes even impossible. An example is "the average net worth of a random group of a hundred people". Every group will have a very different average.  We could have a run of thirty, or even fifty groups with a very similar average, and then suddenly Bill Gates is in a group and "BAM".
+
+So, here's my first claim:
+
+*Losses due to not implementing a new feature belong in Mediocristan.*
+
+A new feature is something that in the past did not exist in your business (duh). That means that not having a new feature, in the majority of cases, will not cause a big loss. Or at least it will not make the losses you already have any bigger.
+
+Let's consider for example an e-commerce business that wants their users to be able to pay with a new payment option, let's say Bitcoins. It could be difficult to estimate how much the company would *make*, but it's relatively easy to see that there won't be a big loss if the Bitcoin feature is not implemented. Current users are buying with current payment options and will continue doing so even without a Bitcoin option.
+
+And that leads to my second claim:
+
+*Losses due to not solving a bug belong in Extremistan.*
+
+Every bug, no matter how small, can be the tip of the iceberg to a much deeper problem. That's why it's so difficult to estimate the effort needed to solve a bug. And deep problems can *stop a business in it's tracks*.
+
+A bug in the error feedback of a credit card form could explain the drop in conversion rates. Also, that bug could be a manifestation of a much deeper problem with server side validation, which, in turn, could start to appear in other forms.
+
+Some errors can be solved quickly by "patching" them. But that means that errors could reoccur if someone touches the code, or uses those same modules elsewhere. A lot of times, a more complex refactoring has to be done carefully, and must be fully backed by unit, integration and end to end tests. With these tests, we can diminish the chance of a bug creeping back up on you.
+
+## But is the whole team always going to be working on bugs?
+
+What about all the new features that we need to implement??? When will that happen?
+
+By solving every bug at its root cause, we diminish the chances of new bugs appearing. That means that in the not-so-long-term, almost everybody in the team will be focusing on implementing new features. The project gains traction, and will deliver a *larger scope* with a *higher quality*. And that's what everyone wants, isn't it?
+
+I'm not saying that all bugs have to be solved right away. I'm saying that all bugs should be *investigated*, and the developers should diagnose whether or not the root cause could give rise to other new, more dangerous problems.
+
+## A script for dealing with a bug
+
+Every time a new bug is reported, and comes to the developers to be solved, ideally we should follow the following steps:
+
+1. Investigate the root cause of the problem. Ideally this should be done in pairs, with at least one of the developers having already worked on that part of the code. That would make things quicker.
+
+2. Choose whether or not to solve the bug right away. The answer to this question should be "yes" in most cases.
+
+3. Write tests to reproduce the bug. Unit tests preferably, but don't be afraid to write new integration and/or end to end tests, if needed. By creating new tests, we try to guarantee that if anything brings the bug back, it will be caught by tests before going to production.
+
+4. Solve the root cause as well as you can.
+
+This approach is not new. It's actually one of the main components of Toyota's "Lean Manufacturing" revolution, called [Jidoka](https://en.wikipedia.org/wiki/Autonomation).
+
+## Summing up
+
+Losses due to not implementing a new feature are much more predictable than losses due to bugs not being solved. Every bug is a potential business-stopper. And that's why we should always give quality a higher priority than scope: to keep our businesses alive.
+]]></description>
+            <guid isPermaLink="false">Solve All Bugs Or Implement New Features?</guid>
+            <pubDate>Wed, 27 May 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Spreadsheets Are An Awesome Functional Programming Tool]]></title>
+            <description><![CDATA[
+I worked for three years as a Risk Management Consultant.   That, as you can imagine, meant I spent a lot of time working with spreadsheets.
+For the most part, Excel was the main spreadsheet platform that was used by the businesses that I interacted with.
+
+I remember reading somewhere "spreadsheets are functional programming!", but for some reason I was never very interested in going further until I watched [Felienne Hermans' talk on Strange Loop 2004](https://www.youtube.com/watch?v=0CKru5d4GPk), where she implements selection sort with a spreadsheet and, believe it or not, even showed an implementation of a Turing machine with spreadsheets!
+
+In general, every cell of a spreadsheet is either a *value* or a *pure function that takes other cells as inputs*. If we restrict it to only that, we can say that a spreadsheet is a platform for functional programming. In this post, I'll describe my experimentation with a Google Spreadsheet to model user interactions and state handling.
+
+## State handling when there are no mutable variables
+
+If we only use pure functions to build our programs, we can benefit from a lot of cool things like modularity, lazy evaluation, and so on. It is relatively easy if we are implementing a mathematical model, or a compiler, for instance. They have well defined inputs and outputs, but things start getting more complex if we have a program that runs for a period of time, and reacts to user interaction. Is it possible to maintain purity in such a scenario?
+
+The standard way of dealing with it is by mutating objects according to user interactions. It can be done in a lot of ways, and in my main project we are [keeping all state in a single object, and reacting to changes in it](../a-more-functional-approach-to-angular/). We find it much more manageable than the standard object oriented way, which deals with a lot of "models" that keep hidden internal local state.
+
+This time I'm gonna try to handle state by using *streams*. That means that I'll model user interactions *and* application state as streams of information.
+
+## State and interaction as functions of time
+
+So, let's start with a basic spec: the user inserts a string, and we have an application state that reacts to it by replicating this input. Let's call it Foo:
+
+<pre><code class="hljs">t = given moment <span class="hljs-keyword">in</span> <span class="hljs-tag">time</span>
+
+<span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span> = user string <span class="hljs-tag">input</span> <span class="hljs-keyword">in</span> t
+
+<span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = foo state <span class="hljs-keyword">in</span> t</code></pre>
+
+So, what I'm doing here is *thinking of both interactions and application state as functions of time*. Let's detail more `stateFoo`:
+
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = <span class="hljs-function"><span class="hljs-title">f</span><span class="hljs-params">(userFoo(t)</span></span>)</code></pre>
+
+In this case, the application state will depend only on the current user interaction. To keep it really simple, let's define:
+
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = <span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span></code></pre>
+
+And now let's implement it in a spreadsheet!
+
+## Modelling time in a spreadsheet
+
+Back in my consultant days, I was dealing with a lot of [time series analyses](http://en.wikipedia.org/wiki/Time_series), and the way we were dealing with time was simple: one line for every event. Let's start with sixteen "time samples" and some user interactions:
+
+![Time and UserFoo(t)](../assets/userFoo.png)
+
+That means that on time `t = 2` the user submitted the input "aaa", when `t = 4 ` the user submitted the input "bbb" and so on.
+
+`stateFoo` can be implemented then as a new column:
+
+![Simple stateFoo(t)](../assets/stateFoo.png)
+
+That function ("formula" in spreadsheet) is repeated for every line, so every cell in the `stateFoo` column equals the corresponding cell from the same line in the `userFoo` column.
+
+That was really simple and easy! Now let's implement a more interesting spec. Let the application state be the *last* Foo that was input by the user. Now, `stateFoo` does not only depend on `userFoo`, but it also depends on the past value of `stateFoo` itself!
+
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = f(
+  <span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span>,
+  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)
+
+<span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span> is blank)
+    return <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
+  <span class="hljs-keyword">else</span>
+    return <span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span></code></pre>
+
+So, if the user inputs something, `stateFoo` changes. If the user does not input anything, `stateFoo` repeats its last value. We can see it in the spreadsheet:
+
+![stateFoo(t) with memory](../assets/stateFoo2.png)
+
+Now state looks more like the state we usually have in applications. Let's bring one more complexity: let the state carry *all previous values*.
+I want the state to be a string that's the concatenation of every past user input, joined by `";"`. A good start would be:
+
+![Naive complex stateFoo(t)](../assets/stateFoo3.png)
+
+We can see the problem: as soon as the user inputs the first string, the state becomes `; aaa`. That error propagates to all future states. There are a lot of ways to solve this issue, but I'll use the one that I think is the simplest: I'll implement a new column that concatenates `";"` to every past state, unless it is empty. So, if we have to concatenate a new input, we concatenate to this value:
+
+![Temp column for complex stateFoo(t)](../assets/stateFoo4.png)
+
+![Final column for complex stateFoo(t)](../assets/stateFoo5.png)
+
+And there we have it; a state that reflects the whole application history.
+
+## Interaction between streams
+
+Let's recap: a stream is a function of time; given time = `t`, a stream would have the value `f(t)`. We are modelling user input as streams. Application state would then be transformations of user input streams.
+
+One nice property of streams is that they can also be transformations of other streams, and past values of themselves. Let's illustrate this with another application state: the Bars.
+
+The Bars work the same way as the Foos, but with one additional spec: the user can only add a new Bar after the Foo `requiredFoo` is input:
+
+<pre><code class="hljs">stateBar<span class="hljs-comment">(t)</span> = f<span class="hljs-comment">(
+  userBar(t)</span>,
+  stateBar<span class="hljs-comment">(t - 1)</span>,
+  stateFoo<span class="hljs-comment">(t)</span>);</code></pre>
+
+Back to our spreadsheet, let's implement the user interactions streams again:
+
+![userBar(t)](../assets/stateBar.png)
+
+The interaction between Foos and Bars will be done with the `hasRequiredFoo` stream:
+
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> contains <span class="hljs-string">"requiredFoo"</span></code></pre>
+
+For simplicity, let's assume `contains` means "has substring `"requiredFoo"`":
+
+![hasRequiredFoo(t)](../assets/stateBar2.png)
+
+And `stateBar` logic would be:
+
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span> is blank or
+      not <span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span>)
+    return <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
+  <span class="hljs-keyword">else</span>
+    return concat(
+      <span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span>,
+      <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)</code></pre>
+
+![stateBar(t)](../assets/stateBar3.png)
+*(in the above image, the "C" column refers to userBar)*
+
+And it's ready! :)
+
+Now just the inputs and application state streams:
+
+![Final inputs and states](../assets/finalStates.png)
+
+## Conclusions
+
+I found this experiment very helpful and even entertaining! Now I understand what "spreadsheets are functional programming!" means, and I agree with it. Actually, I think spreadsheets could be a nice learning environment to start "thinking functionally". It certainly helped me learn the "state as streams" concept.
+
+Everybody interested in the subject should watch [Felienne Hermans' talk on Strange Loop 2004](https://www.youtube.com/watch?v=0CKru5d4GPk). That was her PhD research subject, and she brings spreadsheet programming to a whole new level.
+
+## Next Steps
+
+The next obvious step for me is implement the "state as streams" concept using javascript. There are libraries that claim to help with this, like [RxJS](http://reactivex.io/), [BaconJS](https://baconjs.github.io/) and the more recent [Flyd](https://github.com/paldepind/flyd). I've also been reading about a beta framework based on RxJS and [virtual-dom](https://github.com/Matt-Esch/virtual-dom) called [CycleJS](https://github.com/staltz/cycle), which looks promising.
+
+The link to the complete spreadsheet used in this post is [here](http://goo.gl/i1g3uP).]]></description>
+            <guid isPermaLink="false">Spreadsheets Are An Awesome Functional Programming Tool</guid>
+            <pubDate>Sat, 02 May 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Pointfree Javascript]]></title>
+            <description><![CDATA[
+Javascript is really a very flexible language. It has functional and object oriented characteristics, and it allows for programming in a lot of different styles. In this post I will present what is called *pointfree* style programming, and I will go through some common scenarios to demonstrate its benefits.
+
+## One Step Back
+
+First, let me show the standard imperative way to extract information from an array - the for loop:
+
+<pre><code class="hljs js"><span class="hljs-comment">// imperative style</span>
+<span class="hljs-keyword">var</span> getAdminEmails = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(users)</span> </span>{
+  <span class="hljs-keyword">var</span> emails = [];
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; users.length; i++) {
+    <span class="hljs-keyword">if</span> (users[i].role === <span class="hljs-string">'admin'</span>) {
+      emails.push(users[i].email);
+    }
+  }
+  <span class="hljs-keyword">return</span> emails;
+}</code></pre>
+
+What does this function do? Let's analyze it. I have an empty array. Then I go through every user. If a user's role is equal to `'admin'`, we add it's email to the array. Then we return that array.
+
+I've just described the function's code, but it's still not very clear what it *does*. A much clearer way to say it would be: *it returns all the emails of the users with admin role*.
+
+Let's rewrite the function in a functional style, using javascript's own `filter` and `map` functions (I'm using ES6 syntax here - gotta love those arrow functions!):
+
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> getAdminEmails = users =&gt;
+    users
+      .filter(u =&gt; u.role === <span class="hljs-string">'admin'</span>)
+      .map(u =&gt; u.email);</code></pre>
+
+Analyzing this function is easier: we get the users, separate only the admins, and then get the emails. The first strong point of this style is that *the code of the function is closer to the description of what the function does*. This makes it easier to understand and reason about it, and to look into a new piece of code and understanding quickly what is supposed to happen.
+
+Filters and maps go through an array's elements, just like the for loop, but they have specific purposes: returning subsets and transforming elements, respectively. In contrast, anything can happen inside a for loop. That means that every time you bump into a for loop code, you have to investigate more to understand if a subset will be returned or not, if an element will be transformed, if values will be aggregated, or any combination of those outcomes.
+
+When you use filters and maps, you have a quicker understanding of the function, and you can deepen that understanding little by little as you need to. I know `getAdminEmails` returns an array, since it has a filter and a map. On a second look, one sees that it first filters the users, then transforms them. One can now investigate *just the filter* to understand which elements are going to be transformed. And then one can investigate what happens during the transformation itself.
+
+## Composability
+
+What I find very interesting in the functional version is that I could understand it piece by piece, in different layers. I'll try to make it even more clear now, and produce some reusable functions along the way!
+
+Let's start by trying to write the code as close as possible to what the function does. We want to transform a filtered list, so let's start by composing those two pieces:
+
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> getAdminEmails = compose(
+  getTheEmailsOf,
+  onlyTheAdminRoleUsers);</code></pre>
+
+`compose` is a function that take two functions as parameters, and run one after the other:
+
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> compose = (f, g) =&gt; x =&gt; f(g(x));</code></pre>
+
+Now let's go to the two functions that are going to be composed. `getEmailsOf` is a function that transforms a list by returning the `email` property. "Transforming a list" is what map does. And getting a property from an object sounds like a very common task, so let's implement `map` from a different angle and `prop`:
+
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> prop = p =&gt; x =&gt; x[p];
+
+<span class="hljs-keyword">var</span> map = f =&gt; list =&gt;
+  list.map(f);
+
+<span class="hljs-comment">// which lead to:</span>
+<span class="hljs-keyword">var</span> getTheEmailsOf = map(prop(<span class="hljs-string">'email'</span>));</code></pre>
+
+`onlyTheAdminRoleUsers` is a filter. The test to decide which elements will be returned involves testing if a property is equal to some value:
+
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> propEq = v =&gt; p =&gt; obj =&gt;
+  prop(p)(obj) === v;
+
+<span class="hljs-keyword">var</span> filter = f =&gt; list =&gt;
+  list.filter(f);
+
+<span class="hljs-keyword">var</span> onlyTheAdminRoleUsers =
+  filter(propEq(<span class="hljs-string">'admin'</span>)(<span class="hljs-string">'role'</span>));</code></pre>
+
+And the function's final version:
+
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> getAdminEmails = compose(
+  map(
+    prop(<span class="hljs-string">'email'</span>)),
+  filter(
+    propEq(<span class="hljs-string">'admin'</span>)(<span class="hljs-string">'role'</span>)));</code></pre>
+
+That is what is called *point-free programming*, or *tacit programming*. What is most amazing about this version is that it is *entirely composed of other smaller, generic and reusable functions*! These functions will not only will help you with your next functions, but they will help you understanding quicker *any* function. After you know what `prop` does, it becomes faster to understand `prop('something')` than `obj => obj.something`, and we don't need to go into the "stress" of having to choose a name for the temporary `obj` variable! :)
+
+Note: most of these smaller functions are generic and useful enough so that we could use them in almost every project. [Ramda](http://ramdajs.com/) is a library that has exactly that: a bunch of really small and generic functions.
+
+## Another Example
+
+I'll finish with another common situation:
+
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> calculateTotalPromotions = cart =&gt;
+  getPromotions(cart.products[<span class="hljs-number">0</span>])
+    .then(calculateTotal);</code></pre>
+
+We can understand it quickly because of familiarity, but the code flow is all over the place. Here's what it does: *it calculates the total of the promotions of the first product of the cart*. Look at the order of this last sentence, and compare the order of the code above with the following function:
+
+<pre><code class="hljs js"><span class="hljs-comment">// composeP is a compose that accepts Promises</span>
+<span class="hljs-keyword">var</span> calculateTotalPromotions = composeP(
+  calculateTotal,
+  getPromotions,
+  head, <span class="hljs-comment">// head returns first element</span>
+  prop(<span class="hljs-string">'products'</span>));</code></pre>
+
+Read the code, understand what is going to happen. Much simpler! :)
+
+## Conclusions
+
+Pointfree programming is all about modularizing functions through composition. You use smaller, generic, well defined and well tested functions to build the functions you need. Inside a `compose` or `composeP`, one function is called, then the other, and that's how it goes, no matter if the function has 17 lines or 3. It works the same way, and *code complexity does not increase*.
+
+We also don't have to worry about temporary variables, which makes it easier to understand code and harder to introduce bugs. Also, it's easier to understand and test smaller parts of the code, which makes it more reliable.
+
+Of course it's not a silver bullet, and a lot of times I end up with a function that is not fully pointfree. I find its main weakness occurs when the function has more than one parameter; very often it leads to having some non pointfree code. But, that said, my personal experience is that the pointfree part of the code is much more robust and errors are identified earlier in the development phase. Bugs are almost never found in the pointfree code! :)
+
+## Further Reading
+
+The first place I heard about this programming style was in Frontend Masters [Hardcore Functional Javascript](https://frontendmasters.com/courses/functional-javascript/). It's definitely worth the price.
+
+[jsanchesleao](https://jsleao.wordpress.com/) also wrote an interesting post about [why you should be using something like ramda in your code](https://jsleao.wordpress.com/2015/02/22/curry-and-compose-why-you-should-be-using-something-like-ramda-in-your-code/).
+
+
+
+]]></description>
+            <guid isPermaLink="false">Pointfree Javascript</guid>
+            <pubDate>Fri, 20 Mar 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[A More Functional Approach to Angular, with Baobab]]></title>
+            <description><![CDATA[
+In my [last post](../a-more-functional-approach-to-angular/) I described a simple way to deal with state in an Angular application. I didn't detail the actual `AppStateService` implementation, and was about to do it in a "part 2".  I was about to do just that when I came across [Baobab](https://github.com/Yomguithereal/baobab), a framework-agnostic library that actually implements the idea of a centralized state. In this post I'll recap a little bit on why the concept of a centralized state is important, then I'll present the Baobab library, and finally I'll describe an adaptation of my last post's sample app which uses a centralized state.
+
+## Why is having a central state important?
+
+A *state* can be thought as a "picture", or the "value", of something in a certain point in time. I'll call *central state* the value of your *whole application* at a certain point in time. So, as your application changes, every little part of that change will be stored in this central place.
+
+Having present and past states stored in a single place makes it easier to implement new features in an application, and change old ones. It also makes it easier to make sense of what's going on in your application at any given moment. As I said in the [previously mentioned post](../a-more-functional-approach-to-angular/):
+
+> As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question *what is happening to my application right now?* Or the even more important *what was happening when that crazy error occurred?*
+
+## Presenting Baobab
+
+In Baobab, the central state is created by passing a regular object to the constructor:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// if using node or browserify:</span>
+<span class="hljs-keyword">var</span> Baobab = <span class="hljs-built_in">require</span>(<span class="hljs-string">'baobab'</span>);
+
+<span class="hljs-keyword">var</span> appState = <span class="hljs-keyword">new</span> Baobab({
+  cart: {
+    products: []
+  },
+  paymentOptions: []
+});</code></pre>
+
+One can refer to any part of the tree with the `select` function:
+
+<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> cartCursor = appState.select(<span class="hljs-string">'cart'</span>);
+<span class="hljs-keyword">var</span> productsCursor = appState.select(<span class="hljs-string">'cart'</span>, <span class="hljs-string">'products'</span>);</code></pre>
+
+`select` returns a *cursor*. The first thing you can do with a cursor is *extracting its value*:
+
+<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> currentCart = cartCursor.get();
+<span class="hljs-comment">// =&gt; currentCart = { products: [] }</span>
+<span class="hljs-keyword">var</span> currentProducts = productsCursor.get();
+<span class="hljs-comment">// =&gt; currentProducts = []</span></code></pre>
+
+You can also *update its value*, and *listen to updates*:
+
+<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> cartCursor = appState.select(<span class="hljs-string">'cart'</span>);
+<span class="hljs-keyword">var</span> productsCursor = appState.select(<span class="hljs-string">'cart'</span>, <span class="hljs-string">'products'</span>);
+<span class="hljs-keyword">var</span> paymentOptionsCursor = appState.select(<span class="hljs-string">'paymentOptions'</span>);
+
+cartCursor.on(<span class="hljs-string">'update'</span>, someCallback);
+productsCursor.on(<span class="hljs-string">'update'</span>, anotherCallback);
+paymentOptionsCursor.on(<span class="hljs-string">'update'</span>, yetAnotherCallback);
+
+productCursor.push({ id: <span class="hljs-number">123</span> });
+<span class="hljs-comment">// only someCallback and anotherCallback will be called</span></code></pre>
+
+So, what's so great about all that? First, the "listening" part of your application does not need to know anything about the "changing" part. You just listen to updates to the tree, and act on it. Also, if you have a view that only needs to know about the products, just listen to updates on the products. No need to listen to the whole tree.
+
+## A sample app
+
+Now let's use Baobab in a sample application. In the sample, we'll have two arrays: Foos and Bars. Both will hold strings. To add a weird spec to the mix, the user should not be able to add any Bar unless Foos has the string `'requiredFoo'`. Let's implement it piece by piece, starting with the central state:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// app.js</span>
+angular.module(<span class="hljs-string">'simpleStateApp'</span>, []);
+
+<span class="hljs-comment">// services/appState.js</span>
+angular.module(<span class="hljs-string">'simpleStateApp'</span>)
+  .factory(<span class="hljs-string">'AppState'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+
+  <span class="hljs-keyword">var</span> initial = {
+    foos: [],
+    bars: []
+  };
+  <span class="hljs-keyword">var</span> state = <span class="hljs-keyword">new</span> Baobab(initial);
+
+  <span class="hljs-keyword">return</span> state;</code></pre>
+
+Simple and elegant. Don't we like it when that happens? :) Now let's implement `ReadOnlyCtrl`, a controller that only reads the central state values:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/readOnlyController.js</span>
+angular.module(<span class="hljs-string">'simpleStateApp'</span>)
+  .controller(<span class="hljs-string">'ReadOnlyCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppState)</span> </span>{
+
+  <span class="hljs-keyword">var</span> state = AppState.get();
+
+  <span class="hljs-keyword">var</span> foosCursor = AppState.select(<span class="hljs-string">'foos'</span>);
+  <span class="hljs-keyword">var</span> barsCursor = AppState.select(<span class="hljs-string">'bars'</span>);
+
+  foosCursor.on(<span class="hljs-string">'update'</span>,
+    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ state.foos = foosCursor.get(); });
+
+  barsCursor.on(<span class="hljs-string">'update'</span>,
+    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ state.bars = barsCursor.get(); });
+
+  <span class="hljs-comment">// exposes to view</span>
+  <span class="hljs-keyword">this</span>.state = state;
+});</code></pre>
+
+`state` will be rendered in the view like any other variable:
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"ReadOnlyCtrl as c"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">h3</span>&gt;</span>Read Only Controller<span class="hljs-tag">&lt;/<span class="hljs-title">h3</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Foos:
+    <span class="hljs-tag">&lt;<span class="hljs-title">ul</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">li</span> <span class="hljs-attribute">ng-repeat</span>=<span class="hljs-value">"foo in c.state.foos"</span>&gt;</span>{{ foo }}<span class="hljs-tag">&lt;/<span class="hljs-title">li</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">ul</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Bars:
+    <span class="hljs-tag">&lt;<span class="hljs-title">ul</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">li</span> <span class="hljs-attribute">ng-repeat</span>=<span class="hljs-value">"bar in c.state.bars"</span>&gt;</span>{{ bar }}<span class="hljs-tag">&lt;/<span class="hljs-title">li</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">ul</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
+
+That was easy! Now let's implement a controller that changes the central state:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/fooController.js</span>
+angular.module(<span class="hljs-string">'simpleStateApp'</span>)
+  .controller(<span class="hljs-string">'FooCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppState)</span> </span>{
+
+  <span class="hljs-keyword">var</span> foosCursor = AppState.select(<span class="hljs-string">'foos'</span>);
+
+  <span class="hljs-keyword">var</span> state = {
+    foos: foosCursor.get()
+  };
+
+  <span class="hljs-comment">// the inputs in the view will refer to</span>
+  <span class="hljs-comment">// this variable</span>
+  <span class="hljs-keyword">var</span> form = {
+    newFoo: <span class="hljs-string">''</span>
+  };
+
+  foosCursor.on(<span class="hljs-string">'update'</span>,
+    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ state.foos = foosCursor.get() });
+
+  <span class="hljs-keyword">var</span> addFoo = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
+    foosCursor.push(form.newFoo);
+  };
+
+  <span class="hljs-keyword">this</span>.state = state;
+  <span class="hljs-keyword">this</span>.form = form;
+
+  <span class="hljs-keyword">this</span>.addFoo = addFoo;
+});</code></pre>
+
+Note the `form` variable. It holds the temporary values of the HTML inputs. The `addFoo` function receives this as the parameter, and changes the value of the tree. We'll call `addFoo` with a button `ng-click`, but that's a design decision. It could also be done with the input `ng-change`, for instance. Let's see the view code:
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"FooCtrl as c"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">h3</span>&gt;</span>"Foo" form<span class="hljs-tag">&lt;/<span class="hljs-title">h3</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
+    New Foo: <span class="hljs-tag">&lt;<span class="hljs-title">input</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text"</span> <span class="hljs-attribute">ng-model</span>=<span class="hljs-value">"c.form.newFoo"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">button</span> <span class="hljs-attribute">ng-click</span>=<span class="hljs-value">"c.addFoo(c.form)"</span>&gt;</span>Add Foo<span class="hljs-tag">&lt;/<span class="hljs-title">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
+
+`BarCtrl` has more features: `cannotAddBar`, the function that that we used to implement the weird spec, and `clearState`, the function that clears central state:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/barController.js</span>
+angular.module(<span class="hljs-string">'simpleStateApp'</span>)
+  .controller(<span class="hljs-string">'BarCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppState)</span> </span>{
+
+  <span class="hljs-keyword">var</span> foosCursor = AppState.select(<span class="hljs-string">'foos'</span>);
+  <span class="hljs-keyword">var</span> barsCursor = AppState.select(<span class="hljs-string">'bars'</span>);
+
+  <span class="hljs-keyword">var</span> state = AppState.get();
+  <span class="hljs-keyword">var</span> form = {
+    newBar: <span class="hljs-string">''</span>
+  };
+
+  foosCursor.on(<span class="hljs-string">'update'</span>,
+    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ state.foos = foosCursor.get(); });
+  barsCursor.on(<span class="hljs-string">'update'</span>,
+    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{ state.bars = barsCursor.get(); });
+
+  <span class="hljs-keyword">var</span> addBar = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(form)</span> </span>{
+    barsCursor.push(form.newBar);
+  };
+
+  <span class="hljs-keyword">var</span> cannotAddBar = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(state)</span> </span>{
+    <span class="hljs-keyword">return</span> state.foos.indexOf(<span class="hljs-string">'requiredFoo'</span>) === -<span class="hljs-number">1</span>;
+  };
+
+  <span class="hljs-keyword">var</span> clearState = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+    foosCursor.edit([]);
+    barsCursor.edit([]);
+  };
+
+  <span class="hljs-keyword">this</span>.state = state;
+  <span class="hljs-keyword">this</span>.form = form;
+
+  <span class="hljs-keyword">this</span>.addBar = addBar;
+  <span class="hljs-keyword">this</span>.cannotAddBar = cannotAddBar;
+  <span class="hljs-keyword">this</span>.clearState = clearState;
+  <span class="hljs-keyword">this</span>.undo = undo;
+});</code></pre>
+
+With the view:
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"BarCtrl as c"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">h3</span>&gt;</span>Second "Bar" form<span class="hljs-tag">&lt;/<span class="hljs-title">h3</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
+      New Bar: <span class="hljs-tag">&lt;<span class="hljs-title">input</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text"</span> <span class="hljs-attribute">ng-model</span>=<span class="hljs-value">"c.form.newBar"</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">button</span> <span class="hljs-attribute">ng-click</span>=<span class="hljs-value">"c.addBar(c.form)"</span>
+              <span class="hljs-attribute">ng-disabled</span>=<span class="hljs-value">"c.cannotAddBar(c.state)"</span>&gt;</span>
+        Add Bar
+      <span class="hljs-tag">&lt;/<span class="hljs-title">button</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
+      Click <span class="hljs-tag">&lt;<span class="hljs-title">a</span> <span class="hljs-attribute">href</span>=<span class="hljs-value">""</span> <span class="hljs-attribute">ng-click</span>=<span class="hljs-value">"c.clearState()"</span>&gt;</span>here to clear the State<span class="hljs-tag">&lt;/<span class="hljs-title">a</span>&gt;</span>.
+    <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
+
+And that's it! But wait, there's a little problem we need to deal with. The views do not update as soon as the central state is updated. This happens because Angular's change detection mechanism is not triggered by an update to the central state. We can fix this by putting the following piece of code inside `AppState`:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// services/appState.js</span>
+state.on(<span class="hljs-string">'update'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
+  setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
+    $rootScope.$apply();
+  }, <span class="hljs-number">0</span>);
+});</code></pre>
+
+And our application will run smoothly!
+
+## Adding features
+
+Because everything that  changes is stored in one place, we can easily plug new functionalities by interacting with the central state. That's when this architecture shines.
+
+Let's suppose we want to save our state in the local storage, so that every time the user goes back to it, the last state will be loaded.
+
+The idea is to load the saved state when starting the app, and save it after every change. Let's first implement a `save` and a `load` function in a service:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// services/storageService.js</span>
+angular.module(<span class="hljs-string">'simpleStateApp'</span>)
+  .factory(<span class="hljs-string">'StorageService'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+
+  <span class="hljs-keyword">var</span> save = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(prop, items)</span> </span>{
+    <span class="hljs-built_in">window</span>.localStorage.setItem(
+      <span class="hljs-string">'baobab-app-'</span> + prop,
+      <span class="hljs-built_in">JSON</span>.stringify(items));
+    <span class="hljs-keyword">return</span> items;
+  };
+
+  <span class="hljs-keyword">var</span> load = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(prop, defaultValue)</span> </span>{
+    <span class="hljs-keyword">var</span> items = <span class="hljs-built_in">JSON</span>.parse(
+      <span class="hljs-built_in">window</span>.localStorage.getItem(
+        <span class="hljs-string">'baobab-app-'</span> + prop));
+    <span class="hljs-keyword">return</span> items ? items : defaultValue;
+  };
+
+  <span class="hljs-keyword">return</span> {
+    save: save,
+    load: load
+  };
+});</code></pre>
+
+Now let's change `AppState` to load local storage on startup:
+
+<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> initial = {
+  foos: [],
+  bars: []
+};
+<span class="hljs-keyword">var</span> state = <span class="hljs-keyword">new</span> Baobab(
+  StorageService.load(<span class="hljs-string">'baobab'</span>, initial),
+);</code></pre>
+
+And let's use a `.run` to save the state on every update:
+
+<pre><code class="hljs javascript">angular.module(<span class="hljs-string">'simpleStateApp'</span>, [])
+  .run(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(StorageService, AppState)</span> </span>{
+    AppState.on(<span class="hljs-string">'update'</span>,
+      <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+        StorageService.save(<span class="hljs-string">'baobab'</span>, AppState.get());
+      });
+  });</code></pre>
+
+And the new feature is added. It shines, doesn't it? :)
+
+## One Little Baobab Bonus
+
+Baobab works very well, and still gives us a free important and amazing bonus: undo. We just have to first pass a config to the constructor:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// services/appState.js</span>
+<span class="hljs-keyword">var</span> state = <span class="hljs-keyword">new</span> Baobab(
+  StorageService.load(<span class="hljs-string">'baobab'</span>, initial),
+  {
+    maxHistory: <span class="hljs-number">10</span>
+  }
+);</code></pre>
+
+And implement the `undo` function on the controller:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/barController.js</span>
+<span class="hljs-keyword">var</span> undo = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">if</span> (AppState.hasHistory()) {
+    AppState.undo();
+  }
+};</code></pre>
+
+And our undo is done.
+
+## Conclusions
+
+That was a lot for one post! But I hope I could show some benefits of having a centralized state application architecture. It's all about having the ability to add new features and change old ones with ease, and, as was said before, being able to answer the really important question *what is happening in my application right now?*
+
+## Next Steps
+
+Javascript is going through a big change now with ES6, and Angular 2 is on its way. I'm looking forward to see how to implement a centralized state using these tools.
+
+React is a great framework, that's gaining a lot of traction. I knew about Baobab through [Christian Alfoni](http://christianalfoni.github.io/)'s amazing blog, and he wrote a post on [how to use it with React](http://christianalfoni.github.io/javascript/2015/02/06/plant-a-baobab-tree-in-your-flux-application.html).
+
+There's a new project experimenting with Baobab and Angular, [baobab-angular](https://github.com/christianalfoni/baobab-angular). I'm definitely going to have a look at it.
+
+On another note, I will also implement the app in a *point-free functional* style. I try to write my functions point-free whenever I can; it's also a way to bring simplicity to the function level. More details in an upcoming post!
+
+The example presented in this post has a [live demo here](http://lucasmreis.github.io/baobabStateApp/). Complete source code can be found [here](https://github.com/lucasmreis/baobabStateApp).]]></description>
+            <guid isPermaLink="false">A More Functional Approach to Angular, with Baobab</guid>
+            <pubDate>Tue, 10 Mar 2015 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[A More Functional Approach to Angular]]></title>
+            <description><![CDATA[
+We all know the story: a project is started with all the current best practices and an elegant architecture. Everything is beautiful - until it is not anymore. As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question *what is happening to my application right now?* Or the even more important *what was happening when that crazy error occurred?* In this post, I propose a solution to this problem.
+
+One day I was googling ways to deal with this type of complexity, and I came across the talk [Simple Made Easy](http://www.infoq.com/presentations/Simple-Made-Easy) by Rich Hickey and the paper [Out of the Tar Pit](https://github.com/papers-we-love/papers-we-love/tree/master/design/out-of-the-tar-pit.pdf), by Ben Moseley and Peter Marks. This material changed the way I think about programming, and every time I come back to them, I learn a little bit more.
+
+I can see now that most of that complexity was coming from the way I was storing and dealing with the *state* of my application. It was all over the place. I was getting information from the APIs and storing them in the services themselves. It wasn't clear who was reading that information, who was transforming it, or who was writing it. A lot of debugging was needed to understand what was happening at any point in time, and it was really difficult to write tests for everything.
+
+## The Solution
+
+In order to solve this problem, I took a more *functional* approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored *all the application state in a single place* (some React frameworks work this way, like [Om](https://github.com/omcljs/om) and [Morearty](https://github.com/moreartyjs/moreartyjs)).
+
+The architecture is simple: all the state will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the state. And that's it! Let me explain it more, and illustrate with an example.
+
+Remark: the solution will be illustrated in Angular, but it could, with little work, be implemented in other frameworks (or even vanilla JS for that matter).
+
+The state will be stored in the `AppStateService` service. It has two methods: `listen` and  `change`. `listen` is used to observe one part of the state. Every time the `change` method is called, the listeners will be updated.
+
+The controllers will have a `state` variable exposed to the views, which will be listening to `AppStateService`. It's important the that variable remain *immutable*; let's remember that `AppStateService` should only be mutated via the `change` method:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// INSIDE CONTROLLER</span>
+
+<span class="hljs-comment">// local variable to store the state values</span>
+<span class="hljs-keyword">var</span> state = {};
+
+<span class="hljs-comment">// every time AppStateService changes,</span>
+<span class="hljs-comment">// local state will change too:</span>
+AppStateService.listen(<span class="hljs-string">'somePart'</span>,
+  <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(s)</span> </span>{ state.somePart = s; });
+<span class="hljs-comment">// =&gt; state = { somePart: null }</span>
+
+<span class="hljs-comment">// change AppStateService:</span>
+AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class="hljs-string">'someValue'</span>);
+<span class="hljs-comment">// =&gt; state = { somePart: 'someValue' }</span></code></pre>
+
+The `state` variable should be exposed to the views, together with pure functions to transform it:
+
+<pre><code class="hljs javascript"><span class="hljs-comment">// using "Controller As" syntax</span>
+<span class="hljs-keyword">this</span>.state = state;
+<span class="hljs-keyword">this</span>.summary = SomeService.summary;</code></pre>
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"SomeController as ctrl"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Some Part: {{ ctrl.state.somePart }}<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Summary: {{ ctrl.summary(ctrl.state) }}<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
+
+If the view has any input, the controller will have another variable called `form`, to take advantadge of Angular's two-way binding:
+
+<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> form = { newFoo: <span class="hljs-string">'initial value'</span> };
+<span class="hljs-keyword">this</span>.form = form;</code></pre>
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
+  New Foo: <span class="hljs-tag">&lt;<span class="hljs-title">input</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text"</span> <span class="hljs-attribute">ng-model</span>=<span class="hljs-value">"c.form.newFoo"</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span></code></pre>
+
+Now let's take this Foo example a little further, and start changing the State.
+
+## A More Complete Example
+
+Let `AppStateService` hold a `foos` array. We want a view with an input and a button that, when pressed, add a new Foo to `foos`:
+
+<pre><code class="hljs javascript">angular.module(<span class="hljs-string">'simpleStateApp'</span>)
+  .controller(<span class="hljs-string">'FooCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(AppStateService)</span> </span>{
+
+  <span class="hljs-keyword">var</span> state = {};
+  <span class="hljs-keyword">var</span> form = {
+    newFoo: <span class="hljs-string">''</span>
+  };
+
+  AppStateService.listen(<span class="hljs-string">'foos'</span>,
+    <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(f)</span> </span>{ state.foos = f; });
+
+  <span class="hljs-comment">// changeFoos is a function that</span>
+  <span class="hljs-comment">// only affects the foos property</span>
+  <span class="hljs-keyword">var</span> changeFoos = AppStateService.change(<span class="hljs-string">'foos'</span>);
+
+  <span class="hljs-keyword">var</span> addFoo = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(state, form)</span> </span>{
+    <span class="hljs-comment">// using Ramda library</span>
+    <span class="hljs-keyword">var</span> newFoos =
+      R.append(form.newFoo, state.foos);
+    changeFoos(newFoos);
+  };
+
+  <span class="hljs-comment">// exposed to the view:</span>
+  <span class="hljs-keyword">this</span>.state = state;
+  <span class="hljs-keyword">this</span>.form = form;
+
+  <span class="hljs-keyword">this</span>.addFoo = addFoo;
+});</code></pre>
+
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">ng-controller</span>=<span class="hljs-value">"FooCtrl as c"</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">h3</span>&gt;</span>"Foo" form<span class="hljs-tag">&lt;/<span class="hljs-title">h3</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>
+    New Foo: <span class="hljs-tag">&lt;<span class="hljs-title">input</span> <span class="hljs-attribute">type</span>=<span class="hljs-value">"text"</span> <span class="hljs-attribute">ng-model</span>=<span class="hljs-value">"c.form.newFoo"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">button</span> <span class="hljs-attribute">ng-click</span>=<span class="hljs-value">"c.addFoo(c.state, c.form)"</span>&gt;</span>
+      Add Foo
+    <span class="hljs-tag">&lt;/<span class="hljs-title">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
+
+So, now we have an `addFoo` function. It changes the state by appending `form.newFoo` to the `foos` array. The best part is: every part of the application listening to the `foos` array will be updated once the `changeFoos` function is called!
+
+I setup a small project illustrating that idea [on Github](https://github.com/lucasmreis/simpleStateApp). It illustrates well the benefits of using this approach:
+
+1. There's a "read only" controller, listening to both `foos` and `bars` arrays from `AppStateService`;
+2. There's a Foo controller;
+3. There's a Bar controller being used in *two* different views;
+4. The Bar controller also listens to `foos`, and the user can only add a Bar after a Foo named `requiredFoo` is created (I call this the "weird spec" :) ). This is used to illustrate how different controllers can interplay in intricate ways through the State;
+5. The application also listens to changes in state and save them on local storage.
+
+## Conclusions
+
+So, what have we gained from this architecture? In one word, *simplicity*. The entire application becomes more easily understandable. It's simple to reason about the whole application. Everything that changes with time is confined to `AppStateService`. You know exactly who changes and who listens to each part of it.
+
+In the example posted, I also implemented the method `AppStateService.get()`, that returns the whole state object. Inject it into the console, and you have an incredible debugging tool. This answers the question we ask at the beginning of this post: *what is happening to my application right now?*
+
+## Next Steps
+
+This solution works really well for my current project, but, of course, I'm sure it could be improved. I would appreciate any input!
+
+One feature I would love to see implemented: whenever a big problem happens, an error event would be sent to the server with the State object, so the developers can see exactly where the user was when the error ocurred. That would be awesome.
+
+Here's the [working demo](https://github.com/lucasmreis/simpleStateApp).
+
+**Update 2015-03-10**: I illustrate again this idea in the [next post](../a-more-functional-approach-to-angular-with-baobab), this time using the Baobab library. Check it out, it even has *undo*! :)
+
+]]></description>
+            <guid isPermaLink="false">A More Functional Approach to Angular</guid>
+            <pubDate>Sun, 22 Feb 2015 00:00:00 GMT</pubDate>
+        </item>
+    </channel>
+</rss>

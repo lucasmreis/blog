@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Quick Introduction To CSP In Javascript | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>Quick Introduction To CSP In Javascript</h1>
+        <div class="lead">Communicating Sequential Processes In Seven Small Examples</div>
+        <p><em>What is CSP?</em> In practice, it&#39;s a way of writing concurrent code. The language Go uses it natively, Clojure has core.async which achieves it by using macros, and now we can use it in Javascript because of generators, which were included in ES6.</p>
+<p><em>Why should I bother?</em> Because it&#39;s very powerful, efficient and simple. What more do you want? :)</p>
+<p><em>Ok, let&#39;s do it. How do I start using it?</em> We will use <a href="https://github.com/ubolonton/js-csp">js-csp</a>, and we will need need generators, which are only included in ES6.  That means you&#39;ll have to use Node 4 or superior, or transpile your browser code with <a href="https://babeljs.io/">babel</a> (or any other transpile tool that supports generators).</p>
+<p>Enough talking, let&#39;s go to the examples!</p>
+<h2 id="example-1-the-process">Example 1: The Process</h2>
+<p>A process is the first concept we&#39;re gonna learn. It runs code. And it&#39;s as simple as that. :)</p>
+<p>This is the syntax to start a process: just pass a generator as a parameter to the <code>go</code> function. </p>
+<pre><code class="hljs js">import {go} from <span class="hljs-string">'js-csp'</span>;
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something!'</span>);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; something!</span></code></pre>
+
+<h2 id="example-2-the-process-can-pause">Example 2: The Process Can Pause</h2>
+<p>By using the <code>yield</code> keyword, you can pause a process, freeing the main thread:</p>
+<pre><code class="hljs js">import {go, timeout} from <span class="hljs-string">'js-csp'</span>;
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> timeout(<span class="hljs-number">1000</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something else after 1 second!'</span>);
+});
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something!'</span>);
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; something!</span>
+<span class="hljs-comment">// =&gt; something else after 1 second!</span></code></pre>
+
+<h2 id="example-3-processes-wait-for-values-in-channels">Example 3: Processes Wait For Values In Channels</h2>
+<p>The channels are the second and last concept we&#39;re gonna learn. They are queues, and whenever process calls <code>take</code> on a channel, it pauses until a value is <code>put</code> into that channel. </p>
+<pre><code class="hljs js">import {go, chan, take, putAsync} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> ch = chan();
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> received = <span class="hljs-keyword">yield</span> take(ch);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'RECEIVED:'</span>, received);
+});
+
+<span class="hljs-keyword">const</span> text = <span class="hljs-string">'something'</span>;
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">'SENDING:'</span>, text);
+
+<span class="hljs-comment">// use putAsync to put a value in a</span>
+<span class="hljs-comment">// channel from outside a process</span>
+putAsync(ch, text);
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; SENDING: something</span>
+<span class="hljs-comment">// =&gt; RECEIVED: something</span></code></pre>
+
+<h2 id="example-4-processes-communicate-through-channels">Example 4: Processes Communicate Through Channels</h2>
+<p>On the other side, processes that <code>put</code> a value on a channel also pause until some other process uses <code>take</code>. </p>
+<p>This example is a little bit more complex, try to follow the flow of the main thread, and check it with the terminal output!</p>
+<pre><code class="hljs js">import {go, chan, take, put} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> chA = chan();
+<span class="hljs-keyword">let</span> chB = chan();
+
+<span class="hljs-comment">// Process A</span>
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> receivedFirst = <span class="hljs-keyword">yield</span> take(chA);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, receivedFirst);
+
+  <span class="hljs-keyword">const</span> sending = <span class="hljs-string">'cat'</span>;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; SENDING:'</span>, sending);
+  <span class="hljs-keyword">yield</span> put(chB, sending);
+
+  <span class="hljs-keyword">const</span> receivedSecond = <span class="hljs-keyword">yield</span> take(chA);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, receivedSecond);
+});
+
+<span class="hljs-comment">// Process B</span>
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> sendingFirst = <span class="hljs-string">'dog'</span>;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; SENDING:'</span>, sendingFirst);
+  <span class="hljs-keyword">yield</span> put(chA, sendingFirst);
+
+  <span class="hljs-keyword">const</span> received = <span class="hljs-keyword">yield</span> take(chB);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; RECEIVED:'</span>, received);
+
+  <span class="hljs-keyword">const</span> sendingSecond = <span class="hljs-string">'another dog'</span>;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; SENDING:'</span>, sendingSecond);
+  <span class="hljs-keyword">yield</span> put(chA, sendingSecond);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; B &gt; SENDING: dog</span>
+<span class="hljs-comment">// =&gt; A &gt; RECEIVED: dog</span>
+<span class="hljs-comment">// =&gt; A &gt; SENDING: cat</span>
+<span class="hljs-comment">// =&gt; B &gt; RECEIVED: cat</span>
+<span class="hljs-comment">// =&gt; B &gt; SENDING: another dog</span>
+<span class="hljs-comment">// =&gt; A &gt; RECEIVED: another dog</span></code></pre>
+
+<h2 id="example-5-channel-are-queues">Example 5: Channel Are Queues</h2>
+<p>Because channels are queues, when a process takes from a channel, the value will not be available for other processes to take. One process puts, one process takes. </p>
+<p>In the example below you can check that the second process will never print <code>B &gt; RECEIVED: dog</code>, because the value was already taken by the first process.</p>
+<pre><code class="hljs js">import {go, chan, take, put} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> ch = chan();
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> text = <span class="hljs-keyword">yield</span> take(ch);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, text);
+});
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> text = <span class="hljs-keyword">yield</span> take(ch);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; RECEIVED:'</span>, text);
+});
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">const</span> text = <span class="hljs-string">'dog'</span>
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'C &gt; SENDING:'</span>, text);
+  <span class="hljs-keyword">yield</span> put(ch, text);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; C &gt; SENDING: dog</span>
+<span class="hljs-comment">// =&gt; A &gt; RECEIVED: dog</span></code></pre>
+
+<h2 id="example-6-buffered-channels-don-t-block-on-put">Example 6: Buffered Channels Don&#39;t Block On Put</h2>
+<p>A channel can be buffered, which means that, for a given number of puts, a <code>put</code> will not make the process pause. </p>
+<p>In the next example, even though no one called <code>take</code>, the first two puts will not block the process. But the channel has a buffer of size 2, so the third put will block the process, until someone takes from it.</p>
+<pre><code class="hljs js">import {go, chan, put, buffers} from <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">let</span> ch = chan(buffers.fixed(<span class="hljs-number">2</span>));
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value A'</span>);
+  <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value B'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'I should print!'</span>);
+  <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value C'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'I should not print!'</span>);
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; I should print!</span></code></pre>
+
+<h2 id="example-7-dropping-and-sliding-buffers">Example 7: Dropping And Sliding Buffers</h2>
+<p>Apart from the fixed buffer, which blocks after N puts, we have the dropping and sliding buffers too.</p>
+<p>The dropping buffer can hold up to N values. Any additional values that are put into a dropping buffer will be discarded.</p>
+<p>The sliding buffer can also hold up to N values. But, as opposed to the dropping buffer, when a new value is put into the sliding buffer, the first value put is dropped, and the buffer holds the new value.</p>
+<p>In the example below, <code>value B</code> and <code>value C</code> get dropped in the dropping channel, because it was holding <code>value A</code>. On the second process, as soon as <code>value B</code> is put in the channel, <code>value A</code> is dropped. And as soon as <code>value C</code> is put in the channel, <code>value B</code> is dropped.</p>
+<p>Because of the way they work, dropping and sliding buffers never block!</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> droppingCh = chan(buffers.dropping(<span class="hljs-number">1</span>));
+<span class="hljs-keyword">let</span> slidingCh  = chan(buffers.sliding(<span class="hljs-number">1</span>));
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value A'</span>);
+  <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value B'</span>);
+  <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value C'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'DROPPING:'</span>, <span class="hljs-keyword">yield</span> take(droppingCh));
+});
+
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value A'</span>);
+  <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value B'</span>);
+  <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value C'</span>);
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'SLIDING:'</span>, <span class="hljs-keyword">yield</span> take(slidingCh));
+});
+
+<span class="hljs-comment">// terminal output:</span>
+<span class="hljs-comment">//</span>
+<span class="hljs-comment">// =&gt; DROPPING: value A</span>
+<span class="hljs-comment">// =&gt; SLIDING: value C</span></code></pre>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>After using CSP for a while, coding asynchronous code with callback or promises seems jurassic. I&#39;m hopeful that with ES6 generators, CSP will become the standard in Javascript, as it is with Go and is starting to be with Clojure.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>Two other models also seem very interesting, and they could be considered more high level than CSP: <em>Functional Reactive Programming</em> and <em>Actors</em>, as they are used in Reactive Extensions and Erlang, respectively. I will definetely cover these these in future blog posts.</p>
+<p>I also believe that CSP could be an amazing <em>front end framework</em>.  To read more, check out my blog post <a href="../using-csp-as-application-architecture/"><em>Using CSP as Application Architecture</em></a>.</p>
+
+        <div class="signature">September 24, 2015.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'quick-introduction-to-csp-in-javascript';
+          var disqus_title = 'Quick Introduction To CSP In Javascript';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>
