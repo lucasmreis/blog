@@ -5,7 +5,7 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Sun, 04 Oct 2015 17:26:39 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 04 Oct 2015 17:54:48 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
@@ -15,7 +15,7 @@
             <description><![CDATA[
 Since I started studying and working on a Clojure project, I've been using the `core.async` library. It's a really simple and powerful way of dealing with concurrency, which is also used in the Go language. It's an implementation of [Communicating Sequential Processes](https://en.wikipedia.org/wiki/Communicating_sequential_processes), and now with ES6 generators we can use it in Javascript too! In this post, I'll be using [js-csp](https://github.com/ubolonton/js-csp).  Check out my [Introduction to CSP in Javascript](../quick-introduction-to-csp-in-javascript/) - it can be considered "Part 1" of this post.
 
-When I came across [Quiescent's](https://github.com/levand/quiescent) [TodoMVC implementation](https://github.com/levand/todomvc), I saw the power of CSP as a front end application framework *itself*. This post describes an expanded version of the architecture of that TodoMVC app.
+When I came across [Quiescent's](https://github.com/levand/quiescent) [TodoMVC implementation](https://github.com/levand/todomvc/tree/gh-pages/architecture-examples/quiescent), I saw the power of CSP as a front end application framework *itself*. This post describes an expanded version of the architecture of that TodoMVC app.
 
 ## The Architecture
 
