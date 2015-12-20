@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ES6 Destructuring Improves Readability | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>ES6 Destructuring Improves Readability</h1>
+        <div class="lead">And It&#x27;s Great At Documenting Functions</div>
+        <p>Destructuring is one of the most powerful new features of javascript. It makes it easier to write more concise code, without compromising readability. This week I figured out that destructuring is also very good for documenting functions in javascript, and I want to share this thought with you.</p>
+<p>For those not familiar with destructuring, I suggest <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment">Mozilla website</a> as a good starting point.</p>
+<p>The situation is: you are reading code written by another developer (and I include in this grouping any code that you yourself wrote more than one month ago). Suddenly, there&#39;s this function call:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> cart = getCart(cartId, <span class="hljs-number">3</span>);</code></pre>
+
+<p>It seems like it&#39;s a simple function that &quot;gets&quot; the cart with the id <code>cartId</code>. Awesome. But one detail creeps you out: what does the <code>3</code> mean? It could literally be anything. There&#39;s no clue in the function call as to what it means,and you&#39;ll have to open another file with the function declaration to find out.</p>
+<p>One way to remedy this situation is accepting a <em>config object</em> as a parameter of the function:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> cart = getCart({cartId: cartId, retries: <span class="hljs-number">3</span>});</code></pre>
+
+<p>And now we understand that our function gets a cart and retries three times if an error occurs.</p>
+<p>But now let&#39;s take a look at the function declaration:</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span><span class="hljs-params">(config)</span> </span>{
+  <span class="hljs-comment">// ...</span>
+}</code></pre>
+
+<p>When we look at this declaration, we have no clue as to what parameters the function actually receives. We have to look inside the function code to see which properties of <code>config</code> are being used, which is not optimal. In the recent past, the best way to deal with this was declaring variables in the beginning of the function, which is very verbose:</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span><span class="hljs-params">(config)</span> </span>{
+  <span class="hljs-keyword">const</span> cartId = config.cartId;
+  <span class="hljs-keyword">const</span> retries = config.retries;
+  <span class="hljs-comment">// ...</span>
+}</code></pre>
+
+<p>So there were two situations: using a usual list of parameters, which compromised the readability of function <em>calls</em>, and using a <code>config</code> object, which compromised the readability of function <em>declarations</em>.</p>
+<p>You see where this is going, right? By using destructuring, we can use an object as a parameter, without these problems:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// declaration</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span><span class="hljs-params">({cartId, retries})</span> </span>{
+  <span class="hljs-comment">// ...</span>
+}
+
+<span class="hljs-comment">// call</span>
+<span class="hljs-keyword">const</span> cart = getCart({cartId: cartId, retries: <span class="hljs-number">3</span>});</code></pre>
+
+<p>It may seem like a minor issue, but it saves a lot of time in the long run! You look at the function declaration and you know which parameters it expects. You look at a function call and you understand what the values being passed mean.</p>
+<p>A nice situation where destructuring becomes a very useful documentation tool is React. After version <code>v0.14</code>, stateless components were introduced. They are simple components, declared as functions. An example would be:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> LoginForm = ({
+  username,
+  password,
+  onForgetPassword,
+  onSubmit}) =&gt;
+    <span class="hljs-comment">//...</span></code></pre>
+
+<p>Smooth, isn&#39;t it? :)</p>
+
+        <div class="signature">December 14, 2015.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'es6-destructuring-improves-readability';
+          var disqus_title = 'ES6 Destructuring Improves Readability';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>
