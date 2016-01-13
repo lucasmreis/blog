@@ -5,7 +5,7 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Wed, 13 Jan 2016 22:41:59 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 13 Jan 2016 23:23:04 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
@@ -46,7 +46,7 @@
 <p>This categorization is a work in progress. If you have seen centralized state being used in a different way, or have any other &quot;pros&quot; and &quot;cons&quot;, please feel free to share! Any disagreement with the &quot;pros&quot; and &quot;cons&quot; listed here? I would love to hear from you! :)</p>
 ]]></description>
             <guid isPermaLink="false">Centralized State Design Patterns</guid>
-            <pubDate>Fri, 01 Jan 2016 00:00:00 GMT</pubDate>
+            <pubDate>Wed, 13 Jan 2016 00:00:00 GMT</pubDate>
         </item>
         <item>
             <title><![CDATA[ES6 Destructuring Improves Readability]]></title>
