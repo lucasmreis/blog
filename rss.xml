@@ -5,11 +5,75 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Wed, 13 Jan 2016 23:23:04 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 17 Apr 2016 21:38:53 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[Should We Leave Javascript In Front End Programming?]]></title>
+            <description><![CDATA[<p>I recently &quot;inherited&quot; a Javascript project at work. It was only &quot;a medium-sized React app&quot;, so we all thought it would be easy to get it up and running, and for us to start being productive - even though the application&#39;s only author was not there to help.</p>
+<p>But unfortunately, it was not easy.  It took a couple of hours for the build to work, and a couple of days until I could make any production-ready changes. The difficulties I encountered in this process made me think about the technology choices we have to make in programming.</p>
+<p>For instance, I always thought I knew the answer to this question: <em>Should we implement the next front end project in Javascript?</em></p>
+<h2 id="my-original-answer">My Original Answer</h2>
+<p><strong>Yes.</strong> I believed a hundred percent that, even though there were some really interesting language choices on the radar, we should choose Javascript. Simply because <em>that&#39;s what every developer in the market knows</em>, and <em>there&#39;s already a lot of libraries / frameworks that I can choose from</em>. Summing up, the main reason is <em>familiarity</em>, both with the syntax and the tools.</p>
+<p>And that&#39;s what seems to have changed in front end web programming.</p>
+<h2 id="javascript-is-not-one-language-anymore">Javascript Is Not One Language Anymore</h2>
+<p>First of all, let me explain what I mean by &quot;Javascript is not one language anymore&quot;. I work on a really big front end project that still uses ES5 for most of the code, Angular 1.x as the framework, and Ramda as the main util library. Here is an example of a common piece of code:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">var</span> onPress = pCompose(
+  pCatch(MetricService.logEvent(<span class="hljs-string">'payment:error'</span>)),
+  MetricService.logEvent(<span class="hljs-string">'payment:success'</span>),
+  StateService.change(<span class="hljs-string">'payment'</span>),
+  prop(<span class="hljs-string">'data'</span>),
+  $http,
+  PaymentApiService.requestObj,
+  MetricService.logEvent(<span class="hljs-string">'payment:submit'</span>));</code></pre>
+
+<p>This is a good ES5 / Ramda / Angular piece of code. (<code>pCompose</code> and <code>pCatch</code> are not from Ramda library, but they are pretty self explanatory :) ).</p>
+<p>That piece of code written today could look like:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> onPress = async id =&gt; {
+  MetricService.logEvent(<span class="hljs-string">'payment:submit'</span>, id)
+  <span class="hljs-keyword">const</span> cartReq = PaymentApiService.requestObj(id)
+  <span class="hljs-keyword">try</span> {
+    <span class="hljs-keyword">const</span> { data } = await axios(cartReq)
+    StateService.change(<span class="hljs-string">'payment'</span>, data)
+    MetricService.logEvent(<span class="hljs-string">'payment:success'</span>, data)
+  } <span class="hljs-keyword">catch</span> (err) {
+    MetricService.logEvent(<span class="hljs-string">'payment:error'</span>, err)
+  }
+}</code></pre>
+
+<p>Which is also a perfectly good ES7 piece of code. And it&#39;s completely different, in a lot of aspects.</p>
+<p>Some examples of differences in Javascript code: ES5 callbacks are very different from ES6 promises that are very different from ES7 async functions. &quot;For&quot; loops are very different from Lodash code, that is different from Ramda or Trine code too. Mutable objects, ImmutableJS, ES7 object spread operator... The list goes on.</p>
+<p>So, no two projects I&#39;ve ever encountered were alike in those terms. They are always some chosen combination of practices and technologies, usually with very different styles mixed in because of external dependencies.</p>
+<p>We can conclude that Javascript projects tend to be fundamentally different from each other, and tend to be messy as they grow.</p>
+<h2 id="new-technologies-are-better">New Technologies Are Better</h2>
+<p>ES6 and ES7 are bringing some really good features to the language. But to use them in a production environment, we will have to rely on &quot;transpiling&quot; tools like Babel. This is bringing <em>Javascript development</em> itself closer to <em>other front end languages development</em>. And there are <a href="https://github.com/jashkenas/coffeescript/wiki/list-of-languages-that-compile-to-js">a lot of those</a>.</p>
+<p>The thing is, these other languages do a lot of things better than Javascript. For example, TypeScript adds a thin layer of types that can save a lot of headaches when your code base gets larger. ClojureScript has some very simple and performant wrappers around React, that work well with channels and goroutines for async work. Elm&#39;s cleverly designed compiler almost guarantees no runtime error will happen.  </p>
+<p>With this information in mind, we can ask <em>the question</em> one more time: should we implement the next front end project in Javascript?</p>
+<h2 id="opportunity-cost">Opportunity Cost</h2>
+<p>The way this question should <em>always</em> be answered is with an opportunity cost analysis. In our case, it could be divided in three steps:</p>
+<p><strong>1. Which problems in the code base would I like to solve?</strong></p>
+<p>We need to understand our application&#39;s needs. Does it deal with a lot of async work? Is it heavy on user interaction? Does it need to run on very different platforms?</p>
+<p><strong>2. Are there tools that will help me with those problems better than Javascript?</strong></p>
+<p>The next step is trying to find solutions to these problems, and tools that implement those solutions. Powerful type systems, flexible async patterns, performant rendering, these are all important solutions that should be considered. Make a list of languages / tools that could help each problem.</p>
+<p><strong>3. What are the costs of using these tools in relation to using the most up-to-date Javascript?</strong></p>
+<p>What is the learning curve? How active is the community? Does it have a big ecosystem? How about native Javascript interop?</p>
+<p>The answers to these questions define how costly the adoption of technology will be. An example: although ClojureScript has a decent sized community and ecosystem, these are nothing compared to Javascript, so there&#39;s an opportunity cost in choosing this tool.</p>
+<p>And that&#39;s where the analysis enters: we have to weigh the benefits, and see if they outweigh the costs in relation to using Javascript, always basing your analysis on the most up-to-date Javascript version, which means you&#39;ll have to have a &quot;transpiling&quot; build phase, and learn some new concepts anyway.</p>
+<p>Sometimes we would prefer small changes - like starting to use TypeScript. Changing from Babel to TypeScript compiler is a small cost, and that can bring a project to a higher level.</p>
+<p>Sometimes small changes can only bring us so far, and a bigger learning curve cost of, let&#39;s say, refactoring to Elm, can lead to so much improvement to the final code that the time invested is worth it.</p>
+<p>With this in mind, is it still the case that we should always use Javascript for a front end web project?</p>
+<h2 id="my-new-answer">My New Answer</h2>
+<p><strong>Probably yes.</strong> And I think with a little time the answer will shift to a more certain &quot;no&quot;.  :)</p>
+<p>Today (even though this is changing) Javascript is still the &quot;simple way to start doing something&quot; tool. We all have browsers that can understand Javascript, and they have awesome debugging tools. Adding a build tool and using Babel is still simpler than most front end language development workflows.</p>
+<p>An important observation: if we want to develop for mobile, React Native is the best &quot;non-native&quot; choice. So it makes sense that, if we want to reuse code or even knowledge in mobile projects, Javascript is the chosen tool.</p>
+<p>But this is changing fast. I really believe that in about a year or two, Javascript&#39;s only strength will be the ecosystem. Tools like <a href="https://github.com/bhauman/lein-figwheel">figwheel</a> for ClojureScript, and <a href="https://github.com/elm-lang/elm-reactor">elm-reactor</a> for Elm are already considered superior to native Javascript dev tools.</p>
+<p>Having worked with Clojure before, I&#39;ve already felt the benefits of using a superior language to solve a problem. I plan to start doing small projects in different languages this year, and write about them on this blog. I would really like to here about other developers experiences with compile-to-js languages, so feel free to post it in the comments!</p>
+]]></description>
+            <guid isPermaLink="false">Should We Leave Javascript In Front End Programming?</guid>
+            <pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Centralized State Design Patterns]]></title>
             <description><![CDATA[<p>Front end programming is difficult. We are still figuring out how to best deal with it, and the quantity of frameworks and libraries that appear and disappear every week is one of the consequences.</p>
