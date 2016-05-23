@@ -4,11 +4,11 @@
     <title>Using CSP As Application Architecture | Lucas Reis' Blog</title>
     <link rel="stylesheet" href="../styles/reset.css" type="text/css">
     <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
     <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
   </head>
   <body>
@@ -33,7 +33,7 @@
 <h2 id="application-config">Application Config</h2>
 <p>First of all let&#39;s create the application config object. An example would be:</p>
 <pre><code class="hljs js"><span class="hljs-comment">// index.js</span>
-import {chan, go, take, put, putAsync, buffers} from <span class="hljs-string">'js-csp'</span>;
+<span class="hljs-keyword">import</span> {chan, go, take, put, putAsync, buffers} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
 <span class="hljs-keyword">const</span> loadApp = () =&gt; ({
   state: {
@@ -89,7 +89,7 @@ start();</code></pre>
 };
 
 <span class="hljs-comment">// update function</span>
-export <span class="hljs-keyword">const</span> loading = (state, loadingState) =&gt;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> loading = (state, loadingState) =&gt;
   assoc(state, <span class="hljs-string">'loading'</span>, loadingState);</code></pre>
 
 <p>Every update function will receive two parameters: the state and the data used in the transformation.  Then it will return a new state. Since it&#39;s a pure function, <em>it&#39;s very simple to unit test</em>.</p>
@@ -99,7 +99,7 @@ export <span class="hljs-keyword">const</span> loading = (state, loadingState) =
 <span class="hljs-keyword">const</span> initLoadingUpdate = app =&gt; {
   <span class="hljs-keyword">const</span> updateFn = app.updates.consumers.loading;
   <span class="hljs-keyword">const</span> ch = app.updates.channels.loading;
-  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
     <span class="hljs-comment">// the process will go on forever</span>
     <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
       <span class="hljs-comment">// the process pauses waiting for a</span>
@@ -107,7 +107,7 @@ export <span class="hljs-keyword">const</span> loading = (state, loadingState) =
       <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
 
       <span class="hljs-comment">// logging</span>
-      <span class="hljs-built_in">console</span>.log(`On update channel [ loading ] received value [ ${<span class="hljs-built_in">JSON</span>.stringify(value)} ]`);
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`On update channel [ loading ] received value [ <span class="hljs-subst">${JSON.stringify(value)}</span> ]`</span>);
 
       <span class="hljs-comment">// updates the state</span>
       app.state = updateFn(app.state, value);
@@ -150,7 +150,7 @@ start();
 };
 
 <span class="hljs-comment">// update functions</span>
-export <span class="hljs-keyword">const</span> view = (state, direction) =&gt; {
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> view = (state, direction) =&gt; {
   <span class="hljs-keyword">const</span> nextCurrent = direction === <span class="hljs-string">'next'</span> ?
     <span class="hljs-built_in">Math</span>.min(state.current + <span class="hljs-number">1</span>, state.words.length - <span class="hljs-number">1</span>) :
     <span class="hljs-built_in">Math</span>.max(state.current - <span class="hljs-number">1</span>, <span class="hljs-number">0</span>);
@@ -158,7 +158,7 @@ export <span class="hljs-keyword">const</span> view = (state, direction) =&gt; {
   <span class="hljs-keyword">return</span> assoc(state, <span class="hljs-string">'current'</span>, nextCurrent);
 };
 
-export <span class="hljs-keyword">const</span> add = (state, newWord) =&gt;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> add = (state, newWord) =&gt;
   assoc(state, <span class="hljs-string">'words'</span>, append(state.words, newWord));</code></pre>
 
 <p>And let&#39;s change <code>initLoadingUpdate</code> to <code>initUpdates</code>, which loads a process for each update:</p>
@@ -166,10 +166,10 @@ export <span class="hljs-keyword">const</span> add = (state, newWord) =&gt;
   <span class="hljs-built_in">Object</span>.keys(app.updates.consumers).forEach(k =&gt; {
     <span class="hljs-keyword">const</span> updateFn = app.updates.consumers[k];
     <span class="hljs-keyword">const</span> ch = app.updates.channels[k];
-    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
       <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
         <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
-        <span class="hljs-built_in">console</span>.log(`On update channel [ ${k} ] received value [ ${<span class="hljs-built_in">JSON</span>.stringify(value)} ]`);
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`On update channel [ <span class="hljs-subst">${k}</span> ] received value [ <span class="hljs-subst">${JSON.stringify(value)}</span> ]`</span>);
         app.state = updateFn(app.state, value);
       }
     });
@@ -188,18 +188,18 @@ export <span class="hljs-keyword">const</span> add = (state, newWord) =&gt;
 <p>Sometimes one action cannot be translated in a simple update function. Take, for example, an action that inserts data into a db through a web server. It will set loading to true, make the request, update the state, and set loading to false. </p>
 <p>These are what I&#39;m calling <em>complex actions</em>: functions that call more than one update over a period of time. They also receive two parameters: the update channels and the data required for the action.</p>
 <p>For instance, let&#39;s think of the complex action that changes the nickname of person with a given person ID:</p>
-<pre><code class="hljs js">export <span class="hljs-keyword">const</span> changeNickname = (updateChannels, {personId, newNickname}) =&gt; {
-  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+<pre><code class="hljs js"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> changeNickname = (updateChannels, {personId, newNickname}) =&gt; {
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
     <span class="hljs-comment">// do stuff and put in update channels</span>
   });
 };</code></pre>
 
 <p>For now, let&#39;s implement a &quot;fake&quot; complex action:</p>
 <pre><code class="hljs js"><span class="hljs-comment">// complexActions.js</span>
-import {go, put, timeout} from <span class="hljs-string">'js-csp'</span>;
+<span class="hljs-keyword">import</span> {go, put, timeout} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
-export <span class="hljs-keyword">const</span> dbInsert = (updateChannels, newWord) =&gt; {
-  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> dbInsert = (updateChannels, newWord) =&gt; {
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
     <span class="hljs-keyword">yield</span> put(updateChannels.loading, <span class="hljs-literal">true</span>);
 
     <span class="hljs-comment">// do something costly</span>
@@ -216,10 +216,10 @@ export <span class="hljs-keyword">const</span> dbInsert = (updateChannels, newWo
   <span class="hljs-built_in">Object</span>.keys(app.complexActions.consumers).forEach(k =&gt; {
     <span class="hljs-keyword">const</span> complexActionFn = app.complexActions.consumers[k];
     <span class="hljs-keyword">const</span> ch = app.complexActions.channels[k];
-    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
       <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
         <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
-        <span class="hljs-built_in">console</span>.log(`On complex action channel [ ${k} ] received value [ ${<span class="hljs-built_in">JSON</span>.stringify(value)} ]`);
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`On complex action channel [ <span class="hljs-subst">${k}</span> ] received value [ <span class="hljs-subst">${JSON.stringify(value)}</span> ]`</span>);
         complexActionFn(app.updates.channels, value);
       }
     });
@@ -262,7 +262,7 @@ export <span class="hljs-keyword">const</span> dbInsert = (updateChannels, newWo
   <span class="hljs-comment">// render initial state</span>
   putAsync(app.renderCh, app.state);
 
-  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
     <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>) {
       <span class="hljs-keyword">const</span> state = <span class="hljs-keyword">yield</span> take(app.renderCh);
 

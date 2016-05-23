@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Learning Elm, part 2 | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>Learning Elm, part 2</h1>
+        <div class="lead">Understanding The Benefits Of A Simple Architecture</div>
+        <p><em>This is part 2 of a series. You can read <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">part 1 here</a>.</em></p>
+<p>As I stated in part 1 of this series, I started learning Elm in a quest for more reliability in web front end programming. I implemented an algorithm, a parser, and things went very well.</p>
+<p>Now let&#39;s build a simple application with user interaction. I want to see if I can still feel the same &quot;reliability&quot; I felt when I was only implementing a function.</p>
+<p>It turns out Elm has a standard way of structuring apps baked into the language, the Elm Architecture. It&#39;s very simple, and has <em>already</em> influenced front end programming as a whole, mainly through the Redux library. We&#39;ll explore a simple version of the architecture in this post.</p>
+<h2 id="the-spec">The Spec</h2>
+<p>The specifications for our web app are:</p>
+<ol>
+<li>The user will input an abbreviation of a card</li>
+<li>The application will spell out the card and render it</li>
+</ol>
+<p>We&#39;ll use the parser built in part 1 for that. Let&#39;s start.</p>
+<h2 id="the-initial-boilerplate">The Initial Boilerplate</h2>
+<p>First of all, of course, we need to install Elm. For a Mac, the cleanest path seems to be <code>brew cask install elm-platform</code>.</p>
+<p>Next, running <code>elm package install</code> in the desired directory installs the language core, and creates an <code>elm-package.json</code> file. That file is the equivalent of <code>package.json</code> for the Elm world.</p>
+<p>The easiest way to start developing is by editing the code in an editor (I&#39;ve been using <a href="https://github.com/sbrink/vscode-elm">VS Code</a> for Elm and it feels great), and running <code>elm-reactor</code> in the project directory.</p>
+<p>Elm Reactor starts a server locally. Opening it in the browser shows a navigation page for the project. By clicking in any file, it compiles and runs the Elm code - super simple!</p>
+<p>Now we have everything setup to start building our first Elm app.</p>
+<h2 id="the-layout">The Layout</h2>
+<p>Let&#39;s start by coding the layout. We will use a &quot;standard&quot; library called <code>elm-html</code>. It uses a virtual-dom technique to render the view, and we declare it as code:</p>
+<pre><code class="hljs">module Main exposing (..)
+
+import Html exposing (<span class="hljs-selector-tag">div</span>, <span class="hljs-selector-tag">input</span>, <span class="hljs-selector-tag">p</span>, text)
+
+
+main =
+    <span class="hljs-selector-tag">div</span>
+        []
+        [ <span class="hljs-selector-tag">input</span> [] []
+        , <span class="hljs-selector-tag">p</span> [] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        ]</code></pre>
+Every Html node is a function of two parameters: attributes and the children nodes. So, the above code produces the following html:
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">input</span> /&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Seven of Club<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
+It takes a little time to get used to it, but it's actually very simple. We could style it with CSS, but for the sake of learning, let's do it inside Elm:
+
+<pre><code class="hljs">module Main exposing (..)
+
+import Html exposing (<span class="hljs-selector-tag">div</span>, <span class="hljs-selector-tag">input</span>, <span class="hljs-selector-tag">p</span>, text)
+import Html<span class="hljs-selector-class">.Attributes</span> exposing (style, placeholder)
+
+
+main =
+    <span class="hljs-selector-tag">div</span> [ mainStyle ]
+        [ <span class="hljs-selector-tag">input</span>
+            [ inputStyle
+            , placeholder <span class="hljs-string">"Type your card..."</span>
+            ]
+            []
+        , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        ]
+
+
+mainStyle =
+    style
+        [ ( <span class="hljs-string">"font-family"</span>, <span class="hljs-string">"-apple-system, system, sans-serif"</span> )
+        , ( <span class="hljs-string">"margin"</span>, <span class="hljs-string">"10px"</span> )
+        , ( <span class="hljs-string">"padding"</span>, <span class="hljs-string">"40px"</span> )
+        , ( <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> )
+        , ( <span class="hljs-string">"flex-direction"</span>, <span class="hljs-string">"column"</span> )
+        , ( <span class="hljs-string">"align-items"</span>, <span class="hljs-string">"stretch"</span> )
+        , ( <span class="hljs-string">"background-color"</span>, <span class="hljs-string">"#fafafa"</span> )
+        , ( <span class="hljs-string">"border"</span>, <span class="hljs-string">"lightgray solid 1px"</span> )
+        ]
+
+
+inputStyle =
+    style
+        [ ( <span class="hljs-string">"border"</span>, <span class="hljs-string">"#fafafa solid"</span> )
+        , ( <span class="hljs-string">"border-bottom"</span>, <span class="hljs-string">"lightgray solid 1px"</span> )
+        , ( <span class="hljs-string">"font-size"</span>, <span class="hljs-string">"2em"</span> )
+        , ( <span class="hljs-string">"color"</span>, <span class="hljs-string">"rgba(0,0,0,0.75)"</span> )
+        , ( <span class="hljs-string">"background-color"</span>, <span class="hljs-string">"#fafafa"</span> )
+        ]
+
+
+cardStyle =
+    style
+        [ ( <span class="hljs-string">"font-size"</span>, <span class="hljs-string">"2em"</span> )
+        , ( <span class="hljs-string">"color"</span>, <span class="hljs-string">"rgba(0,0,0,0.75)"</span> )
+        ]</code></pre>
+ That's our layout. :)
+
+## The Elm Architecture
+Now let's get into how an Elm application is supposed to be structured.
+
+Elm apps use a centralized state pattern, which I've [written about in this blog](http://lucasmreis.github.io/blog/centralized-state-design-patterns/). It's a simple "loop" described as such:
+<pre><code class="hljs">Model &gt; <span class="hljs-keyword">View</span> &gt; <span class="hljs-keyword">Update</span> &gt; Model &gt; <span class="hljs-keyword">View</span> &gt; ...</code></pre>
+
+<p>First you describe a model of your app. It is the skeleton, the data you need to render the application.</p>
+<p>The view is then a function of the model. It takes the data and renders it.</p>
+<p>After rendering, the application &quot;waits&quot; for user interaction or any other event. When that happens, it triggers the update function. The update function is a function that receives the old model and data of the event, and returns a new model. This model is then rendered, and the loop continues.</p>
+<p>Elm gives us a function that does all the &quot;plumbing&quot; for us, and it&#39;s called <code>Html.App.program</code>. We&#39;ll use a simpler version of it, because that&#39;s everything we need for our small app, and it&#39;s called <code>beginnerProgram</code>. With it, you only need to define your model, update and view and the program does the heavy work for you:</p>
+<pre><code class="hljs">import Html.<span class="hljs-keyword">App</span> exposing (beginnerProgram)
+
+
+main =
+    Html.<span class="hljs-keyword">App</span>.beginnerProgram
+        { model = init <span class="hljs-string">""</span>
+        , <span class="hljs-keyword">view</span> = <span class="hljs-keyword">view</span>
+        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
+        }</code></pre>
+
+<p>Now let&#39;s define <code>init</code>,  <code>view</code> and <code>update</code>.</p>
+<h2 id="the-model">The Model</h2>
+<p>The user interacts through an input. That means we need a String in our model to hold it. We do not need anything else, since the other changing part of our view is simply a function of that String.</p>
+<pre><code class="hljs"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">alias</span></span> Model =
+    <span class="hljs-built_in">String</span>
+
+
+init : <span class="hljs-built_in">String</span> -&gt; Model
+init <span class="hljs-keyword">str</span> =
+    <span class="hljs-keyword">str</span></code></pre>
+That's all the model we need for our spec, and a function to initialize it.
+
+## The View
+The view will be a function of our model. Let's use our layout as a starting point:
+
+<pre><code class="hljs">view model =
+    div [ mainStyle ]
+        [ input
+            [ inputStyle
+            , placeholder <span class="hljs-string">"Type your card..."</span>
+            ]
+            []
+        , p [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        ]</code></pre>
+
+<p>So, our view still does not use the model. Remember that we need to render the model string after parsing it, so let&#39;s do it:</p>
+<pre><code class="hljs">import CardParser
+
+(...)
+
+view <span class="hljs-selector-tag">address</span> model =
+  let
+    card =
+      CardParser<span class="hljs-selector-class">.spellCard</span> model
+  <span class="hljs-keyword">in</span>
+    <span class="hljs-selector-tag">div</span>
+      [ mainStyle ]
+      [ <span class="hljs-selector-tag">input</span>
+          [ inputStyle
+          , placeholder <span class="hljs-string">"Type your card..."</span>
+          ]
+          []
+      , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text card ]
+      ]</code></pre>
+
+<p>Add a generic update function to the code to see the page rendered:</p>
+<p><pre><code class="hljs"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
+    <span class="hljs-keyword">model</span></code></pre>
+And we can see our app working! Change the initial value of the model in the beginnerProgram function and see the difference in the parsed string. Good work! Now let&#39;s make the app respond to some user interaction.</p>
+<h2 id="the-update">The Update</h2>
+<p>The update function is also simple: as the user types something in the input field, it changes the model. Html.App will make sure our new model is then rendered through the view function.</p>
+<p>The update mechanism works through message passing. The view sends messages that are processed by the update function, and then it produces a new model:</p>
+<p><pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
+    = <span class="hljs-type">ChangeText</span> <span class="hljs-type">String</span></p>
+<p><span class="hljs-title">update</span> : <span class="hljs-type">Msg</span> -&gt; <span class="hljs-type">Model</span> -&gt; <span class="hljs-type">Model</span>
+<span class="hljs-title">update</span> msg model =
+    <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
+        <span class="hljs-type">ChangeText</span> newText -&gt;
+            newText</code></pre>
+Now we need to send those messages on user input:</p>
+<p><pre><code class="hljs">import Html<span class="hljs-selector-class">.Events</span> exposing (onInput)</p>
+<p>(...)</p>
+<p>view model =
+    let
+        card =
+            CardParser<span class="hljs-selector-class">.spellCard</span> model
+    <span class="hljs-keyword">in</span>
+        <span class="hljs-selector-tag">div</span> [ mainStyle ]
+            [ <span class="hljs-selector-tag">input</span>
+                [ inputStyle
+                , placeholder <span class="hljs-string">&quot;Type your card...&quot;</span>
+                , onInput ChangeText -- HERE!!!
+                ]
+                []
+            , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text card ]
+            ]</code></pre>
+Refresh your Elm Reactor page and play with the input now. That&#39;s it, our work is done!</p>
+<h2 id="but-specs-change-">But Specs Change...</h2>
+<p>Don&#39;t they always? :)</p>
+<p>Our app now needs <em>two inputs</em> that work the same way. The first thing that pops into our head is making a component of our current app, and then showing two of them. Let&#39;s do it.</p>
+<p>Let&#39;s first create a new file called <code>ParserComponent.elm</code>, and move all the model, view and update code there. Our Main module will look like:</p>
+<p><pre><code class="hljs"><span class="hljs-keyword">module</span> Main <span class="hljs-keyword">exposing</span> (..)</p>
+<p><span class="hljs-keyword">import</span> Html.App <span class="hljs-keyword">exposing</span> (beginnerProgram)
+<span class="hljs-keyword">import</span> ParserComponent <span class="hljs-keyword">exposing</span> (<span class="hljs-type">Model</span>, <span class="hljs-type">Msg</span>, init, view, update)</p>
+<p><span class="hljs-title">main</span> =
+    <span class="hljs-type">Html</span>.<span class="hljs-type">App</span>.beginnerProgram
+        { model = <span class="hljs-type">ParserComponent</span>.init <span class="hljs-string">&quot;&quot;</span>
+        , view = <span class="hljs-type">ParserComponent</span>.view
+        , update = <span class="hljs-type">ParserComponent</span>.update
+        }</code></pre>
+And our app will work the same way. Now, to have two of the same components, let&#39;s define a new model, view and update for our app:</p>
+<p><pre><code class="hljs">type <span class="hljs-built_in">alias</span> Model =
+    { firstParser : ParserComponent.Model
+    , secondParser : ParserComponent.Model
+    }</p>
+<p>init <span class="hljs-keyword">first</span> <span class="hljs-keyword">second</span> =
+    Model <span class="hljs-keyword">first</span> <span class="hljs-keyword">second</span></code></pre>
+First of all, our new model is comprised of two ParserComponents models. Ok. Now how will we update them? We will <em>tag</em> every message that is sent from each component, and then treat each of them in a new update function:</p>
+<p><pre><code class="hljs">type Msg
+    = First ParserComponent.Msg
+    | Second ParserComponent.Msg</p>
+<p><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
+ <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
+   <span class="hljs-keyword">First</span> m -&gt;
+     { <span class="hljs-keyword">model</span> | firstParser = ParserComponent.update m model.firstParser}</p>
+<p>   <span class="hljs-keyword">Second</span> m -&gt;
+     { <span class="hljs-keyword">model</span> | secondParser = ParserComponent.update m model.secondParser}</code></pre>
+So, now our messages can be sent by the first or second component, and we&#39;ll tag each with <code>First</code> and <code>Second</code>. Then, a <code>First</code> message will update the <code>firstParser</code> portion of our model, and a <code>Second</code> message will update the <code>secondParser</code> portion of our model.</p>
+<p>Now let&#39;s see how to actually tag those messages in the new view:</p>
+<p><pre><code class="hljs">view model =
+    <span class="hljs-selector-tag">div</span> []
+        [ Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.map</span> First
+            (ParserComponent<span class="hljs-selector-class">.view</span> model.firstParser)
+        , Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.map</span> Second
+            (ParserComponent<span class="hljs-selector-class">.view</span> model.secondParser)
+        ]</code></pre>
+By using the <code>Html.App.map</code> we tag, with the first parameter, every message that is sent by the view rendered in the second parameter.</p>
+<p>We are rendering a ParserComponent view with the <code>firstParser</code> portion of the model, and another with the <code>secondParser</code>, and we are tagging all the messages sent by the first with <code>First</code>, and all the messages sent by the second with <code>Second</code>.</p>
+<p>Refresh again the Reactor page and there you have it - two independently working parser components.</p>
+<p>##But The Specs Can Change Again...</p>
+<p>To test even more how easy and safe it is to change our Elm code, let&#39;s change our spec once more. Let&#39;s say each component has now to parse a <em>list of cards</em>, separated by comma.</p>
+<p>We can achieve that by <em>only changing the view function of the component</em>:</p>
+<p><pre><code class="hljs">sentence <span class="hljs-attr">card</span> =
+    p [ cardStyle ] [ text card ]</p>
+<p>view <span class="hljs-attr">model</span> =
+    <span class="hljs-keyword">let</span>
+        <span class="hljs-attr">cards</span> =
+            model
+                |&gt; String.split <span class="hljs-string">&quot;,&quot;</span>
+                |&gt; List.<span class="hljs-built_in">map</span> String.trim
+                |&gt; List.<span class="hljs-built_in">map</span> CardParser.spellCard
+    <span class="hljs-keyword">in</span>
+        div [ mainStyle ]
+            [ input
+                [ inputStyle
+                , placeholder <span class="hljs-string">&quot;Type your card...&quot;</span>
+                , onInput ChangeText
+                ]
+                []
+            , div [] (List.<span class="hljs-built_in">map</span> sentence cards)
+            ]</code></pre>
+And it just works.</p>
+<p>##A Comment On Difficulties</p>
+<p>Up until now, I can think of two main difficulties people would find in Elm: the application architecture that it enforces and the syntax itself.</p>
+<p>The architecture is simple, but it&#39;s very different from the classic MVC from Angular and Backbone. Lately the trend in Javascript has been React + Flux, so, if you are using Redux or any other similar framework, you should have no problem understanding Elm. If you are used to the classic MVC pattern, things are going to take a little more time to sink in.</p>
+<p>The syntax is very restrictive, and this can be frustrating to some developers who are used to imperative programming. But as soon as I started changing code, refactoring, extracting components, and changing specs, I could feel that the &quot;restrictiveness&quot; pays off. I feel that the language forces you to think a little bit more before writing code, and then makes refactoring easier and simpler.</p>
+<p>##Conclusions</p>
+<p>My initial objective when I started learning Elm was investigate ways to have more reliable front end code. Up until now everything is going smoothly, I had no runtime error after the code got compiled, and I have a lot of trust that the code is doing what it&#39;s supposed to do. It&#39;s also still fun!</p>
+<p>In part 3 I plan to make a simple application that makes http requests, and check if code is still as simple as it&#39;s now.</p>
+<p>By the way, here&#39;s the <a href="https://github.com/lucasmreis/learning-elm">final code</a>.</p>
+
+        <div class="signature">May 20, 2016.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'learning-elm-part-2';
+          var disqus_title = 'Learning Elm, part 2';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

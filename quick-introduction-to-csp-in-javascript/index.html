@@ -4,11 +4,11 @@
     <title>Quick Introduction To CSP In Javascript | Lucas Reis' Blog</title>
     <link rel="stylesheet" href="../styles/reset.css" type="text/css">
     <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
     <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
   </head>
   <body>
@@ -29,9 +29,9 @@
 <h2 id="example-1-the-process">Example 1: The Process</h2>
 <p>A process is the first concept we&#39;re gonna learn. It runs code. And it&#39;s as simple as that. :)</p>
 <p>This is the syntax to start a process: just pass a generator as a parameter to the <code>go</code> function. </p>
-<pre><code class="hljs js">import {go} from <span class="hljs-string">'js-csp'</span>;
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> {go} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something!'</span>);
 });
 
@@ -41,9 +41,9 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span
 
 <h2 id="example-2-the-process-can-pause">Example 2: The Process Can Pause</h2>
 <p>By using the <code>yield</code> keyword, you can pause a process, freeing the main thread:</p>
-<pre><code class="hljs js">import {go, timeout} from <span class="hljs-string">'js-csp'</span>;
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> {go, timeout} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">yield</span> timeout(<span class="hljs-number">1000</span>);
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'something else after 1 second!'</span>);
 });
@@ -57,11 +57,11 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span
 
 <h2 id="example-3-processes-wait-for-values-in-channels">Example 3: Processes Wait For Values In Channels</h2>
 <p>The channels are the second and last concept we&#39;re gonna learn. They are queues, and whenever process calls <code>take</code> on a channel, it pauses until a value is <code>put</code> into that channel. </p>
-<pre><code class="hljs js">import {go, chan, take, putAsync} from <span class="hljs-string">'js-csp'</span>;
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> {go, chan, take, putAsync} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
 <span class="hljs-keyword">let</span> ch = chan();
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">const</span> received = <span class="hljs-keyword">yield</span> take(ch);
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'RECEIVED:'</span>, received);
 });
@@ -81,13 +81,13 @@ putAsync(ch, text);
 <h2 id="example-4-processes-communicate-through-channels">Example 4: Processes Communicate Through Channels</h2>
 <p>On the other side, processes that <code>put</code> a value on a channel also pause until some other process uses <code>take</code>. </p>
 <p>This example is a little bit more complex, try to follow the flow of the main thread, and check it with the terminal output!</p>
-<pre><code class="hljs js">import {go, chan, take, put} from <span class="hljs-string">'js-csp'</span>;
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> {go, chan, take, put} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
 <span class="hljs-keyword">let</span> chA = chan();
 <span class="hljs-keyword">let</span> chB = chan();
 
 <span class="hljs-comment">// Process A</span>
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">const</span> receivedFirst = <span class="hljs-keyword">yield</span> take(chA);
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, receivedFirst);
 
@@ -100,7 +100,7 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span
 });
 
 <span class="hljs-comment">// Process B</span>
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">const</span> sendingFirst = <span class="hljs-string">'dog'</span>;
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; SENDING:'</span>, sendingFirst);
   <span class="hljs-keyword">yield</span> put(chA, sendingFirst);
@@ -125,21 +125,21 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span
 <h2 id="example-5-channel-are-queues">Example 5: Channel Are Queues</h2>
 <p>Because channels are queues, when a process takes from a channel, the value will not be available for other processes to take. One process puts, one process takes. </p>
 <p>In the example below you can check that the second process will never print <code>B &gt; RECEIVED: dog</code>, because the value was already taken by the first process.</p>
-<pre><code class="hljs js">import {go, chan, take, put} from <span class="hljs-string">'js-csp'</span>;
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> {go, chan, take, put} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
 <span class="hljs-keyword">let</span> ch = chan();
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">const</span> text = <span class="hljs-keyword">yield</span> take(ch);
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'A &gt; RECEIVED:'</span>, text);
 });
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">const</span> text = <span class="hljs-keyword">yield</span> take(ch);
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'B &gt; RECEIVED:'</span>, text);
 });
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">const</span> text = <span class="hljs-string">'dog'</span>
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'C &gt; SENDING:'</span>, text);
   <span class="hljs-keyword">yield</span> put(ch, text);
@@ -153,11 +153,11 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span
 <h2 id="example-6-buffered-channels-don-t-block-on-put">Example 6: Buffered Channels Don&#39;t Block On Put</h2>
 <p>A channel can be buffered, which means that, for a given number of puts, a <code>put</code> will not make the process pause. </p>
 <p>In the next example, even though no one called <code>take</code>, the first two puts will not block the process. But the channel has a buffer of size 2, so the third put will block the process, until someone takes from it.</p>
-<pre><code class="hljs js">import {go, chan, put, buffers} from <span class="hljs-string">'js-csp'</span>;
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> {go, chan, put, buffers} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
 
 <span class="hljs-keyword">let</span> ch = chan(buffers.fixed(<span class="hljs-number">2</span>));
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value A'</span>);
   <span class="hljs-keyword">yield</span> put(ch, <span class="hljs-string">'value B'</span>);
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'I should print!'</span>);
@@ -178,14 +178,14 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> droppingCh = chan(buffers.dropping(<span class="hljs-number">1</span>));
 <span class="hljs-keyword">let</span> slidingCh  = chan(buffers.sliding(<span class="hljs-number">1</span>));
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value A'</span>);
   <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value B'</span>);
   <span class="hljs-keyword">yield</span> put(droppingCh, <span class="hljs-string">'value C'</span>);
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'DROPPING:'</span>, <span class="hljs-keyword">yield</span> take(droppingCh));
 });
 
-go(<span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-params">()</span> </span>{
+go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
   <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value A'</span>);
   <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value B'</span>);
   <span class="hljs-keyword">yield</span> put(slidingCh, <span class="hljs-string">'value C'</span>);

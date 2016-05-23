@@ -4,11 +4,11 @@
     <title>ES6 Destructuring Improves Readability | Lucas Reis' Blog</title>
     <link rel="stylesheet" href="../styles/reset.css" type="text/css">
     <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
     <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
   </head>
   <body>
@@ -33,12 +33,12 @@
 
 <p>And now we understand that our function gets a cart and retries three times if an error occurs.</p>
 <p>But now let&#39;s take a look at the function declaration:</p>
-<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span><span class="hljs-params">(config)</span> </span>{
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span>(<span class="hljs-params">config</span>) </span>{
   <span class="hljs-comment">// ...</span>
 }</code></pre>
 
 <p>When we look at this declaration, we have no clue as to what parameters the function actually receives. We have to look inside the function code to see which properties of <code>config</code> are being used, which is not optimal. In the recent past, the best way to deal with this was declaring variables in the beginning of the function, which is very verbose:</p>
-<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span><span class="hljs-params">(config)</span> </span>{
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span>(<span class="hljs-params">config</span>) </span>{
   <span class="hljs-keyword">const</span> cartId = config.cartId;
   <span class="hljs-keyword">const</span> retries = config.retries;
   <span class="hljs-comment">// ...</span>
@@ -47,7 +47,7 @@
 <p>So there were two situations: using a usual list of parameters, which compromised the readability of function <em>calls</em>, and using a <code>config</code> object, which compromised the readability of function <em>declarations</em>.</p>
 <p>You see where this is going, right? By using destructuring, we can use an object as a parameter, without these problems:</p>
 <pre><code class="hljs js"><span class="hljs-comment">// declaration</span>
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span><span class="hljs-params">({cartId, retries})</span> </span>{
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getCart</span>(<span class="hljs-params">{cartId, retries}</span>) </span>{
   <span class="hljs-comment">// ...</span>
 }
 

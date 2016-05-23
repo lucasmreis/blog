@@ -4,11 +4,11 @@
     <title>Spreadsheets Are An Awesome Functional Programming Tool | Lucas Reis' Blog</title>
     <link rel="stylesheet" href="../styles/reset.css" type="text/css">
     <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
     <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
   </head>
   <body>
@@ -32,17 +32,17 @@ For the most part, Excel was the main spreadsheet platform that was used by the 
 <p>This time I&#39;m gonna try to handle state by using <em>streams</em>. That means that I&#39;ll model user interactions <em>and</em> application state as streams of information.</p>
 <h2 id="state-and-interaction-as-functions-of-time">State and interaction as functions of time</h2>
 <p>So, let&#39;s start with a basic spec: the user inserts a string, and we have an application state that reacts to it by replicating this input. Let&#39;s call it Foo:</p>
-<pre><code class="hljs">t = given moment <span class="hljs-keyword">in</span> <span class="hljs-tag">time</span>
+<pre><code class="hljs">t = given moment <span class="hljs-keyword">in</span> time
 
-<span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span> = user string <span class="hljs-tag">input</span> <span class="hljs-keyword">in</span> t
+<span class="hljs-keyword">user</span>Foo(t) = <span class="hljs-keyword">user</span> string input <span class="hljs-keyword">in</span> t
 
-<span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = foo state <span class="hljs-keyword">in</span> t</code></pre>
+<span class="hljs-keyword">state</span>Foo(t) = foo <span class="hljs-keyword">state</span> <span class="hljs-keyword">in</span> t</code></pre>
 
 <p>So, what I&#39;m doing here is <em>thinking of both interactions and application state as functions of time</em>. Let&#39;s detail more <code>stateFoo</code>:</p>
-<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = <span class="hljs-function"><span class="hljs-title">f</span><span class="hljs-params">(userFoo(t)</span></span>)</code></pre>
+<pre><code class="hljs">stateFoo(<span class="hljs-name">t</span>) = f(<span class="hljs-name">userFoo</span>(<span class="hljs-name">t</span>))</code></pre>
 
 <p>In this case, the application state will depend only on the current user interaction. To keep it really simple, let&#39;s define:</p>
-<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = <span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span></code></pre>
+<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = <span class="hljs-keyword">user</span>Foo(t)</code></pre>
 
 <p>And now let&#39;s implement it in a spreadsheet!</p>
 <h2 id="modelling-time-in-a-spreadsheet">Modelling time in a spreadsheet</h2>
@@ -53,15 +53,15 @@ For the most part, Excel was the main spreadsheet platform that was used by the 
 <p><img src="../assets/stateFoo.png" alt="Simple stateFoo(t)"></p>
 <p>That function (&quot;formula&quot; in spreadsheet) is repeated for every line, so every cell in the <code>stateFoo</code> column equals the corresponding cell from the same line in the <code>userFoo</code> column.</p>
 <p>That was really simple and easy! Now let&#39;s implement a more interesting spec. Let the application state be the <em>last</em> Foo that was input by the user. Now, <code>stateFoo</code> does not only depend on <code>userFoo</code>, but it also depends on the past value of <code>stateFoo</code> itself!</p>
-<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> = f(
-  <span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span>,
-  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)
+<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = f(
+  <span class="hljs-keyword">user</span>Foo(t),
+  <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>))
 
-<span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
-  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span> is blank)
-    return <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
-  <span class="hljs-keyword">else</span>
-    return <span class="hljs-function"><span class="hljs-title">userFoo</span><span class="hljs-params">(t)</span></span></code></pre>
+<span class="hljs-keyword">state</span>Foo(t) =
+  if (<span class="hljs-keyword">user</span>Foo(t) is blank)
+    return <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>)
+  else
+    return <span class="hljs-keyword">user</span>Foo(t)</code></pre>
 
 <p>So, if the user inputs something, <code>stateFoo</code> changes. If the user does not input anything, <code>stateFoo</code> repeats its last value. We can see it in the spreadsheet:</p>
 <p><img src="../assets/stateFoo2.png" alt="stateFoo(t) with memory"></p>
@@ -76,28 +76,28 @@ I want the state to be a string that&#39;s the concatenation of every past user 
 <p>Let&#39;s recap: a stream is a function of time; given time = <code>t</code>, a stream would have the value <code>f(t)</code>. We are modelling user input as streams. Application state would then be transformations of user input streams.</p>
 <p>One nice property of streams is that they can also be transformations of other streams, and past values of themselves. Let&#39;s illustrate this with another application state: the Bars.</p>
 <p>The Bars work the same way as the Foos, but with one additional spec: the user can only add a new Bar after the Foo <code>requiredFoo</code> is input:</p>
-<pre><code class="hljs">stateBar<span class="hljs-comment">(t)</span> = f<span class="hljs-comment">(
-  userBar(t)</span>,
-  stateBar<span class="hljs-comment">(t - 1)</span>,
-  stateFoo<span class="hljs-comment">(t)</span>);</code></pre>
+<pre><code class="hljs"><span class="hljs-keyword">state</span>Bar(t) = f(
+  <span class="hljs-keyword">user</span>Bar(t),
+  <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>),
+  <span class="hljs-keyword">state</span>Foo(t));</code></pre>
 
 <p>Back to our spreadsheet, let&#39;s implement the user interactions streams again:</p>
 <p><img src="../assets/stateBar.png" alt="userBar(t)"></p>
 <p>The interaction between Foos and Bars will be done with the <code>hasRequiredFoo</code> stream:</p>
-<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span> =
-  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> contains <span class="hljs-string">"requiredFoo"</span></code></pre>
+<pre><code class="hljs">hasRequiredFoo(t) =
+  <span class="hljs-keyword">state</span>Foo(t) contains <span class="hljs-string">"requiredFoo"</span></code></pre>
 
 <p>For simplicity, let&#39;s assume <code>contains</code> means &quot;has substring <code>&quot;requiredFoo&quot;</code>&quot;:</p>
 <p><img src="../assets/stateBar2.png" alt="hasRequiredFoo(t)"></p>
 <p>And <code>stateBar</code> logic would be:</p>
-<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
-  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span> is blank or
-      not <span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span>)
-    return <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
-  <span class="hljs-keyword">else</span>
+<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) =
+  if (<span class="hljs-keyword">user</span>Bar(t) is blank or
+      not hasRequiredFoo(t))
+    return <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>)
+  else
     return concat(
-      <span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span>,
-      <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)</code></pre>
+      <span class="hljs-keyword">user</span>Bar(t),
+      <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>))</code></pre>
 
 <p><img src="../assets/stateBar3.png" alt="stateBar(t)">
 <em>(in the above image, the &quot;C&quot; column refers to userBar)</em></p>

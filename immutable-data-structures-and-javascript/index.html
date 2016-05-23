@@ -4,11 +4,11 @@
     <title>Immutable Data Structures and Javascript | Lucas Reis' Blog</title>
     <link rel="stylesheet" href="../styles/reset.css" type="text/css">
     <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
     <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
   </head>
   <body>
@@ -24,13 +24,13 @@
         <div class="lead">Using Mori to bring simplicity to state handling</div>
         <p>One of the most difficult - perhaps <em>the</em> most difficult - issue in a complex front end application is state handling. I&#39;ve written before about storing <a href="http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular/">all application state</a> in a <a href="http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular-with-baobab/">single, centralized object</a>, and now I&#39;ll write about using <em>immutable data structures</em>.</p>
 <p>I found that working with immutable data structures has actually made implementation <em>much simpler</em>! How can a limitation make something more powerful, you may be asking yourself? Follow me and I&#39;ll explain.</p>
-<h2 id="why-did-i-try-this-immutable-thing">Why did I try this immutable thing</h2>
+<p>##Why did I try this immutable thing</p>
 <p>I&#39;ve been watching a lot of Rich Hickey videos lately, and everything this guy says makes a lot of sense. According to Hickey, an immutable collection is not only an &quot;array that cannot be modified&quot;, but it is an <em>array that can be treated as a value</em>.</p>
 <p>When we have two Numbers or two Strings, and we want to know if they are equal, we simply ask &quot;are they equal?&quot; by using the <code>===</code> operator. That&#39;s it - <code>2</code> always equals <code>2</code>, and if <code>a = 2</code> and <code>b = 2</code> we can say for sure that <code>a === b</code>. The same would be true for other values like <code>&#39;this string&#39; === &#39;this string&#39;</code>.</p>
 <p>But, if we have two arrays or objects, <code>===</code> does not work the same way. It works by comparing references, so <code>[1, 2, 3] === [1, 2, 3]</code> is false, because they are actually <em>two different collections that happen to have the same values</em>.</p>
 <p>When working with immutable collections and objects, they are compared just like values. If they have the same elements, they are the same collection. Simple, isn&#39;t it? :)</p>
 <p>This is possible due to smart algorithms and data structure implementation made by libraries like <a href="http://swannodette.github.io/mori/">Mori</a> and <a href="https://facebook.github.io/immutable-js/">Immutable.js</a>. I will not go into detail here, but here&#39;s what we need to know regarding these data structures:</p>
-<pre><code class="hljs js">import Mori from <span class="hljs-string">'mori'</span>;
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> Mori <span class="hljs-keyword">from</span> <span class="hljs-string">'mori'</span>;
 
 <span class="hljs-comment">// a vector is an example of</span>
 <span class="hljs-comment">// immutable data structure</span>
@@ -53,7 +53,7 @@ mori.equals(a, mori.vector(<span class="hljs-number">1</span>, <span class="hljs
 <p><strong>Question 1.</strong> Are the objects cloned every time I apply a transformation? <strong>No.</strong> And that&#39;s a key part of the reason why the  immutable data structures&#39; performance is almost the same as their mutable counterparts. These libraries are implemented so that a transformed object <em>shares as much memory as possible</em> with the original object. (<a href="http://hypirion.com/musings/understanding-persistent-vector-pt-1">more details here</a>)</p>
 <p><strong>Question 2.</strong> Does that mean that storing transformed versions of objects use less memory? <strong>Yes!</strong> If we have an one million elements conventional array that occupies 1GB of memory, clone it, append an element, and save both versions, we&#39;ll use 2GB of memory. If we use an immutable vector and <code>conj</code>, storing both versions will not occupy much more space than storing only one vectors.</p>
 <p>Pause a little bit to think about this last property of immutable objects, and think of how much awesomeness this &quot;limitation&quot; could bring to your code. :)</p>
-<h2 id="back-to-application-state">Back to application state</h2>
+<p>##Back to application state</p>
 <p>The application will only consist of two lists, Foos and Bars. The user can add a new Foo or a new Bar using the app inputs. Foos and Bars are unique.</p>
 <p>Let&#39;s do it step by step:</p>
 <ul>
@@ -70,7 +70,7 @@ mori.equals(a, mori.vector(<span class="hljs-number">1</span>, <span class="hljs
 <span class="hljs-keyword">let</span> history = vector(initialValue);
 
 <span class="hljs-comment">// get current state</span>
-export <span class="hljs-keyword">const</span> currentState = () =&gt; peek(history);</code></pre>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> currentState = () =&gt; peek(history);</code></pre>
 
 <ul>
 <li>To react to changes in the state, we register listeners. They consist of two functions: <code>listenTo</code>, which specifies a part/transformation of the state that will be listened to, and a <code>callback</code> to run if the state changes:</li>
@@ -78,7 +78,7 @@ export <span class="hljs-keyword">const</span> currentState = () =&gt; peek(hist
 <pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
 <span class="hljs-keyword">let</span> listeners = vector();
 
-export <span class="hljs-keyword">const</span> listen = (listenTo, callback) =&gt; {
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> listen = (listenTo, callback) =&gt; {
   listeners = conj(listeners, hashMap(
     <span class="hljs-string">'listenTo'</span>, listenTo,
     <span class="hljs-string">'callback'</span>, callback
@@ -119,7 +119,7 @@ listen(prop(<span class="hljs-string">'bars'</span>), renderSomething);</code></
   }
   };
 
-export <span class="hljs-keyword">const</span> update = fn =&gt; {
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> update = fn =&gt; {
   <span class="hljs-keyword">const</span> previousState = peek(history);
 
   <span class="hljs-comment">// calculate new state</span>
@@ -141,7 +141,7 @@ export <span class="hljs-keyword">const</span> update = fn =&gt; {
 <li>Good bonus: undo!</li>
 </ul>
 <pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
-export <span class="hljs-keyword">const</span> undo = () =&gt; {
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> undo = () =&gt; {
   <span class="hljs-keyword">if</span> (count(history) &gt; <span class="hljs-number">1</span>) {
 
     <span class="hljs-keyword">const</span> previousState =
@@ -162,7 +162,7 @@ export <span class="hljs-keyword">const</span> undo = () =&gt; {
 <li>Views can be rendered by functions that take the state value as input. These render functions can also be used as callbacks:</li>
 </ul>
 <pre><code class="hljs js"><span class="hljs-comment">// render.js</span>
-export <span class="hljs-keyword">let</span> renderList = elem =&gt; seq =&gt;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">let</span> renderList = elem =&gt; seq =&gt;
   elem.innerHTML =
     reduce(makeLi, <span class="hljs-string">'&lt;ul&gt;'</span>, seq) + <span class="hljs-string">'&lt;/ul&gt;'</span>;
 
@@ -187,7 +187,7 @@ listen(prop(<span class="hljs-string">'foos'</span>),
 <span class="hljs-keyword">const</span> conjItem = item =&gt; coll =&gt;
   conj(coll, item);
 
-export <span class="hljs-keyword">const</span> addFoo = foo =&gt; state =&gt;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> addFoo = foo =&gt; state =&gt;
   updateIn(state, [<span class="hljs-string">'foos'</span>], conjItem(foo));
 
 <span class="hljs-comment">// index.js</span>
@@ -212,11 +212,11 @@ addFooElement.onclick = () =&gt;
 <li>State is changed by calling the update function.</li>
 <li>User interactions or any other event can call the update function.</li>
 </ul>
-<h2 id="and-what-did-we-gain-by-using-immutable-data-structures-">And what did we gain by using immutable data structures?</h2>
+<p>##And what did we gain by using immutable data structures?</p>
 <p>My first impression was: it&#39;s simple. After getting used to the Mori functions, it is very straightforward to manipulate the data structures. And the fact that Mori handles memory and performance very well makes the code very direct too.</p>
 <p>Immutable persistent data structures make comparison very cheap, and it proved to be very important to the update function. Memory sharing is also an amazing feature that practically gave &quot;undo&quot; for free.</p>
 <p>So, in the end immutable data structures made it easy, explicit and performant to implement application state as series of values.</p>
-<h2 id="next-steps">Next steps</h2>
+<p>##Next steps</p>
 <p>I chose Mori because it&#39;s an interface for clojurescript native data structures. <a href="http://clojure.org/">Clojure</a> is an amazing language, and I&#39;m starting to study and experiment with it now.</p>
 <p>Staying in javascript, it would also be interesting to get a look at <a href="https://facebook.github.io/immutable-js/">immutable.js</a>. It&#39;s maintained by facebook, and seems to play very well with React.</p>
 

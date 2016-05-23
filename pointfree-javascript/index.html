@@ -4,11 +4,11 @@
     <title>Pointfree Javascript | Lucas Reis' Blog</title>
     <link rel="stylesheet" href="../styles/reset.css" type="text/css">
     <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
     <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
   </head>
   <body>
@@ -26,7 +26,7 @@
 <h2 id="one-step-back">One Step Back</h2>
 <p>First, let me show the standard imperative way to extract information from an array - the for loop:</p>
 <pre><code class="hljs js"><span class="hljs-comment">// imperative style</span>
-<span class="hljs-keyword">var</span> getAdminEmails = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(users)</span> </span>{
+<span class="hljs-keyword">var</span> getAdminEmails = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">users</span>) </span>{
   <span class="hljs-keyword">var</span> emails = [];
   <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; users.length; i++) {
     <span class="hljs-keyword">if</span> (users[i].role === <span class="hljs-string">'admin'</span>) {

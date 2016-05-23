@@ -4,11 +4,11 @@
     <title>Should We Leave Javascript In Front End Programming? | Lucas Reis' Blog</title>
     <link rel="stylesheet" href="../styles/reset.css" type="text/css">
     <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.0/styles/default.min.css">
     <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
   </head>
   <body>
@@ -41,11 +41,11 @@
 
 <p>This is a good ES5 / Ramda / Angular piece of code. (<code>pCompose</code> and <code>pCatch</code> are not from Ramda library, but they are pretty self explanatory :) ).</p>
 <p>That piece of code written today could look like:</p>
-<pre><code class="hljs js"><span class="hljs-keyword">const</span> onPress = async id =&gt; {
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> onPress = <span class="hljs-keyword">async</span> id =&gt; {
   MetricService.logEvent(<span class="hljs-string">'payment:submit'</span>, id)
   <span class="hljs-keyword">const</span> cartReq = PaymentApiService.requestObj(id)
   <span class="hljs-keyword">try</span> {
-    <span class="hljs-keyword">const</span> { data } = await axios(cartReq)
+    <span class="hljs-keyword">const</span> { data } = <span class="hljs-keyword">await</span> axios(cartReq)
     StateService.change(<span class="hljs-string">'payment'</span>, data)
     MetricService.logEvent(<span class="hljs-string">'payment:success'</span>, data)
   } <span class="hljs-keyword">catch</span> (err) {
