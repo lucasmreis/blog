@@ -4,11 +4,379 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Thu, 26 May 2016 15:37:07 GMT</lastBuildDate>
+        <lastBuildDate>Fri, 10 Jun 2016 02:05:43 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[Learning Elm, part 3]]></title>
+            <description><![CDATA[<p><em>This is part 3 of a series. Click here to read <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">part 1</a> and <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">part 2</a>.</em></p>
+<p>It&#39;s time for some interaction with APIs! <em>Now</em> we can say that we&#39;re building an actual web application, and we&#39;ll really be putting Elm to the test.</p>
+<p>So, why not implement a Star Wars themed app?</p>
+<h2 id="spec">Spec</h2>
+<p>The spec is simple: a Star Wars character &quot;card&quot; appears on the left, and corresponding film &quot;cards&quot;, representing the films of the character, are shown on the right.</p>
+<p>Clicking on a film &quot;card&quot; displays it on the left, and a list of the characters that appear in the film are shown on the right. And it goes on.</p>
+<p><img src="../assets/swspec.jpg" alt="Characters And Films"></p>
+<p><em>Characters cards will be yellow, and film cards will be blue. By clicking on a card, it changes from one screen to the other.</em></p>
+<h2 id="film-and-character-components">Film And Character Components</h2>
+<p>I&#39;ll build both the Character and Film components in separate files. This is the initial implementation:</p>
+<pre><code class="hljs">-- Character<span class="hljs-selector-class">.elm</span>
+
+type alias Model =
+    { name : String
+    }
+
+
+view model =
+    <span class="hljs-selector-tag">div</span> [ mainStyle ]
+        [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]
+
+-- imports and styles omitted <span class="hljs-keyword">for</span> brevity...</code></pre>
+<pre><code class="hljs">-- Film<span class="hljs-selector-class">.elm</span>
+
+type alias Model =
+    { title : String
+    , episode_id : Int
+    }
+
+
+view model =
+    let
+        chapter =
+            toString model<span class="hljs-selector-class">.episode_id</span>
+    <span class="hljs-keyword">in</span>
+        <span class="hljs-selector-tag">div</span> [ mainStyle ]
+            [ <span class="hljs-selector-tag">div</span> [ numberStyle ]
+                [ text chapter ]
+            , <span class="hljs-selector-tag">div</span> [ nameStyle ]
+                [ text model<span class="hljs-selector-class">.title</span> ]
+            ]</code></pre>
+
+<p>If these examples do not feel straightforward to you, refer back to <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">Part 2</a>.</p>
+<p>To preview the views and fine tune the CSS, I&#39;ll create the <code>Main.elm</code> file and run Elm Reactor pointing to it:</p>
+<pre><code class="hljs">main =
+    Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.beginnerProgram</span>
+        { model = model
+        , view = view
+        , update = update
+        }
+
+
+update model =
+    model
+
+
+sampleCh : Character<span class="hljs-selector-class">.Model</span>
+sampleCh =
+    { name = <span class="hljs-string">"Luke Skywalker"</span>
+    }
+
+
+sampleFilm : Film<span class="hljs-selector-class">.Model</span>
+sampleFilm =
+    { title = <span class="hljs-string">"A New Hope"</span>
+    , episode_id = <span class="hljs-number">4</span>
+    }
+
+
+model =
+    ( sampleCh, sampleFilm )
+
+
+view ( ch, film ) =
+    <span class="hljs-selector-tag">div</span> []
+        [ Character<span class="hljs-selector-class">.view</span> ch
+        , Film<span class="hljs-selector-class">.view</span> film
+        ]</code></pre>
+
+<p>That should render a sample component of each. Now it&#39;s time to start modeling our application.</p>
+<p><img src="../assets/swsample.png" alt="Sample Character And Film"></p>
+<h2 id="the-application-model">The Application Model</h2>
+<p>Our spec specifies two &quot;application states&quot;: a character with a list of films, or a film with a list of characters. A natural model for this spec would be:</p>
+<pre><code class="hljs"><span class="hljs-comment">-- MODEL</span>
+<span class="hljs-comment">-- Aliases added for reading simplicity</span>
+
+
+<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">C</span> =
+    <span class="hljs-type">Character</span>.<span class="hljs-type">Model</span>
+
+
+<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">F</span> =
+    <span class="hljs-type">Film</span>.<span class="hljs-type">Model</span>
+
+
+<span class="hljs-keyword">type</span> <span class="hljs-type">Model</span>
+    = <span class="hljs-type">FilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
+    | <span class="hljs-type">CharactersFromFilm</span> <span class="hljs-type">F</span> (<span class="hljs-type">List</span> <span class="hljs-type">C</span>)</code></pre>
+To build the view, I will once again define a sample model:
+
+<pre><code class="hljs"><span class="hljs-attr">model </span>=<span class="hljs-string">
+    FilmsFromCharacter sampleCh
+        [ sampleFilm
+        , sampleFilm
+        , sampleFilm
+        ]</span></code></pre>
+And then, I'll use it to define the view, while refreshing Elm Reactor:
+<pre><code class="hljs">view model =
+    case model of
+        FilmsFromCharacter c fs -&gt;
+            <span class="hljs-selector-tag">div</span> [ twoColumns ]
+                [ Character<span class="hljs-selector-class">.view</span> c
+                , <span class="hljs-selector-tag">div</span> [] (List<span class="hljs-selector-class">.map</span> Film<span class="hljs-selector-class">.view</span> fs)
+                ]
+
+        CharactersFromFilm f cs -&gt;
+            <span class="hljs-selector-tag">div</span> [ twoColumns ]
+                [ Film<span class="hljs-selector-class">.view</span> f
+                , <span class="hljs-selector-tag">div</span> [] (List<span class="hljs-selector-class">.map</span> Character<span class="hljs-selector-class">.view</span> cs)
+                ]
+
+
+twoColumns =
+    style [ ( <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ) ]</code></pre>
+Just change the sample and it works very well!
+
+So, as a next step, I want to make the application retrieve actual information from the API. This is where things are different from [part 2](http://lucasmreis.github.io/blog/learning-elm-part-2/), because now our update function not only deals with the model, it also deals with *Commands*.
+
+## The Command
+
+Because this scenario is much more complex, instead of using the  `beginnerProgram` , we'll use the `program` function. It's a little different:
+
+<pre><code class="hljs">main =
+    Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.program</span>
+        { init = ( model, Cmd<span class="hljs-selector-class">.none</span> )
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+-- (...)
+
+update msg model =
+    ( model, Cmd<span class="hljs-selector-class">.none</span> )
+
+-- (...)
+
+subscriptions x =
+    Sub.<span class="hljs-attribute">none</span></code></pre>
+
+<p>So, now instead of only a model, we have <code>init</code>. It is a tuple with a model to be rendered immediately and a command that will fire the update function in the future. Another thing to point out is that the update function also returns this same combination.  Subscriptions are listeners that can also fire the update function.</p>
+<p>Our next step is to build     <code>init</code>.  First, the app needs to get an initial character from the API and render it on the screen. Then, it has to render the films corresponding to that character. The http request will be the command, and I need an application state to wait for the request to complete.</p>
+<p><em>A Key Takeaway:</em> Elm architecture is designed in such a way that it showed me how I completely missed an important screen in my initial design of the page. At this point, it&#39;s clear to me that I need an <em>initial loading screen</em> :)</p>
+<pre><code class="hljs"><span class="hljs-keyword">type</span> Model
+    = InitialScreen
+    | FilmsFromCharacter C (<span class="hljs-built_in">List</span> F)
+    | CharactersFromFilm F (<span class="hljs-built_in">List</span> C)
+
+(<span class="hljs-attr">...</span>)
+
+view model =
+    <span class="hljs-keyword">case</span> model of
+        InitialScreen -&gt;
+            simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
+
+(<span class="hljs-attr">...</span>)
+
+simpleMessage t =
+    div <span class="hljs-meta">[</span> simpleMessageStyle <span class="hljs-meta">]</span> <span class="hljs-meta">[</span> text t <span class="hljs-meta">]</span></code></pre>
+
+<p>The elm-http <code>get</code> function receives a &quot;Decoder&quot; and a url. The decoder is the function that will convert the json response to a character model. So it makes sense that it&#39;s inside the Character module, right?</p>
+<p>Another thing that we realize at this point is that <em>I&#39;ll have to have the list of the films the character was in!</em> Of course. So let&#39;s change the model to also store the films&#39; urls that&#39;ll be in the character card returned by the API:</p>
+<pre><code class="hljs"><span class="hljs-comment">-- Character.elm</span>
+<span class="hljs-keyword">import</span> Json.Decode <span class="hljs-keyword">exposing</span> (<span class="hljs-type">Decoder</span>, succeed, string, list, int, (:=))
+<span class="hljs-keyword">import</span> Json.Decode.Extra <span class="hljs-keyword">exposing</span> ((|:))
+
+(...)
+
+<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">Model</span> =
+    { name : <span class="hljs-type">String</span>
+    , films : <span class="hljs-type">List</span> <span class="hljs-type">String</span>
+    }
+
+
+<span class="hljs-title">characterDecoder</span> : <span class="hljs-type">Decoder</span> <span class="hljs-type">Model</span>
+<span class="hljs-title">characterDecoder</span> =
+    succeed <span class="hljs-type">Model</span>
+        |: (<span class="hljs-string">"name"</span> := string)
+        |: (<span class="hljs-string">"films"</span> := list string)</code></pre>
+The `|:` comes from the `elm-community/elm-json-extra` package, and feels like a better way to parse a json than the standard library.
+
+So now I have the decoder. Let's go back to Main and implement the `getCharacter` command for init:
+
+<pre><code class="hljs">import Http
+
+(...)
+
+getCharacter url =
+    Http<span class="hljs-selector-class">.get</span> Character<span class="hljs-selector-class">.characterDecoder</span> url</code></pre>
+
+<p>As soon as we define the <code>init</code> as <code>init = ( InitialScreen, getCharacter &quot;http://swapi.co/api/people/1/&quot; )</code> we&#39;ll receive the following message from the compiler:</p>
+<pre><code class="hljs">The argument to <span class="hljs-keyword">function</span> <span class="hljs-title">`program`</span> <span class="hljs-keyword">is</span> causing a mismatch. - <span class="hljs-keyword">Function</span> <span class="hljs-title">`program`</span> <span class="hljs-keyword">is</span> expecting the argument to be:
+
+    { init : ( <span class="hljs-type">Model</span>, Cmd a )
+
+(...)
+
+But it <span class="hljs-keyword">is</span>:
+
+    { init : ( <span class="hljs-type">Model</span>, Platform.<span class="hljs-keyword">Task</span> Http.Error Character.Model )
+
+(...)</code></pre>
+That means `getCharacter` is not returning a command, it's returning a `Task`. A task is actually a *representation* of an action that has not happened, and may or may not fail. To run the task, we need to feed it to the `Task.perform` function:
+
+<pre><code class="hljs">getCharacter url =
+    url
+        <span class="hljs-string">|&gt; Http.get Character.characterDecoder</span>
+        <span class="hljs-string">|&gt; Task.perform FetchFail LoadFilms</span></code></pre>
+
+<p>Now the task will run, and it&#39;s going to return a <code>Msg</code> of type <code>FetchFail Http.Error</code> if it fails, or a <code>LoadFilms Character.Model</code> if it succeeds. These two types should be part of the <code>Msg</code> that is sent to the update function:</p>
+<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg
+    </span>= LoadFilms C
+    | FetchFail Http.Error</code></pre>
+
+<p>We also need to handle those two messages in our update function. Elm architecture, once more, reminds us that we haven&#39;t planned all the possible application states: we need an error state, and a &quot;I have a character and I&#39;m waiting for the films&quot; state:</p>
+<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Model</span>
+    = <span class="hljs-type">InitialScreen</span>
+    | <span class="hljs-type">ErrorScreen</span>
+    | <span class="hljs-type">WaitingForFilms</span> <span class="hljs-type">C</span>
+    | <span class="hljs-type">FilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
+    | <span class="hljs-type">CharactersFromFilm</span> <span class="hljs-type">F</span> (<span class="hljs-type">List</span> <span class="hljs-type">C</span>)
+
+
+<span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
+    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
+    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span>
+
+
+<span class="hljs-title">update</span> msg model =
+    <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
+        <span class="hljs-type">FetchFail</span> _ -&gt;
+            ( <span class="hljs-type">ErrorScreen</span>, <span class="hljs-type">Cmd</span>.none )
+
+        <span class="hljs-type">LoadFilms</span> c -&gt;
+            ( <span class="hljs-type">WaitingForFilms</span> c, <span class="hljs-type">Cmd</span>.none )
+
+
+<span class="hljs-title">view</span> model =
+    <span class="hljs-keyword">case</span> model <span class="hljs-keyword">of</span>
+        <span class="hljs-type">InitialScreen</span> -&gt;
+            simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
+
+        <span class="hljs-type">ErrorScreen</span> -&gt;
+            simpleMessage <span class="hljs-string">"Sorry, there was an error. Please try again!"</span>
+
+        <span class="hljs-type">WaitingForFilms</span> c -&gt;
+            div [ twoColumns ]
+                [ <span class="hljs-type">Character</span>.view c
+                , simpleMessage <span class="hljs-string">"Loading Films..."</span>
+                ]
+
+(...)</code></pre>
+
+<h2 id="good-tools-nudge-you-in-the-right-direction">Good Tools Nudge You in the Right Direction</h2>
+<p>I&#39;d like to express once again how awesome Elm is to have pointed out that alternative application states were needed. I &quot;naively&quot; thought only two screens were needed, and in reality I needed five :)</p>
+<p>The concept of a tool &quot;nudging&quot; you to better practices was first introduced to me in a Rich Hickey, inventor of Clojure, video (any video of him is well worth your time!).</p>
+<p>This also led me to conclude that Javascript is always nudging us in the <em>wrong</em> direction. Rich Hickey, for example, made Clojure so that, if you are in a hurry, you can work with immutable variables. You have to go out of your way to mutate values using that tool, and that&#39;s good, because mutations are a big source of unnecessary complexity.</p>
+<p>Compare that to Javascript: it&#39;s always easier to mutate everything, change variables outside the function scope, write functions that are impure... So that means that you are nudged <em>towards application complexity</em> when using Javascript!</p>
+<p>Elm, on the other hand, is always nudging me towards writing good code. I feel not only that I&#39;m writing code in a clean way, as I do with Clojure, but I&#39;m also building <em>the whole application</em> in a clean and complete way. I feel I&#39;m building every view necessary for every state the application will be in, and every error will be properly treated.</p>
+<p>That&#39;s an awesome feeling. :)</p>
+<h2 id="almost-finishing-our-application-">Almost Finishing Our Application...</h2>
+<p>We are almost there! First of all let&#39;s implement the function that, given a character, it gets all the corresponding films.</p>
+<p><em>Important:</em> We&#39;ll use the <code>Task.sequence</code> to batch all the tasks, but this is definitely not the best way to do it; these requests could and should be parallel. I invite you to suggest a better way to do it in the comments!</p>
+<pre><code class="hljs"><span class="hljs-comment">-- Film.elm</span>
+
+<span class="hljs-keyword">type</span> <span class="hljs-type">alias </span>Model =
+    { title : <span class="hljs-type">String</span>
+    , episode_id : <span class="hljs-type">Int</span>
+    , characters : <span class="hljs-type">List</span> String
+    }
+
+
+filmDecoder : <span class="hljs-type">Decoder</span> Model
+filmDecoder =
+    succeed Model
+        |: (<span class="hljs-string">"title"</span> := string)
+        |: (<span class="hljs-string">"episode_id"</span> := int)
+        |: (<span class="hljs-string">"characters"</span> := list string)</code></pre>
+<pre><code class="hljs"><span class="hljs-comment">-- Main.elm</span>
+<span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
+    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
+    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span>
+    | <span class="hljs-type">ToFilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
+
+<span class="hljs-title">update</span> msg model =
+    <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
+
+(...)
+
+        <span class="hljs-type">LoadFilms</span> c -&gt;
+            ( <span class="hljs-type">WaitingForFilms</span> c, getFilmsFromCharacter c )
+
+        <span class="hljs-type">ToFilmsFromCharacter</span> c fs -&gt;
+            ( <span class="hljs-type">FilmsFromCharacter</span> c fs, <span class="hljs-type">Cmd</span>.none )
+
+(...)</code></pre>
+
+<p>There&#39;s only one detail missing from our components: they need to produce a message when clicked. I implemented it so each component would send a message with its model, so the update function would be able to use the list of films&#39; or characters&#39; urls:</p>
+<pre><code class="hljs">-- Character<span class="hljs-selector-class">.elm</span>
+import Html<span class="hljs-selector-class">.Events</span> exposing (onClick)
+
+(...)
+
+view : Model -&gt; Html<span class="hljs-selector-class">.Html</span> Model
+view model =
+    <span class="hljs-selector-tag">div</span>
+        [ onClick model
+        , mainStyle
+        ]
+        [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]</code></pre>
+
+<p>The type signature leaves it very clear: our view receives a Model, and returns an Html that produces messages of type Model. Good.</p>
+<p>Now, when we use those views in our Main view, we need to add information to them in order to produce a valid message. For instance, if we click a character, it will send a message of type <code>Character.Model</code> (or <code>C</code>). But our application will only understand a message of type <code>LoadFilms C</code>. So we need to call the Character view function and <em>map</em> the message it sends with the <code>LoadFilms</code> tag. It&#39;s easier to demonstrate than to explain:</p>
+<pre><code class="hljs">msgMap =
+    <span class="hljs-type">Html</span>.<span class="hljs-type">App</span>.<span class="hljs-built_in">map</span>
+
+view model =
+    <span class="hljs-keyword">case</span> model of
+
+(...)
+
+    <span class="hljs-type">WaitingForFilms</span> <span class="hljs-built_in">c</span> -&gt;
+            div [ twoColumns ]
+                [ msgMap <span class="hljs-type">LoadFilms</span> (<span class="hljs-type">Character</span>.view <span class="hljs-built_in">c</span>)
+                , simpleMessage <span class="hljs-string">"Loading Films..."</span>
+                ]
+
+    <span class="hljs-type">FilmsFromCharacter</span> <span class="hljs-built_in">c</span> fs -&gt;
+            <span class="hljs-keyword">let</span>
+                filmsViews =
+                    fs
+                        |&gt; <span class="hljs-type">List</span>.<span class="hljs-built_in">map</span> <span class="hljs-type">Film</span>.view
+                        |&gt; <span class="hljs-type">List</span>.<span class="hljs-built_in">map</span> (msgMap <span class="hljs-type">LoadCharacters</span>)
+            <span class="hljs-keyword">in</span>
+                div [ twoColumns ]
+                    [ msgMap <span class="hljs-type">LoadFilms</span> (<span class="hljs-type">Character</span>.view <span class="hljs-built_in">c</span>)
+                    , div [] filmsViews
+                    ]
+
+(...)</code></pre>
+
+<p>From now on, it&#39;s a &quot;complete the puzzle&quot; game. Just fill in the blanks asked by the compiler one by one, and the application will be ready and working.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>I can see two clear next steps for the app: making the requests parallel, and using animations for the transitions between the application states. As I said before, any ideas are welcome.</p>
+<p><a href="http://lucasmreis.github.io/star-wars-elm/">Here&#39;s the working app</a>!</p>
+<p><a href="https://github.com/lucasmreis/learning-elm/tree/master/part-3/app/elm">And here&#39;s the complete code</a>.</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>Elm is awesome. The fact that the compiler asks you to take care of the union types in a pattern match, makes it very difficult to forget something. Actually, after compiling the code, the application worked perfectly on the first shot. I was looking for reliability, and I found it!</p>
+<p>There&#39;s a new component that I was not aware of before, that became clearer with this new exercise: the psychological impact of a strong compiler. Whenever your code is not compilable, solving issues feels like <em>solving puzzles</em>, and actually <em>building something</em>  And, every time it compiles and we refresh the Elm Reactor window, we see <em>something working</em>.</p>
+<p>With Javascript I feel like things are always breaking and I have to fi them little by little. Runtime errors generate frustration, and even when we solve them, they still bring thoughts like <em>did I really stop it from breaking? Will it break in production in some unexpected way? Did I really deal with all the possible cases?</em></p>
+<p>Of course this is a personal observation, but I felt I should note it in case it resonates with other people facing the same struggles.</p>
+<p>So, that was Part 3. Feel free to post any questions you might have!</p>
+]]></description>
+            <guid isPermaLink="false">Learning Elm, part 3</guid>
+            <pubDate>Thu, 09 Jun 2016 00:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Learning Elm, part 2]]></title>
             <description><![CDATA[<p><em>This is part 2 of a series. You can read <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">part 1 here</a>.</em></p>
