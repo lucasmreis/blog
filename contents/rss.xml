@@ -4,7 +4,7 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Fri, 10 Jun 2016 02:05:43 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 19 Jun 2016 12:33:44 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
@@ -512,7 +512,7 @@ init <span class="hljs-keyword">str</span> =
 
 (...)
 
-view <span class="hljs-selector-tag">address</span> model =
+view model =
   let
     card =
       CardParser<span class="hljs-selector-class">.spellCard</span> model
