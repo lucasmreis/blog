@@ -4,11 +4,218 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Sun, 19 Jun 2016 12:33:44 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 25 Sep 2016 15:53:52 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[Does Elm Harmonize With F#?]]></title>
+            <description><![CDATA[<p>After <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">experimenting with Elm</a>, I was hooked. I could feel that working with a smart type system brought both <em>reliability</em>, in the sense of &quot;it does what I want it to do&quot;, and <em>safety</em>, in the sense of &quot;it does not have bugs&quot;.</p>
+<p>Elm&#39;s main focus is the front end (<a href="https://github.com/ElmCast/elm-node">even though</a> <a href="https://github.com/Fresheyeball/elm-http-server">some work</a> <a href="https://github.com/eeue56/servelm">is being done</a>), so a natural next question could be <em>What would using an Elm-like language in the server be like</em>? And by &quot;Elm-like&quot; I mean a language with immutable data structures as default, encouraging expressions over statements, and of course, having those cool discriminated unions we all learned to love. :)</p>
+<p>After doing some quick research, my finalists were Haskell, Ocaml and F#. A former coworker was always saying good things about F#, and after seeing things like <a href="http://fsharp.github.io/FSharp.Data/">FSharp.Data</a>, <a href="https://developer.xamarin.com/guides/cross-platform/fsharp/fsharp_support_overview/">Xamarin</a> and <a href="https://fsharpforfunandprofit.com/">this amazing blog</a>, I decided to go with F#.</p>
+<h2 id="setting-up">Setting Up</h2>
+<p>The first week with F# was not easy. I was a little clueless about where to get started since I don&#39;t have a Windows machine. So, I downloaded Xamarin Studio, and used it for a couple of days. It&#39;s a good IDE with a so so editor, so I started looking for some alternatives.</p>
+<p>Every F# project needs a <code>*.fsproj</code> config file, which is a big messy XML that is not meant to be changed by &quot;human beings&quot; (as opposed to the simpler <code>package.json</code> from Node or <code>elm-package.json</code> from Elm). But it turns out that the F# open source community has built some nice tools to deal with it. Summing up, install the <a href="http://ionide.io/">Ionide</a> extension to VS Code or Atom, and everything will be easier.</p>
+<p>My programming workflow then became: start coding something, and &quot;send&quot; the code little by little to the REPL. Define some types, send to the REPL. Write a function, send to the REPL. Write some use cases, send to the REPL. It&#39;s the exact same workflow I used with Clojure, and it leads to a lot of early feedback and agility from the very beginning.</p>
+<p>With F# up and running, I decided to implement a simple project to learn the language.</p>
+<h2 id="the-project">The Project</h2>
+<p>My wife was a girl scout when she was a kid. She told me about a common girl scout activity in the US, which is selling cookies door to door to raise money for their girl scout activities. I found that was a cool tradition, so I decided to implement a girl scout cookie selling dashboard! :)</p>
+<p>The requirements are: each scout somehow send commands like &quot;Visit House&quot; or &quot;Sell 5 Cookies&quot; to the server. The server validates the command, and broadcast events like &quot;Maggie Just Visited A House&quot; or &quot;Lisa Just Sold 5 Cookies&quot; to the dashboards, that are updated in realtime and consolidate all the information.</p>
+<h2 id="the-domain-model">The Domain Model</h2>
+<p>Each scout can be modelled as a &quot;state machine&quot;. This is where these type systems really shine. F#, like Elm, has union types and pattern matching, so the code was pretty similar. For instance:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">ScoutState</span> </span>=
+    | Walking
+    | Visiting
+    | HavingFun
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">ScoutCommand</span> </span>=
+    | StartDay
+    | VisitHouse
+    | Sell <span class="hljs-keyword">of</span> int
+    | HaveFun
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">ScoutEvent</span> </span>=
+    | DayStarted
+    | HouseVisited
+    | Sold <span class="hljs-keyword">of</span> int
+    | DayFinished
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">ScoutError</span> </span>=
+    | ShouldBeHavingFun
+    | ShouldBeWalking
+    | ShouldBeVisiting</code></pre>
+
+<p>A word about Commands and Events: when programming in Elm, &quot;everything&quot; that happened in the application was called a Message. The Update function understands the Messages, updates the state accordingly, and then emits or not new Messages.</p>
+<p>When reading about F#, I came across lots of reading materials on Domain Driven Design (DDD), Event Sourcing and Command Query Responsibility Segregation (CQRS). One of the nice ideas I&#39;ve read is the <em>separation between Commands and Events</em> among the Messages.</p>
+<p>Every time a user wants to change the domain, it issues a Command. If the Command actually changes the domain, an Event is generated. An Event represents things that actually happened to the domain. For example, if a scout issues a Command <code>Sell 3</code>, the server checks if it&#39;s a valid Command for the actual State, and if it&#39;s ok it issues an Event <code>Sold 3</code>. If it&#39;s not valid, let&#39;s say the scout was not visiting any house, it returns a <code>ShouldBeVisiting</code> error, and the State is not updated.</p>
+<p>The cool part is that we can store all the Events, and query them at will. The present State is a replay of all the past Events! That&#39;s what Event Sourcing is all about, and I really recommend watching <a href="https://www.youtube.com/watch?v=8JKjvY4etTY">every video you can</a> <a href="https://www.youtube.com/watch?v=kZL41SMXWdM">from Greg Young</a>, <a href="https://www.youtube.com/watch?v=LDW0QWie21s">the &quot;father&quot; of the Event Sourcing pattern</a>.</p>
+<p>With that in mind, this is the final state machine representation of the scouts:</p>
+<p><img src="../assets/scouts-model.png" alt="Scout&#39;s Model"></p>
+<p><a href="https://github.com/lucasmreis/AmazingCookies/blob/master/src/Domain/Domain.fs">The final code for the domain is here</a>.</p>
+<h2 id="a-simple-event-store">A Simple Event Store</h2>
+<p>The events produced by the server need to be stored somewhere. To continue the learning experience, I decided to implement the simplest in-memory event store I could think of. It should be able to store every event, broadcast them to listeners, and that&#39;s it.</p>
+<p>Since the store actually stores data, and this data is accessed through methods, I thought that modelling the store as an <em>object</em> would be ok. Yes, it&#39;s the kind of object that we try to escape with functional programming, but it still has it uses :)</p>
+<p>It was also good to see that &quot;object oriented programming&quot; with F# is very simple, and has almost no boilerplate. You just declare a type with <code>()</code> near the name, and declare &quot;members&quot; of the type. For instance:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">EventStore</span></span>() =
+    <span class="hljs-keyword">let</span> eventList =
+        <span class="hljs-keyword">new</span> ResizeArray&lt;String * ScoutEvent&gt;()
+
+    <span class="hljs-keyword">member</span> this.Save(name, events) =
+        events |&gt; List.iter (<span class="hljs-keyword">fun</span> e -&gt; eventList.Add(name, e))
+
+    <span class="hljs-keyword">member</span> this.Get() =
+        eventList</code></pre>
+
+<p>When instanced with <code>let store = new EventStore()</code>, this object creates an array of <code>String * ScoutEvent</code> tuples. This will hold all the events produced by the application, together with the scout&#39;s name that produced the event.</p>
+<p>F# has a very interesting feature called <em>computation expressions</em>. <a href="https://docs.microsoft.com/en-us/dotnet/articles/fsharp/language-reference/computation-expressions">The docs</a> describe it as <em>a convenient syntax for writing computations that can be sequenced and combined using control flow constructs and bindings</em>. I do not know of an easier way to describe it, so let me show two examples, <code>async</code> and <code>seq</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-comment">// First example</span>
+
+<span class="hljs-comment">// this works just like Javascript's async/await,</span>
+<span class="hljs-comment">// or Clojure's core.async</span>
+<span class="hljs-keyword">let</span> asyncFetchedDocument = async {
+    <span class="hljs-keyword">let</span> url = <span class="hljs-string">"http://some-url.com/api"</span>
+
+    <span class="hljs-comment">// this line will wait for the response without blocking the thread</span>
+    <span class="hljs-keyword">let!</span> res = someAsyncFetchFunction url
+
+    <span class="hljs-keyword">return</span> res.data }
+
+<span class="hljs-keyword">let</span> fetchedDocument =
+    Async.RunSynchronously asyncFetchedDocument
+
+
+<span class="hljs-comment">// Second example</span>
+
+<span class="hljs-comment">// this produces a lazy sequence</span>
+<span class="hljs-keyword">let</span> lazySeq = seq {
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-number">1</span> .. <span class="hljs-number">5</span> <span class="hljs-keyword">do</span>
+      <span class="hljs-keyword">if</span> (i % <span class="hljs-number">2</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">then</span>
+        <span class="hljs-keyword">yield</span> i
+        <span class="hljs-keyword">yield</span> -i }
+
+<span class="hljs-keyword">let</span> list =
+    Seq.toList lazySeq
+<span class="hljs-comment">// =&gt; [2; -2; 4; -4]</span></code></pre>
+
+<p>In the event store I wrote, I used a <code>query</code> computation expression to get all the events from a given name in the EventStore:</p>
+<pre><code class="hljs fsharp">...
+
+<span class="hljs-keyword">member</span> this.Get(name) =
+    query {
+        <span class="hljs-keyword">for</span> (n, ev) <span class="hljs-keyword">in</span> eventList <span class="hljs-keyword">do</span>
+        where (n = name)
+        select ev
+    } |&gt; Seq.toList
+
+...</code></pre>
+
+<p>That&#39;s really cool, right? It feels like a strongly typed SQL :) I feel that Elm would strongly benefit from something like this.</p>
+<p>So, to finish the EventStore, I needed a pub/sub to the saved events:</p>
+<pre><code class="hljs fsharp">...
+
+  <span class="hljs-keyword">let</span> saveEvent =
+      <span class="hljs-keyword">new</span> Event&lt;'Key * 'Event&gt;()
+
+  <span class="hljs-keyword">member</span> this.SaveEvent =
+      saveEvent.Publish
+
+  <span class="hljs-keyword">member</span> this.Save(name, events) =
+      events |&gt; List.iter (<span class="hljs-keyword">fun</span> e -&gt; eventList.Add(name, e))
+      events |&gt; List.iter (<span class="hljs-keyword">fun</span> e -&gt; saveEvent.Trigger((name, e)))
+
+...</code></pre>
+
+<p>The events are published at <code>SaveEvent</code>, and saving an event triggers the listeners. An example subscription would be:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> logger ev = printfn <span class="hljs-string">"-- EVENT: %A"</span> ev
+
+store.SaveEvent.Add(logger)</code></pre>
+
+<p><a href="https://github.com/lucasmreis/AmazingCookies/blob/master/src/EventStore/EventStore.fs">The complete EventStore, with generic typing, is here</a>.</p>
+<h2 id="a-server">A Server</h2>
+<p>Years ago I worked with C#, and wrote a server with ASP.NET MVC. In this project, I thought I was going to write the server using F#/C# &quot;interop&quot; (and I was not very happy about it :) ). Fortunately, I came across an &quot;F# native&quot; web server framework called <a href="https://suave.io/">Suave</a>. Suave in Portuguese means <em>smooth</em>, and that&#39;s exactly how it feels to write a server with this framework!</p>
+<p>For instance, look at the final code for the server:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> app store =
+    choose [
+        path <span class="hljs-string">"/"</span>          &gt;=&gt; Files.sendFile <span class="hljs-string">"build/index.html"</span> <span class="hljs-keyword">true</span>
+        path <span class="hljs-string">"/dashboard"</span> &gt;=&gt; Files.sendFile <span class="hljs-string">"build/dashboard.html"</span> <span class="hljs-keyword">true</span>
+        path <span class="hljs-string">"/websocket"</span> &gt;=&gt; handShake (eventSocket store)
+        path <span class="hljs-string">"/command"</span>   &gt;=&gt; POST &gt;=&gt; request(commandRequest store)
+        ServerErrors.INTERNAL_ERROR <span class="hljs-string">"Sorry, route not valid!"</span> ]</code></pre>
+
+<p>Really clear, right? Writing this server was very easy. The routes are defined through function composition, and Suave comes with some functions that define standard server behaviors, like <code>Filters.POST</code>, <code>Files.sendFile</code> and <code>ServerErrors.INTERNAL_ERROR</code>.</p>
+<p>I found one problem while trying to make it work: <em>there&#39;s simply no documentation on working with websockets</em>. After googling it, the material I found was from a couple of StackOverflow questions, and <a href="https://github.com/SuaveIO/suave/blob/master/examples/WebSocket/Program.fs">this example from the project&#39;s github</a>.</p>
+<p>It took some time, but, after a few hours, I was able to make it work. This is part of the final code for the socket code:</p>
+<pre><code class="hljs fsharp">...
+
+socket {
+    <span class="hljs-keyword">let</span> loop = ref <span class="hljs-keyword">true</span>
+    <span class="hljs-keyword">while</span> !loop <span class="hljs-keyword">do</span>
+        <span class="hljs-keyword">let!</span> msg = webSocket.read()
+        <span class="hljs-keyword">match</span> msg <span class="hljs-keyword">with</span>
+        | (Ping, _, _) -&gt; <span class="hljs-keyword">do!</span> webSocket.send Pong [||] <span class="hljs-keyword">true</span>
+        | (Close, _, _) -&gt;
+            <span class="hljs-keyword">do!</span> webSocket.send Close [||] <span class="hljs-keyword">true</span>
+            subscription.Dispose()
+            loop := <span class="hljs-keyword">false</span>
+        | _ -&gt; ()
+    }</code></pre>
+
+<p>It&#39;s a computation expression! Gotta love those.</p>
+<p><a href="https://github.com/lucasmreis/AmazingCookies/tree/master/src/Server">The complete code for the server can be found here</a>.</p>
+<h2 id="an-elm-dashboard">An Elm dashboard</h2>
+<p>After implementing F#, it was time to return to Elm. The dashboard architecture was simple: the app listens for events through the native websockets implementation, and it drives the standard Elm architecture. This is what the final result looks like (notice I&#39;m using Postman to send the scout&#39;s commands to the server):</p>
+<p><img src="../assets/event-source-a.gif" alt="Event Source A">
+<img src="../assets/event-source-b.gif" alt="Event Source B"></p>
+<p>One of the best parts of Elm is that the structure of the code does not seem to change from application to application. The &quot;framework&quot; is so close to the language itself, that one simply does not try to do things differently - I&#39;m not even sure it&#39;s possible. Because of that, we can focus more on the real complexity of the problem, and think less and less about implementation details.</p>
+<p>The only different part from my <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">earlier</a> <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">learning Elm</a> <a href="http://lucasmreis.github.io/blog/learning-elm-part-3/">series</a> is the websockets part. But it&#39;s really, really simple:</p>
+<pre><code class="hljs"><span class="hljs-symbol">type</span> Msg
+    = EventReceived <span class="hljs-keyword">String
+</span>
+<span class="hljs-keyword">subscriptions </span>: Model -&gt; <span class="hljs-keyword">Sub </span>Msg
+<span class="hljs-keyword">subscriptions </span>model =
+    WebSocket.listen scoutEventsServer EventReceived</code></pre>
+
+<p>And now I only have to treat <code>EventReceived</code> messages in the <code>update</code> function.</p>
+<p>Something I did not like: I felt like I had to repeat a lot of the code in the client and the server, mostly in the models. Mismatches between client and server models are a huge source of errors. Although I don&#39;t think it would happen here - after all, they are in the same project :) - I would have to update two pieces of code each time the model needed to change.</p>
+<p><a href="https://github.com/lucasmreis/AmazingCookies/blob/master/src/Client/app/Dashboard.elm">The complete code for the dashboard is here</a>.</p>
+<h2 id="final-conclusions">Final Conclusions</h2>
+<p>In the end, I really enjoyed the experiment. Even though the languages appear similar, I could see a lot of differences between the two, mostly due to Elm being a language looking for reliability in a narrow scope, and F# looking for pragmatism in a much larger scope.</p>
+<h3 id="ways-elm-is-superior-to-f">Ways Elm Is Superior To F</h3>
+<ul>
+<li><p><em>&quot;Only one way to code&quot;, and it&#39;s very well thought out.</em> After grasping the Elm architecture, I am able to concentrate more each time on the complexities of the problems themselves and less about incidental implementation complexities.</p>
+</li>
+<li><p><em>Elm is safer.</em> Elm&#39;s limitations to immutable data and pure functions make everything safer in general. It&#39;s difficult to think of a runtime error happening in an Elm app.</p>
+</li>
+<li><p><em>Elm-format diminishes the cognitive load</em>. Auto formatting is much more powerful than I thought it would be! It&#39;s one more tool that let&#39;s you focus on the important problems. If you spend some time using auto formatting with Elm and then go back to any other language without a formatter, you&#39;ll understand how much we gain when we are not thinking about code formatting.</p>
+</li>
+<li><p><em>Better type signature syntax</em>. When one needs to write a function type signature, nothing beats Elm&#39;s (and for that matter Haskell&#39;s) signatures. I like stating the types on a different line from the function itself, and I even use it as comments in some of my Javascript code, the way <a href="http://ramdajs.com/0.22.1/docs/#repeat">RamdaJS uses it in its docs</a>.</p>
+</li>
+</ul>
+<h3 id="ways-f-is-superior-to-elm">Ways F# Is Superior To Elm</h3>
+<ul>
+<li><p><em>F# is not focused in a single problem</em>. This means you can use F# in almost any software domain, from web servers to web clients, from mobile apps to data science silos. So, knowledge gained in one domain, is knowledge brought to another.</p>
+</li>
+<li><p><em>F# is very pragmatic</em>. If you want to deal with async problems, you can choose from native implementations of goroutines, actors or observables. You can tackle a problem using many different paradigms, and you have the whole .NET ecosystem at you disposal. In this sense, it feels as pragmatic as Clojure to me, and that tends to help most of the time.</p>
+</li>
+<li><p><em>Type inferring</em>. It just works, sometimes it feels like magic, and almost never gets in your way. Just start writing the function, and the compiler starts helping you. <em>Obs:</em> I found that a very good type inferring has one drawback: reading code on a web page. When you read code in an editor, you can always hover your mouse and it gives you information, but when the tool is not there to help you, code can be a little to obscure to understand. That&#39;s not good when you are trying to understand a complicated piece of code on github.</p>
+</li>
+<li><p><em>Tooling / compiler gives you a lot of information during development</em>. Elm&#39;s error messages are a gem. They are amazingly helpful, but I feel that F#&#39;s compiler helps you <em>more</em> during development. You can basically hover your mouse over anything in your code and you get information about it.</p>
+</li>
+<li><p><em>Computation Expressions</em>. As I said before, it&#39;s a really simple and unified way of writing code that result in more complex behaviors.</p>
+</li>
+</ul>
+<h2 id="things-i-learned-in-the-process">Things I Learned In The Process</h2>
+<p>I learned some valuable lessons working on this project. First of all, on the language level, I learned a lot about how to use types better. ML-style languages make it easier to use types to actively make your code more reliable. I recommend reading <a href="http://blog.ploeh.dk/2016/02/10/types-properties-software/">this blog post series</a> as a masterclass in &quot;making illegal states unrepresentable&quot;. It&#39;s a very powerful and simple idea that consists of using the type system as way to maintain the application in a valid state 100% of the time. Another way of phrasing it is <a href="https://twitter.com/splodingsocks/status/776523774183301120">&quot;testing is good, but impossible is better&quot;</a> :)</p>
+<p>And second, in the architecture level, I learned about Event Sourcing and CQRS. Today, I really believe that <em>using event logs as first class citizens is the way to go in most situations</em>. Even in this small project, I could feel the benefits: whenever I was coming up with a new way of visualizing the scouts information in the dashboard, I never had to change any schema, or any code in the backend. &quot;Read models&quot; are only different queries in the stored events.</p>
+<p>I feel that in a lot of companies, our main storage consists of &quot;last states of a bunch of view models&quot;, and we spend a lot of money on different analytics, and log-managing tools to deal with the really important business questions. If these companies already stored events, and treated them as they treat their main data, an immense value would be generated at a much lower cost.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>The repeated code between client and server made me curious about trying something more &quot;unified&quot;, so I&#39;ll try some <a href="https://fable-compiler.github.io/">Fable</a> for frontend programming.</p>
+<p>Also, I&#39;ll also try to use more Event Sourcing whenever I can :)</p>
+]]></description>
+            <guid isPermaLink="false">Does Elm Harmonize With F#?</guid>
+            <pubDate>Fri, 09 Sep 2016 00:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Learning Elm, part 3]]></title>
             <description><![CDATA[<p><em>This is part 3 of a series. Click here to read <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">part 1</a> and <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">part 2</a>.</em></p>
@@ -33,6 +240,7 @@ view model =
         [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]
 
 -- imports and styles omitted <span class="hljs-keyword">for</span> brevity...</code></pre>
+
 <pre><code class="hljs">-- Film<span class="hljs-selector-class">.elm</span>
 
 type alias Model =
@@ -117,7 +325,8 @@ To build the view, I will once again define a sample model:
         , sampleFilm
         , sampleFilm
         ]</span></code></pre>
-And then, I'll use it to define the view, while refreshing Elm Reactor:
+
+<p>And then, I&#39;ll use it to define the view, while refreshing Elm Reactor:</p>
 <pre><code class="hljs">view model =
     case model of
         FilmsFromCharacter c fs -&gt;
@@ -135,14 +344,11 @@ And then, I'll use it to define the view, while refreshing Elm Reactor:
 
 twoColumns =
     style [ ( <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ) ]</code></pre>
-Just change the sample and it works very well!
 
-So, as a next step, I want to make the application retrieve actual information from the API. This is where things are different from [part 2](http://lucasmreis.github.io/blog/learning-elm-part-2/), because now our update function not only deals with the model, it also deals with *Commands*.
-
-## The Command
-
-Because this scenario is much more complex, instead of using the  `beginnerProgram` , we'll use the `program` function. It's a little different:
-
+<p>Just change the sample and it works very well!</p>
+<p>So, as a next step, I want to make the application retrieve actual information from the API. This is where things are different from <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">part 2</a>, because now our update function not only deals with the model, it also deals with <em>Commands</em>.</p>
+<h2 id="the-command">The Command</h2>
+<p>Because this scenario is much more complex, instead of using the  <code>beginnerProgram</code> , we&#39;ll use the <code>program</code> function. It&#39;s a little different:</p>
 <pre><code class="hljs">main =
     Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.program</span>
         { init = ( model, Cmd<span class="hljs-selector-class">.none</span> )
@@ -200,10 +406,9 @@ simpleMessage t =
     succeed <span class="hljs-type">Model</span>
         |: (<span class="hljs-string">"name"</span> := string)
         |: (<span class="hljs-string">"films"</span> := list string)</code></pre>
-The `|:` comes from the `elm-community/elm-json-extra` package, and feels like a better way to parse a json than the standard library.
 
-So now I have the decoder. Let's go back to Main and implement the `getCharacter` command for init:
-
+<p>The <code>|:</code> comes from the <code>elm-community/elm-json-extra</code> package, and feels like a better way to parse a json than the standard library.</p>
+<p>So now I have the decoder. Let&#39;s go back to Main and implement the <code>getCharacter</code> command for init:</p>
 <pre><code class="hljs">import Http
 
 (...)
@@ -223,8 +428,8 @@ But it <span class="hljs-keyword">is</span>:
     { init : ( <span class="hljs-type">Model</span>, Platform.<span class="hljs-keyword">Task</span> Http.Error Character.Model )
 
 (...)</code></pre>
-That means `getCharacter` is not returning a command, it's returning a `Task`. A task is actually a *representation* of an action that has not happened, and may or may not fail. To run the task, we need to feed it to the `Task.perform` function:
 
+<p>That means <code>getCharacter</code> is not returning a command, it&#39;s returning a <code>Task</code>. A task is actually a <em>representation</em> of an action that has not happened, and may or may not fail. To run the task, we need to feed it to the <code>Task.perform</code> function:</p>
 <pre><code class="hljs">getCharacter url =
     url
         <span class="hljs-string">|&gt; Http.get Character.characterDecoder</span>
@@ -299,6 +504,7 @@ filmDecoder =
         |: (<span class="hljs-string">"title"</span> := string)
         |: (<span class="hljs-string">"episode_id"</span> := int)
         |: (<span class="hljs-string">"characters"</span> := list string)</code></pre>
+
 <pre><code class="hljs"><span class="hljs-comment">-- Main.elm</span>
 <span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
     = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>

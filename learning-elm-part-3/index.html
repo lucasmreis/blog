@@ -44,6 +44,7 @@ view model =
         [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]
 
 -- imports and styles omitted <span class="hljs-keyword">for</span> brevity...</code></pre>
+
 <pre><code class="hljs">-- Film<span class="hljs-selector-class">.elm</span>
 
 type alias Model =
@@ -128,7 +129,8 @@ To build the view, I will once again define a sample model:
         , sampleFilm
         , sampleFilm
         ]</span></code></pre>
-And then, I'll use it to define the view, while refreshing Elm Reactor:
+
+<p>And then, I&#39;ll use it to define the view, while refreshing Elm Reactor:</p>
 <pre><code class="hljs">view model =
     case model of
         FilmsFromCharacter c fs -&gt;
@@ -146,14 +148,11 @@ And then, I'll use it to define the view, while refreshing Elm Reactor:
 
 twoColumns =
     style [ ( <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ) ]</code></pre>
-Just change the sample and it works very well!
 
-So, as a next step, I want to make the application retrieve actual information from the API. This is where things are different from [part 2](http://lucasmreis.github.io/blog/learning-elm-part-2/), because now our update function not only deals with the model, it also deals with *Commands*.
-
-## The Command
-
-Because this scenario is much more complex, instead of using the  `beginnerProgram` , we'll use the `program` function. It's a little different:
-
+<p>Just change the sample and it works very well!</p>
+<p>So, as a next step, I want to make the application retrieve actual information from the API. This is where things are different from <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">part 2</a>, because now our update function not only deals with the model, it also deals with <em>Commands</em>.</p>
+<h2 id="the-command">The Command</h2>
+<p>Because this scenario is much more complex, instead of using the  <code>beginnerProgram</code> , we&#39;ll use the <code>program</code> function. It&#39;s a little different:</p>
 <pre><code class="hljs">main =
     Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.program</span>
         { init = ( model, Cmd<span class="hljs-selector-class">.none</span> )
@@ -211,10 +210,9 @@ simpleMessage t =
     succeed <span class="hljs-type">Model</span>
         |: (<span class="hljs-string">"name"</span> := string)
         |: (<span class="hljs-string">"films"</span> := list string)</code></pre>
-The `|:` comes from the `elm-community/elm-json-extra` package, and feels like a better way to parse a json than the standard library.
 
-So now I have the decoder. Let's go back to Main and implement the `getCharacter` command for init:
-
+<p>The <code>|:</code> comes from the <code>elm-community/elm-json-extra</code> package, and feels like a better way to parse a json than the standard library.</p>
+<p>So now I have the decoder. Let&#39;s go back to Main and implement the <code>getCharacter</code> command for init:</p>
 <pre><code class="hljs">import Http
 
 (...)
@@ -234,8 +232,8 @@ But it <span class="hljs-keyword">is</span>:
     { init : ( <span class="hljs-type">Model</span>, Platform.<span class="hljs-keyword">Task</span> Http.Error Character.Model )
 
 (...)</code></pre>
-That means `getCharacter` is not returning a command, it's returning a `Task`. A task is actually a *representation* of an action that has not happened, and may or may not fail. To run the task, we need to feed it to the `Task.perform` function:
 
+<p>That means <code>getCharacter</code> is not returning a command, it&#39;s returning a <code>Task</code>. A task is actually a <em>representation</em> of an action that has not happened, and may or may not fail. To run the task, we need to feed it to the <code>Task.perform</code> function:</p>
 <pre><code class="hljs">getCharacter url =
     url
         <span class="hljs-string">|&gt; Http.get Character.characterDecoder</span>
@@ -310,6 +308,7 @@ filmDecoder =
         |: (<span class="hljs-string">"title"</span> := string)
         |: (<span class="hljs-string">"episode_id"</span> := int)
         |: (<span class="hljs-string">"characters"</span> := list string)</code></pre>
+
 <pre><code class="hljs"><span class="hljs-comment">-- Main.elm</span>
 <span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
     = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
@@ -406,7 +405,7 @@ view model =
       <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
 
       <footer>
-        by Lucas Reis | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
       </footer>
     </div>
 
