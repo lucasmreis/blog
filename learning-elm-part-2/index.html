@@ -44,7 +44,12 @@
       <div id="main-text">
         <h1>Learning Elm, part 2</h1>
         <div class="lead">Understanding The Benefits Of A Simple Architecture</div>
-        <p><em>This is part 2 of a series. You can read <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">part 1 here</a>.</em></p>
+        <p><em>This is part 2 of a series:</em></p>
+<ul>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">Part 1: Understanding The Benefits Of A Simple Architecture</a></li>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-3/">Part 3: Building A Real Application</a></li>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-4/">Part 4: Property Based Testing And Better Modelling</a></li>
+</ul>
 <p>As I stated in part 1 of this series, I started learning Elm in a quest for more reliability in web front end programming. I implemented an algorithm, a parser, and things went very well.</p>
 <p>Now let&#39;s build a simple application with user interaction. I want to see if I can still feel the same &quot;reliability&quot; I felt when I was only implementing a function.</p>
 <p>It turns out Elm has a standard way of structuring apps baked into the language, the Elm Architecture. It&#39;s very simple, and has <em>already</em> influenced front end programming as a whole, mainly through the Redux library. We&#39;ll explore a simple version of the architecture in this post.</p>
@@ -138,14 +143,11 @@ cardStyle =
 <p>The view is then a function of the model. It takes the data and renders it.</p>
 <p>After rendering, the application &quot;waits&quot; for user interaction or any other event. When that happens, it triggers the update function. The update function is a function that receives the old model and data of the event, and returns a new model. This model is then rendered, and the loop continues.</p>
 <p>Elm gives us a function that does all the &quot;plumbing&quot; for us, and it&#39;s called <code>Html.App.program</code>. We&#39;ll use a simpler version of it, because that&#39;s everything we need for our small app, and it&#39;s called <code>beginnerProgram</code>. With it, you only need to define your model, update and view and the program does the heavy work for you:</p>
-<pre><code class="hljs">import Html.<span class="hljs-keyword">App</span> exposing (beginnerProgram)
-
-
-main =
-    Html.<span class="hljs-keyword">App</span>.beginnerProgram
-        { model = init <span class="hljs-string">""</span>
-        , <span class="hljs-keyword">view</span> = <span class="hljs-keyword">view</span>
-        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
+<pre><code class="hljs"><span class="hljs-attr">main</span> =
+    Html.beginnerProgram
+        { <span class="hljs-attr">model</span> = init <span class="hljs-string">""</span>
+        , <span class="hljs-attr">view</span> = view
+        , <span class="hljs-attr">update</span> = update
         }</code></pre>
 
 <p>Now let&#39;s define <code>init</code>,  <code>view</code> and <code>update</code>.</p>
@@ -237,12 +239,12 @@ view model =
 <p>Let&#39;s first create a new file called <code>ParserComponent.elm</code>, and move all the model, view and update code there. Our Main module will look like:</p>
 <pre><code class="hljs"><span class="hljs-keyword">module</span> Main <span class="hljs-keyword">exposing</span> (..)
 
-<span class="hljs-keyword">import</span> Html.App <span class="hljs-keyword">exposing</span> (beginnerProgram)
+<span class="hljs-keyword">import</span> Html <span class="hljs-keyword">exposing</span> (beginnerProgram)
 <span class="hljs-keyword">import</span> ParserComponent <span class="hljs-keyword">exposing</span> (<span class="hljs-type">Model</span>, <span class="hljs-type">Msg</span>, init, view, update)
 
 
 <span class="hljs-title">main</span> =
-    <span class="hljs-type">Html</span>.<span class="hljs-type">App</span>.beginnerProgram
+    <span class="hljs-type">Html</span>.beginnerProgram
         { model = <span class="hljs-type">ParserComponent</span>.init <span class="hljs-string">""</span>
         , view = <span class="hljs-type">ParserComponent</span>.view
         , update = <span class="hljs-type">ParserComponent</span>.update
@@ -275,13 +277,13 @@ init <span class="hljs-keyword">first</span> <span class="hljs-keyword">second</
 <p>Now let&#39;s see how to actually tag those messages in the new view:</p>
 <pre><code class="hljs">view model =
     <span class="hljs-selector-tag">div</span> []
-        [ Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.map</span> First
+        [ Html<span class="hljs-selector-class">.map</span> First
             (ParserComponent<span class="hljs-selector-class">.view</span> model.firstParser)
-        , Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.map</span> Second
+        , Html<span class="hljs-selector-class">.map</span> Second
             (ParserComponent<span class="hljs-selector-class">.view</span> model.secondParser)
         ]</code></pre>
 
-<p>By using the <code>Html.App.map</code> we tag, with the first parameter, every message that is sent by the view rendered in the second parameter.</p>
+<p>By using the <code>Html.map</code> we tag, with the first parameter, every message that is sent by the view rendered in the second parameter.</p>
 <p>We are rendering a ParserComponent view with the <code>firstParser</code> portion of the model, and another with the <code>secondParser</code>, and we are tagging all the messages sent by the first with <code>First</code>, and all the messages sent by the second with <code>Second</code>.</p>
 <p>Refresh again the Reactor page and there you have it - two independently working parser components.</p>
 <h2 id="but-the-specs-can-change-again-">But The Specs Can Change Again...</h2>

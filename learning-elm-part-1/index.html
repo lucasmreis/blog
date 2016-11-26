@@ -44,7 +44,12 @@
       <div id="main-text">
         <h1>Learning Elm, part 1</h1>
         <div class="lead">Understanding The Benefits Of A Strong Type System</div>
-        <p><em>This is part 1 of a series. You can read <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">part 2 here</a>.</em></p>
+        <p><em>This is part 1 of a series:</em></p>
+<ul>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">Part 2: Understanding The Benefits Of A Strong Type System</a></li>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-3/">Part 3: Building A Real Application</a></li>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-4/">Part 4: Property Based Testing And Better Modelling</a></li>
+</ul>
 <p>A big concern when working with Javascript is <em>reliability</em>. Reliability in the sense of being completely sure about what a piece of code does, and knowing that changing one part won&#39;t break another part. A key concept is <em>error feedback cycle</em>: how soon can you catch errors in your code?</p>
 <p>There are a lot of ways to deal with that. &quot;Linters&quot; and comprehensive tests are a good start, and they are already a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and make it easier to reason about your project.</p>
 <p>Another trend I see is using <em>types</em>, mostly through TypeScript and Facebook Flow. They claim that, by programming with types, you can have a compiler that helps you get the code right. Not only that, the compiler will catch a lot of errors early in the process, so the error feedback cycle gets much shorter.</p>
@@ -309,7 +314,7 @@ main =
 <p>Now the function that takes this tuple and returns a Maybe Card:</p>
 <pre><code class="hljs">parseCardTuple : <span class="hljs-function"><span class="hljs-params">(Maybe String, Maybe Char)</span> -&gt;</span> Maybe Card
 parseCardTuple (value, suit) =
-  <span class="hljs-keyword">case</span> (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) <span class="hljs-keyword">of</span>
+  <span class="hljs-keyword">case</span> ( value |&gt; Maybe.andThen parseValue, suit |&gt; Maybe.andThen parseSuit ) <span class="hljs-keyword">of</span>
     <span class="hljs-function"><span class="hljs-params">(Just v, Just s)</span> -&gt;</span>
       Just (v, s)
 
@@ -396,7 +401,7 @@ parseCardString <span class="hljs-keyword">str</span> =
 <p>It handles the case <code>&quot;J&quot;</code> separately, and calls our previous function if it&#39;s not a Joker. Now we only have to change <code>parseCardTuple</code> to return an OrdinaryCard instead of the tuple in case of success:</p>
 <pre><code class="hljs">parseCardTuple : <span class="hljs-function"><span class="hljs-params">(Maybe String, Maybe Char)</span> -&gt;</span> Maybe Card
 parseCardTuple (value, suit) =
-  <span class="hljs-keyword">case</span> (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) <span class="hljs-keyword">of</span>
+  <span class="hljs-keyword">case</span> ( value |&gt; Maybe.andThen parseValue, suit |&gt; Maybe.andThen parseSuit ) <span class="hljs-keyword">of</span>
     <span class="hljs-function"><span class="hljs-params">(Just v, Just s)</span> -&gt;</span>
       Just (OrdinaryCard v s) -- <span class="hljs-keyword">not</span> a tuple
 
