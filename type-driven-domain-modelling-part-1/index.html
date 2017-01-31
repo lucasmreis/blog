@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Type Driven Domain Modelling, part 1 | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>Type Driven Domain Modelling, part 1</h1>
+        <div class="lead">Evolving Models With F#</div>
+        <p>A while ago I saw this tweet:</p>
+<div style="display: flex; justify-content: center">
+  <blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Every system tends towards complexity, slowness and difficulty<br>Staying simple, fast and easy-to-use is a battle that must be fought everyday</p>&mdash; Guillermo Rauch (@rauchg) <a href="https://twitter.com/rauchg/status/813529770059186176">December 26, 2016</a></blockquote>
+  <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+
+<p>I work daily in big javascript projects, so I get where Guillermo is coming from. Javascript doesn&#39;t have types, and doesn&#39;t enforce immutability, so the following things tend to happen in almost every project I&#39;ve come across:</p>
+<ol>
+<li>The first version is (most of the time) clean and simple. Well chosen libraries being used with the best practices.</li>
+<li>As a project grows, big refactorings begin to become more and more &quot;dangerous&quot;. There&#39;s always the risk of having a runtime error that was not caught in dev, and will be caught in production.</li>
+<li>New changes, then, become small refactorings, mostly <em>thin layers of code</em> over previous code. A lot of null / undefined testing takes place, unit tests are corrected, and new ones are written.</li>
+</ol>
+<p>These thin layers of code end up adding bits of complexity to the code. At first it&#39;s manageable, but, months later, the project starts getting more and more difficult to change. The worst effect on these projects is losing <em>reliability</em> and <em>safety</em>: we are not sure the application does what we want it to do, and we are not sure if any hidden bugs will make it to production.</p>
+<p>Of course, there are tools to help us deal with this complexity. We&#39;ve been using Typescript at work for a while now, and it has been great. But, from <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">my previous</a> <a href="http://lucasmreis.github.io/blog/does-elm-harmonize-with-f/#/">experiments here</a> <a href="http://lucasmreis.github.io/blog/from-elm-to-fable/">in the blog</a>, I still think that a &quot;stronger typed&quot; language could help much more to avoid this type of complexity-piling.</p>
+<p>So, in this post series, I&#39;ll model a simple e-commerce basket using F#. Then I&#39;ll change the specs and add features of this model, and try to maintain reliability and simplicity in the code. Let&#39;s start!</p>
+<h2 id="specs">Specs</h2>
+<p>Let&#39;s keep the first spec simple: the user can add a quantity of a product to his basket, he should have access to the current state of the basket, with a calculated total.</p>
+<p>The next version should contemplate what I&#39;ll call <em>quantity promotions</em>; it&#39;s the classic <em>buy 3 pay $10</em>, <em>buy 2 pay 5</em> kind of promotion.</p>
+<p>On version 3, not only the final price should be shown to the user, but it should also show the price <em>without considering the promotions</em>, and how much discount was given in that product.</p>
+<p>On version 4, and final version (maybe?), we should also tell the user, for each line &quot;if you buy another 2 of these, you&#39;ll have an added discount of X!&quot;. This tip will be based in the quantity promotions of each product.</p>
+<h2 id="initial-setup">Initial Setup</h2>
+<p>I&#39;ll use <a href="https://code.visualstudio.com/">VS Code</a> editor with the <a href="https://github.com/ionide/ionide-vscode-fsharp">Ionide</a> extension to start a new project. I chose to start an &quot;Expecto&quot; project, since it already has a test file configured:</p>
+<div style="display: flex">
+  <div style="padding-right: 10px">
+    <img src="../assets/ionide-new-project.png" alt="Ionide: New Project" style="box-shadow: 5px 5px 14px 0px #999" />
+  </div>
+  <div>
+    <img src="../assets/ionide-expecto.png" alt="Ionide: Expecto" style="box-shadow: 5px 5px 14px 0px #999" />
+  </div>
+</div>
+
+<p>After the project is created, we need to create a new file. I created a <code>Domain.fs</code> file inside the project folder, together with the <code>Main.fs</code> and <code>Tests.fs</code> that were there. Now - and this is particular to F# - the file needs to be <em>added to the project</em>. In every F# project, we need to specify not only the files to be compiled, but the <em>order in which they should be compiled</em>. That may sound weird and too old-school, but today I agree that <a href="https://fsharpforfunandprofit.com/posts/cyclic-dependencies/">its a good thing</a>, since it helps to avoid circular dependencies among other problems.</p>
+<p>So, to add it, open the <code>.fsproj</code> file in the project folder. It&#39;s a big messy XML, I know :) The file ordering is easy to do, though. Just search for the <code>Main.fs</code> file, and you&#39;ll find this XML node:</p>
+<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-name">ItemGroup</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Tests.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Main.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">None</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"App.config"</span> /&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">ItemGroup</span>&gt;</span></code></pre>
+
+<p>The <code>Domain.fs</code> file needs to be compiled before the other files, so we only need to change the config to:</p>
+<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-name">ItemGroup</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Domain.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Tests.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Main.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">None</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"App.config"</span> /&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">ItemGroup</span>&gt;</span></code></pre>
+
+<p>This way our file is going to be compiled first, and we can use it in the tests and in the main function.</p>
+<h2 id="starting-with-the-domain">Starting With The Domain</h2>
+<p>Now we can start to code our model in the <code>Domain.fs</code> file:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">module</span> Domain
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Product</span> </span>= {
+    sku: string
+    price: int
+}
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Event</span> </span>=
+    | AddToBasket <span class="hljs-keyword">of</span> Product * int</code></pre>
+
+<p>The first thing I don&#39;t like about this modelling is that we&#39;re using <code>int</code> for the price, and we&#39;re also using <code>int</code> for the quantity in the event. The latter is especially bad, since it&#39;s not clear that it means the quantity of products added to the basket. One way of making it better and more explicit would be:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Sku</span> </span>= string
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Price</span> </span>= int
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Qty</span> </span>= int
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Product</span> </span>= {
+    sku: Sku
+    price: Price
+}
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Event</span> </span>=
+    | AddToBasket <span class="hljs-keyword">of</span> Product * Qty</code></pre>
+
+<p>Much better, right?</p>
+<p><em>Observation</em>: I&#39;m using int as the price unit because I know that in the first specs I only have to sum and subtract prices. In these situations, I think an integer representing cents are enough. Things get hairy when dividing money, and other more complex conversions. When our model needs that, we will probably need to change from <code>int</code> to something else.</p>
+<h2 id="the-basket-read-model">The Basket Read Model</h2>
+<p>The user should have access to the current state of the basket, and to the total he or she will have to pay. Let&#39;s first define a <em>line</em>, which is a combination of a sku, a quantity and a total price:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Line</span> </span>= {
+    productSku: Sku
+    quantity: Qty
+    lineTotal: Price
+}</code></pre>
+
+<p>Now, the basket read model can be defined as a list of lines and a total to be paid:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Basket</span> </span>= {
+    lines: Line list
+    total: Price
+}</code></pre>
+
+<p>I consider these to be good initial types. Let&#39;s start with these, and make changes when we see the need.</p>
+<p>The basket will be built by an <code>update</code> function, that takes a basket and an event as parameters, and returns an updated basket:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> empty = { lines = [] ; total = <span class="hljs-number">0</span> }
+
+<span class="hljs-comment">// wrong implementation so</span>
+<span class="hljs-comment">// we can write our test;</span>
+<span class="hljs-comment">// this is our main function!</span>
+<span class="hljs-keyword">let</span> addToBasket product basket = empty
+
+<span class="hljs-keyword">let</span> update basket event =
+    <span class="hljs-keyword">match</span> event <span class="hljs-keyword">with</span>
+    | AddToBasket(product, quantity) -&gt;
+        addToBasket product basket</code></pre>
+
+<h2 id="the-first-tests">The First Tests</h2>
+<p>Before starting the tests, let&#39;s think about some properties of our basket. One good property is <em>if there&#39;s only one line in our basket, it&#39;s total must be the same as the basket&#39;s total</em>. Let&#39;s write a test that makes sure this property holds.</p>
+<p>First, we need to install <code>Expecto.FsCheck</code>, which is the library that let&#39;s Expecto run <a href="http://lucasmreis.github.io/blog/learning-elm-part-4/">property based tests</a>. With the <code>paket.dependencies</code> file opened, run the <em>Add Nuget Package</em> command to install the package:</p>
+<div style="display: flex">
+  <div style="padding-right: 10px">
+    <img src="../assets/ionide-add-nuget.png" alt="Ionide: Add Nuget" style="box-shadow: 5px 5px 14px 0px #999" />
+  </div>
+  <div>
+    <img src="../assets/ionide-expecto-fscheck.png" alt="Ionide: Expecto FsCheck" style="box-shadow: 5px 5px 14px 0px #999" />
+  </div>
+</div>
+
+<p>Now that the package is installed, we need to add the dependency in the project. Open the <code>paket.eferences</code> file, and add <code>Expecto.FsCheck</code> to the list of dependencies. Then run the install command from Paket:</p>
+<div style="display: flex">
+  <div style="padding-right: 10px">
+    <img src="../assets/ionide-paket-references.png" alt="Ionide: Paket References" style="box-shadow: 5px 5px 14px 0px #999" />
+  </div>
+  <div>
+    <img src="../assets/ionide-paket-install.png" alt="Ionide: Paket Install" style="box-shadow: 5px 5px 14px 0px #999" />
+  </div>
+</div>
+
+<p>Now, in the <code>Tests.fs</code> file, let&#39;s write the following test:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">open</span> Domain
+
+<span class="hljs-meta">[&lt;Tests&gt;]</span>
+<span class="hljs-keyword">let</span> tests =
+    testList <span class="hljs-string">"basket promotions"</span> [
+        testProperty <span class="hljs-string">"total of single line"</span> &lt;| <span class="hljs-keyword">fun</span> (quantity : Qty ) (price : Price) -&gt;
+            <span class="hljs-keyword">let</span> prod = { sku = <span class="hljs-string">"a"</span> ; price = price }
+            <span class="hljs-keyword">let</span> event = AddToBasket(prod, quantity)
+            <span class="hljs-keyword">let</span> basket = update empty event
+
+            <span class="hljs-keyword">let</span> lineTotal = basket.lines.Head.lineTotal
+            <span class="hljs-keyword">let</span> basketTotal = basket.total
+
+            Expect.equal lineTotal basketTotal <span class="hljs-string">"must be the same as basket total"</span>
+    ]</code></pre>
+
+<p>That&#39;s the first property to our model that we&#39;re going to test. Another property is <em>whenever a new product is added, if it&#39;s already in the basket, the number of lines stays the same</em>:</p>
+<pre><code class="hljs">testProperty <span class="hljs-string">"adding product multiple times downto the basket"</span> &lt;| <span class="hljs-function"><span class="hljs-title">fun</span> <span class="hljs-params">(N : <span class="hljs-type">uint16</span> )</span></span> -&gt;
+    let prod = { sku = <span class="hljs-string">"sku"</span> ; price = <span class="hljs-number">10</span> }
+    let event = AddToBasket(prod, <span class="hljs-number">1</span>)
+    let basket =
+        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
+        |&gt; List.map (<span class="hljs-function"><span class="hljs-keyword">fun</span> _ -&gt; event)</span>
+        |&gt; List.fold update empty
+
+    Expect.equal basket.lines.Length <span class="hljs-number">1</span> <span class="hljs-string">"must have one line"</span></code></pre>
+
+<p>Note the use of <code>N : uint16</code> in the parameter. I chose it because of the range: it goes from 0 to 65535, so it&#39;s never negative, and it has a reasonable range for this application. Calling <code>(int N + 1)</code> converts it to the desired type and range.</p>
+<p>And, of course, the property <em>if we add N different products, our basket will have N lines</em>:</p>
+<pre><code class="hljs fsharp">testProperty <span class="hljs-string">"adding multiple products to the basket"</span> &lt;| <span class="hljs-keyword">fun</span> (N : uint16 ) -&gt;
+    <span class="hljs-keyword">let</span> prod (num : int) = { sku = <span class="hljs-string">"sku"</span> + num.ToString() ; price = <span class="hljs-number">10</span> }
+    <span class="hljs-keyword">let</span> event (num : int) = AddToBasket(prod num, <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">let</span> basket =
+        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
+        |&gt; List.map event
+        |&gt; List.fold update empty
+
+    Expect.equal basket.lines.Length (int N + <span class="hljs-number">1</span>) <span class="hljs-string">"must have N lines"</span></code></pre>
+
+<p>These tests seem enough to make sure the function is reliable. If you have any ideas for other basket properties that could be tested, or even some unit tests that seem important, please let me know in the comments!</p>
+<h2 id="the-function">The Function</h2>
+<p>The <code>addToBasket</code> function should be straightforward: it should add a line with the selected quantity and sku and the calculated total. Then it should calculate the basket total by summing the line totals. The only &quot;gotcha&quot; is that, if the product is already in the basket, the corresponding line should be updated.</p>
+<p>So, I&#39;ll start with two helper functions:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> buildLine product quantity = {
+    productSku = product.sku
+    quantity = quantity
+    lineTotal = quantity * product.price
+}
+
+<span class="hljs-keyword">let</span> basketTotal lines =
+    lines
+    |&gt; List.map (<span class="hljs-keyword">fun</span> l -&gt; l.lineTotal)
+    |&gt; List.sum</code></pre>
+
+<p>Now, for the actual function, I&#39;ll use this strategy: I&#39;ll <em>transform</em> the Line list so that a line with the same sku as the product being added gets updated. If this transformed list is different than the original line list, that means that the product was already in the basket! If the transformed list is the same, that means we only need to append a new line to the list:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> addToBasket product quantity basket =
+    <span class="hljs-keyword">let</span> transformLine line =
+        <span class="hljs-keyword">if</span> line.productSku = product.sku
+        <span class="hljs-keyword">then</span> buildLine product (line.quantity + quantity)
+        <span class="hljs-keyword">else</span> line
+
+    <span class="hljs-keyword">let</span> transformedLines =
+        basket.lines
+        |&gt; List.map transformLine
+
+    <span class="hljs-keyword">let</span> productAlreadyInBasket =
+        transformedLines &lt;&gt; basket.lines
+
+    <span class="hljs-keyword">let</span> lines =
+        <span class="hljs-keyword">if</span> productAlreadyInBasket
+        <span class="hljs-keyword">then</span> transformedLines
+        <span class="hljs-keyword">else</span> (buildLine product quantity)::basket.lines
+
+    { basket <span class="hljs-keyword">with</span> lines = lines ; total = basketTotal lines }</code></pre>
+
+<p>Now run the Expecto tests, and voilá! Everything is working :)</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>It&#39;s incredible how reliable your code can feel when it&#39;s written in a strong typed language with some property tests. This is a trait of ML-type languages like F#, Haskell, Ocaml and Elm, and I think this is the the direction we should look in when looking for reliability and safety.</p>
+<p>Speaking on F# in particular, it&#39;s a very &quot;agile&quot; developing experience. Good type inferring, with the tooling that Ionide provides, makes it very easy and quick to experiment with different ways of writing the same thing, while still maintaining correctness through types.</p>
+<p>Another good surprise was Expecto, and how easy it was to setup, write and run the tests - even the property based ones.</p>
+<h2 id="nest-steps">Nest Steps</h2>
+<p>Now that we have a simple model working, it&#39;s time to change the specs and add new features. In my next update I&#39;ll add promotions to the products. Stay tuned!</p>
+<p>And, as always, I&#39;m constantly learning - and would love to know if some of you have any ideas on how to better implement these specs, or if there&#39;s any library or framework that I&#39;m missing and would make my life easier. Thanks in advance :)</p>
+
+        <div class="signature">January 25, 2017.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'type-driven-domain-modelling-part-1';
+          var disqus_title = 'Type Driven Domain Modelling, part 1';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>
