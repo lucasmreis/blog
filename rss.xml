@@ -4,7 +4,7 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Tue, 31 Jan 2017 03:17:27 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 01 Feb 2017 02:31:35 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
@@ -126,7 +126,7 @@
   </div>
 </div>
 
-<p>Now that the package is installed, we need to add the dependency in the project. Open the <code>paket.eferences</code> file, and add <code>Expecto.FsCheck</code> to the list of dependencies. Then run the install command from Paket:</p>
+<p>Now that the package is installed, we need to add the dependency in the project. Open the <code>paket.references</code> file, and add <code>Expecto.FsCheck</code> to the list of dependencies. Then run the install command from Paket:</p>
 <div style="display: flex">
   <div style="padding-right: 10px">
     <img src="../assets/ionide-paket-references.png" alt="Ionide: Paket References" style="box-shadow: 5px 5px 14px 0px #999" />
@@ -218,7 +218,7 @@
 <p>Speaking on F# in particular, it&#39;s a very &quot;agile&quot; developing experience. Good type inferring, with the tooling that Ionide provides, makes it very easy and quick to experiment with different ways of writing the same thing, while still maintaining correctness through types.</p>
 <p>Another good surprise was Expecto, and how easy it was to setup, write and run the tests - even the property based ones.</p>
 <p>The final code can be found <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs">here</a>, and the tests <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>.</p>
-<h2 id="nest-steps">Nest Steps</h2>
+<h2 id="next-steps">Next Steps</h2>
 <p>Now that we have a simple model working, it&#39;s time to change the specs and add new features. In my next update I&#39;ll add promotions to the products. Stay tuned!</p>
 <p>And, as always, I&#39;m constantly learning - and would love to know if some of you have any ideas on how to better implement these specs, or if there&#39;s any library or framework that I&#39;m missing and would make my life easier. Thanks in advance :)</p>
 ]]></description>
