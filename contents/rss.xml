@@ -4,14 +4,161 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Wed, 01 Feb 2017 02:31:35 GMT</lastBuildDate>
+        <lastBuildDate>Sat, 04 Feb 2017 00:45:38 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
         <item>
+            <title><![CDATA[Type Driven Domain Modelling, part 2]]></title>
+            <description><![CDATA[<p><em>This is part 2 of a series:</em></p>
+<ul>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-1/">Part 1: Types And Property Testing</a></li>
+</ul>
+<p>We wrote our initial domain in part 1. The user produces an event called <code>AddToBasket</code>, with a product and a quantity. Then we wrote a function that takes a list of events, and produces a read model to send to the client to be rendered.</p>
+<p>In this second part we&#39;ll add <em>promotions</em> to products, and make sure total calculations are right!</p>
+<h2 id="spec">Spec</h2>
+<p>In the second part of the series, we&#39;ll add what I call <em>quantity promotions</em>: they are the classic &quot;buy N for X&quot;. For instance, an item costs $3, but we can buy 2 for $5. This is the promotion we&#39;re going to model in this post.</p>
+<h2 id="modelling-a-promotion">Modelling A Promotion</h2>
+<p><em>The starting point for this code is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/DomainPart1.fs">here</a>.</em></p>
+<p>First, let&#39;s start with the Promotion itself, and add it to the Product type:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Promotion</span> </span>= {
+    promoQty: Qty
+    promoPrice: Price
+}
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Product</span> </span>= {
+    sku: Sku
+    price: Price
+    promotion: Promotion option
+}</code></pre>
+
+<p>It&#39;s modeled as an Option, since not all products have a promotion.</p>
+<p>With that in mind, we need to change the <code>buildLine</code> function to account for promotions. Let&#39;s build a function to calculate the total of a line, given a product and a quantity:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> lineTotal quantity product =
+    <span class="hljs-keyword">match</span> product.promotion <span class="hljs-keyword">with</span>
+    | None -&gt; quantity * product.price
+    | Some promotion -&gt; <span class="hljs-number">0</span> <span class="hljs-comment">// implement it!</span>
+
+<span class="hljs-keyword">let</span> buildLine product quantity = {
+    productSku = product.sku
+    quantity = quantity
+    lineTotal = lineTotal quantity product
+}</code></pre>
+
+<p>Everything is working up to this point, but one thing bothers me: because both <code>Qty</code> and <code>Price</code> are aliases for <code>int</code>, the inferred types are often confused:</p>
+<p><img src="../assets/wrong-inferring.png" alt="Wrong Inferring"></p>
+<p>We could fix this particular case by &quot;forcing&quot; a <code>Qty</code> type to <code>quantity</code>, but I think there&#39;s a bigger message here: quantity and price are <em>not</em> the same thing!</p>
+<p>Within our domain, there is one property of quantity that can help us model it: <em>it&#39;s never negative</em>. Another property is that it has to be able to do some arithmetic; we need to be able to sum and divide quantities at least.</p>
+<p>Looking through the <a href="https://docs.microsoft.com/en-us/dotnet/articles/fsharp/language-reference/primitive-types">primitives of F#</a>, I found one that can help us: <em>unsigned ints</em>! I think that <code>uint16</code> is a good choice, since it&#39;s a integer with a 0 - 65535 range. As a bonus, it also has all the arithmetic between <code>uint16</code> implemented:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Sku</span> </span>= string
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Price</span> </span>= int
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Qty</span> </span>= uint16
+
+<span class="hljs-keyword">let</span> createQty (n : int) : Qty =
+    <span class="hljs-keyword">if</span> n &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">then</span> (uint16 <span class="hljs-number">0</span>) <span class="hljs-keyword">else</span> (uint16 n)</code></pre>
+
+<p>I also created a little helper to create a <code>Qty</code> from an <code>int</code>, just because. :)</p>
+<h2 id="calculating-totals">Calculating Totals</h2>
+<p>Now, we can right away see an error in the <code>lineTotal</code> call, since it is inferring that it takes a <code>Price</code>, and not a <code>Qty</code>. Before fixing it, I can see that we&#39;re gonna need an important functionality: we need to be able to multiply a quantity by a price! And it needs to return a price. This is a key function in our domain, so let&#39;s implement it:</p>
+<pre><code class="hljs"><span class="hljs-comment">// super cool custom operator!</span>
+<span class="hljs-keyword">let</span> (*) (qty : Qty) (price : Price) : Price =
+    <span class="hljs-keyword">int</span> qty * price
+
+<span class="hljs-keyword">let</span> lineTotal quantity product =
+    <span class="hljs-keyword">match</span> product.promotion with
+    <span class="hljs-params">| None -&gt; quantity * product.price
+    |</span> <span class="hljs-literal">Some</span> promotion -&gt; <span class="hljs-number">0</span> <span class="hljs-comment">// implement it!</span></code></pre>
+
+<p>Much cleaner. Now, the difficult part: actually calculating the total of a line, when the product is promoted. Let&#39;s do some TDD-ish programming, since it&#39;s easy to make some mistakes in calculations like these. First, a stub of the function itself:</p>
+<pre><code class="hljs fsharp"><span class="hljs-comment">// Domain.fs</span>
+<span class="hljs-keyword">let</span> promotedTotal quantity price promotion = <span class="hljs-number">0</span>
+
+<span class="hljs-comment">// Tests.fs</span>
+(...)
+
+testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span class="hljs-keyword">fun</span> (N : Qty) -&gt;
+    <span class="hljs-keyword">let</span> promoQty = N + (createQty <span class="hljs-number">2</span>)
+    <span class="hljs-keyword">let</span> promotion = { promoQty = promoQty ; promoPrice = <span class="hljs-number">7</span> }
+    <span class="hljs-keyword">let</span> promoted = promotedTotal promoQty <span class="hljs-number">10</span> promotion
+
+    <span class="hljs-keyword">let</span> notPromoQty = N + (createQty <span class="hljs-number">1</span>)
+    <span class="hljs-keyword">let</span> notPromoted = promotedTotal notPromoQty <span class="hljs-number">10</span> promotion
+
+    <span class="hljs-keyword">let</span> promotedExpected = <span class="hljs-number">7</span>
+    <span class="hljs-keyword">let</span> notPromotedExpected = notPromoQty * <span class="hljs-number">10</span>
+
+    Expect.equal promoted promotedExpected <span class="hljs-string">"same price as promotion"</span>
+    Expect.equal notPromoted notPromotedExpected <span class="hljs-string">"multiplied by regular price"</span></code></pre>
+
+<p>I also had to correct the other tests to work with the new <code>Product</code> and <code>Price</code> types. The final version of the test file is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>. Fixing these errors is very direct, since it only involves &quot;getting rid of the red underlinings&quot; that Ionide + the compiler signal. It&#39;s never - ever - that easy in JS, or any other dynamic language for that matter. It&#39;s a much more stressful activity, and stressful activities drain your energy.</p>
+<p>The test is simple: if I have a promotion &quot;buy N for $7&quot;, if I add N to the basket, my total is 7. If I add N - 1, my total is (N - 1) * unit price. (I use <code>N + (createQty 2)</code> here to guarantee that I don&#39;t have any unwanted zeros).</p>
+<p>Now, the implementation:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> promotedTotal quantity price promotion =
+    <span class="hljs-keyword">let</span> promotedQty = quantity / promotion.promoQty
+    <span class="hljs-keyword">let</span> promotedTotal = promotedQty * promotion.promoPrice
+
+    <span class="hljs-keyword">let</span> notPromotedQty = quantity % promotion.promoQty
+    <span class="hljs-keyword">let</span> notPromotedTotal = notPromotedQty * price
+
+    promotedTotal + notPromotedTotal
+
+<span class="hljs-keyword">let</span> lineTotal quantity product =
+    <span class="hljs-keyword">match</span> product.promotion <span class="hljs-keyword">with</span>
+    | None -&gt; quantity * product.price
+    | Some promotion -&gt; promotedTotal quantity product.price promotion</code></pre>
+
+<p>Run the Expecto tests, and there we have it! Working totals :)</p>
+<h2 id="experimenting-with-the-domain">Experimenting With The Domain</h2>
+<p>Even though the project has no compile errors and the tests are ok, it&#39;s still good practice to experiment with the types and functions. At the very least you will be able to rest easy seeing that everything is working, right?</p>
+<p>A good way of doing this is by creating a script file, including our Domain module, and just sending code to F# Interactive. For instance, I created a <code>Experiments.fsx</code> file, with the following contents:</p>
+<pre><code class="hljs fsharp">#load <span class="hljs-string">"Domain.fs"</span>
+
+<span class="hljs-keyword">open</span> Domain
+
+<span class="hljs-keyword">let</span> productA = {
+    sku = <span class="hljs-string">"a"</span>
+    price = <span class="hljs-number">1</span>
+    promotion = None
+}
+
+<span class="hljs-keyword">let</span> productB = {
+    sku = <span class="hljs-string">"b"</span>
+    price = <span class="hljs-number">2</span>
+    promotion = Some {
+        promoQty = createQty <span class="hljs-number">3</span>
+        promoPrice = <span class="hljs-number">5</span>
+    }
+}
+
+<span class="hljs-keyword">let</span> events = [
+    AddToBasket(productA, createQty <span class="hljs-number">5</span>)
+    AddToBasket(productB, createQty <span class="hljs-number">7</span>)
+    AddToBasket(productA, createQty <span class="hljs-number">4</span>)
+]
+
+<span class="hljs-keyword">let</span> myBasket = List.fold update empty events</code></pre>
+
+<p>I created a couple of products, one with a promotion. Then I created a series of events, and built a basket with it. With Ionide it&#39;s easy to run:</p>
+<p><img src="../assets/ionide-fsi-send-file.png" alt="FSI Send File"></p>
+<p>Now we can play with different products and events, and check the results!</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>Changing F# code is so smooth, it&#39;s almost fun. And this is a good thing - it&#39;s a sign that it does not <em>drain a lot of energy</em> from the developer. We can focus on the models and algorithms without using a lot of energy with silly errors from the changes we&#39;re making.</p>
+<p>Whenever we do a lot of cognitive-intense work, we get tired. There&#39;s no escape to that. And when we get tired, we make mistakes. In the projects I&#39;ve worked on, I think 90% of the simple errors that were deployed to production were deployed by tired developers. So, that&#39;s another positive contribution from F# and its tooling and ecosystem to a project&#39;s <em>safety</em>, in the sense that <em>no unwanted accidents happen in production</em>.</p>
+<p>The final code for the domain is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs">here</a>, and the final code for the tests are <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>Imagine we want not only to show the calculated totals, but we also want to show to our users <em>how much they are saving</em> on each line, and in the basket as a whole. I&#39;ll cover this in Part 3 of this series!</p>
+]]></description>
+            <guid isPermaLink="false">Type Driven Domain Modelling, part 2</guid>
+            <pubDate>Wed, 01 Feb 2017 00:00:00 GMT</pubDate>
+        </item>
+        <item>
             <title><![CDATA[Type Driven Domain Modelling, part 1]]></title>
-            <description><![CDATA[<p>A while ago I saw this tweet:</p>
+            <description><![CDATA[<p><em>This is part 1 of a series:</em></p>
+<ul>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/">Part 2: Evolving Models</a></li>
+</ul>
+<p>A while ago I saw this tweet:</p>
 <div style="display: flex; justify-content: center">
   <blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Every system tends towards complexity, slowness and difficulty<br>Staying simple, fast and easy-to-use is a battle that must be fought everyday</p>&mdash; Guillermo Rauch (@rauchg) <a href="https://twitter.com/rauchg/status/813529770059186176">December 26, 2016</a></blockquote>
   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
