@@ -4,7 +4,7 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Sat, 04 Feb 2017 00:45:38 GMT</lastBuildDate>
+        <lastBuildDate>Sat, 04 Feb 2017 13:06:27 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
@@ -56,7 +56,7 @@
 <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Qty</span> </span>= uint16
 
 <span class="hljs-keyword">let</span> createQty (n : int) : Qty =
-    <span class="hljs-keyword">if</span> n &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">then</span> (uint16 <span class="hljs-number">0</span>) <span class="hljs-keyword">else</span> (uint16 n)</code></pre>
+    <span class="hljs-keyword">if</span> n &lt; <span class="hljs-number">0</span> <span class="hljs-keyword">then</span> (uint16 <span class="hljs-number">0</span>) <span class="hljs-keyword">else</span> (uint16 n)</code></pre>
 
 <p>I also created a little helper to create a <code>Qty</code> from an <code>int</code>, just because. :)</p>
 <h2 id="calculating-totals">Calculating Totals</h2>
