@@ -47,6 +47,7 @@
         <p><em>This is part 2 of a series:</em></p>
 <ul>
 <li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-1/">Part 1: Types And Property Testing</a></li>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-3/">Part 3: One More Spec Change</a></li>
 </ul>
 <p>We wrote our initial domain in part 1. The user produces an event called <code>AddToBasket</code>, with a product and a quantity. Then we wrote a function that takes a list of events, and produces a read model to send to the client to be rendered.</p>
 <p>In this second part we&#39;ll add <em>promotions</em> to products, and make sure total calculations are right!</p>
@@ -174,7 +175,7 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
 <h2 id="conclusions">Conclusions</h2>
 <p>Changing F# code is so smooth, it&#39;s almost fun. And this is a good thing - it&#39;s a sign that it does not <em>drain a lot of energy</em> from the developer. We can focus on the models and algorithms without using a lot of energy with silly errors from the changes we&#39;re making.</p>
 <p>Whenever we do a lot of cognitive-intense work, we get tired. There&#39;s no escape to that. And when we get tired, we make mistakes. In the projects I&#39;ve worked on, I think 90% of the simple errors that were deployed to production were deployed by tired developers. So, that&#39;s another positive contribution from F# and its tooling and ecosystem to a project&#39;s <em>safety</em>, in the sense that <em>no unwanted accidents happen in production</em>.</p>
-<p>The final code for the domain is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs">here</a>, and the final code for the tests are <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>.</p>
+<p>The final code for the domain is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/DomainPart2.fs">here</a>, and the final code for the tests are <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/TestsPart2.fs">here</a>.</p>
 <h2 id="next-steps">Next Steps</h2>
 <p>Imagine we want not only to show the calculated totals, but we also want to show to our users <em>how much they are saving</em> on each line, and in the basket as a whole. I&#39;ll cover this in Part 3 of this series!</p>
 

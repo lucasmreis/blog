@@ -4,16 +4,188 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Sat, 04 Feb 2017 13:26:47 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 05 Mar 2017 14:47:33 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
         <item>
+            <title><![CDATA[Type Driven Domain Modelling, part 3]]></title>
+            <description><![CDATA[<p><em>This is part 3 of a series:</em></p>
+<ul>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-1/">Part 1: Types And Property Testing</a></li>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/">Part 2: Evolving Models</a></li>
+</ul>
+<p>In this third part of the series, we will add a feature to the basket read model: every line will be more explicit about whether or not it&#39;s being promoted, and what the discount is.</p>
+<h2 id="spec">Spec</h2>
+<p>Lines in the basket will have one total value if there are no promotions applied. In cases where a promotion is applied, lines in the basket will list the <em>original</em> total value (before discount), the resulting <em>discount</em>, and the <em>final</em> total value after subtracting the discount from the original total.</p>
+<h2 id="evolving-the-types">Evolving The Types</h2>
+<p>To achieve the new spec, we don&#39;t need to change the Product or the Event. Or In <em>CQRS</em> terms, we don&#39;t need to change the <em>Command</em> side, only the <em>Read</em> side.</p>
+<p>Let&#39;s first define a type <code>ReadTotal</code>, that expresses the totals we need to show the user according to the new spec:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">ReadTotal</span> </span>=
+    | NotPromoted <span class="hljs-keyword">of</span> Price
+    | Promoted <span class="hljs-keyword">of</span> original: Price * discount: Price * final: Price</code></pre>
+
+<p>There we have it: a <code>NotPromoted</code> total that only stores the price, or a <code>Promoted</code> total, that stores the price before, the discount, and the price after the promotion (<code>original</code>, <code>discount</code>, and <code>final</code>).</p>
+<p>Now let&#39;s see it in our read models:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Line</span> </span>= {
+    productSku: Sku
+    quantity: Qty
+    lineTotal: ReadTotal
+}
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Basket</span> </span>= {
+    lines: Line list
+    total: ReadTotal
+}
+
+<span class="hljs-keyword">let</span> empty = { lines = [] ; total = NotPromoted <span class="hljs-number">0</span> }</code></pre>
+
+<p>That&#39;s everything we need with our types, now let&#39;s go to the functions.</p>
+<h2 id="adapting-the-functions">Adapting The Functions</h2>
+<p>First, I&#39;m going to rename <code>promotedTotal</code> to <code>promotedFinalTotal</code> - that&#39;s more descriptive of what the function does now:</p>
+<pre><code class="hljs fsharp"><span class="hljs-comment">// only changed the function's name</span>
+<span class="hljs-keyword">let</span> promotedFinalTotal quantity price promotion =
+    <span class="hljs-keyword">let</span> promotedQty = quantity / promotion.promoQty
+    <span class="hljs-keyword">let</span> promotedTotal = promotedQty * promotion.promoPrice
+
+    <span class="hljs-keyword">let</span> notPromotedQty = quantity % promotion.promoQty
+    <span class="hljs-keyword">let</span> notPromotedTotal = notPromotedQty * price
+
+    promotedTotal + notPromotedTotal</code></pre>
+
+<p>And then we reimplement <code>promotedTotal</code>. This function will calculate the promoted total, and the total without promotion. If the values are different, it returns a <code>Promoted</code>. If the values are not different, it returns a <code>NotPromoted</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> promotedTotal quantity price promotion =
+    <span class="hljs-keyword">let</span> final = promotedFinalTotal quantity price promotion
+    <span class="hljs-keyword">let</span> original = quantity * price
+
+    <span class="hljs-keyword">if</span> final &lt;&gt; original
+    <span class="hljs-keyword">then</span> Promoted(original, original - final, final)
+    <span class="hljs-keyword">else</span> NotPromoted(final)</code></pre>
+
+<p>Easy! Now we adapt the <code>lineTotal</code> function to return <code>ReadTotal</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> lineTotal quantity product =
+    <span class="hljs-keyword">match</span> product.promotion <span class="hljs-keyword">with</span>
+    | None -&gt; NotPromoted(quantity * product.price)
+    | Some promotion -&gt; promotedTotal quantity product.price promotion</code></pre>
+
+<p>And we&#39;re done with all the line refactoring :) If we compile the project now, we see that we only have to adapt <code>basketTotal</code> to sum the totals of all the lines. Let&#39;s do it.</p>
+<h2 id="summing-readtotals">Summing ReadTotals</h2>
+<p>Let&#39;s have a look at the current <code>basketTotal</code> implementation:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> basketTotal lines =
+    lines
+    |&gt; List.map (<span class="hljs-keyword">fun</span> l -&gt; l.lineTotal)
+    |&gt; List.sum</code></pre>
+
+<p><code>List.sum</code> is a simple function that sums all the ints from a list. Another way we could sum the ints could be:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> basketTotal lines =
+    lines
+    |&gt; List.map (<span class="hljs-keyword">fun</span> l -&gt; l.lineTotal)
+    |&gt; List.fold (+) <span class="hljs-number">0</span></code></pre>
+
+<p>This works the same way, but exposes a more generic syntax that we can take advantage of. <code>(+)</code> is the function that sums two ints, and <code>0</code> is an &quot;initial&quot; int; that means that in order to adapt this function to <code>ReadTotal</code> instead of int we only need to implement a function that sums two <code>ReadTotal</code> and an initial total!</p>
+<p>To sum two <code>ReadTotal</code>, we have to take into account that both could be either <code>NotPromoted</code> or <code>Promoted</code>. I&#39;ll implement it as four case pattern match, and if you have a better idea, please write it in the comments!</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> sumTotals t1 t2 =
+    <span class="hljs-keyword">match</span> t1, t2 <span class="hljs-keyword">with</span>
+    | NotPromoted v1, NotPromoted v2 -&gt;
+        NotPromoted(v1 + v2)
+
+    | NotPromoted v, Promoted(o, d, f) -&gt;
+        Promoted(v + o, d, v + f)
+
+    | Promoted(o, d, f), NotPromoted v -&gt;
+        Promoted(v + o, d, v + f)
+
+    | Promoted(o1, d1, f1), Promoted(o2, d2, f2) -&gt;
+        Promoted(o1 + o2, d1 + d2, f1 + f2)
+
+<span class="hljs-keyword">let</span> basketTotal lines =
+    lines
+    |&gt; List.map (<span class="hljs-keyword">fun</span> l -&gt; l.lineTotal)
+    |&gt; List.fold sumTotals (NotPromoted <span class="hljs-number">0</span>)</code></pre>
+
+<p>And our new domain is ready! Just run the <code>Experiments.fsx</code> script we <a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/">wrote in Part 2</a>, and see the results :)</p>
+<h2 id="updating-the-tests">Updating The Tests</h2>
+<p>For the &quot;promoted line total&quot; test, we need now to build both the <code>Promoted</code> and <code>NotPromoted</code> expected results:</p>
+<pre><code class="hljs fsharp">testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span class="hljs-keyword">fun</span> (N : Qty) -&gt;
+    <span class="hljs-keyword">let</span> price = <span class="hljs-number">10</span>
+    <span class="hljs-keyword">let</span> promotedPrice = <span class="hljs-number">7</span>
+
+    <span class="hljs-keyword">let</span> promoQty = N + <span class="hljs-number">2</span>us
+    <span class="hljs-keyword">let</span> promotion = { promoQty = promoQty ; promoPrice = promotedPrice }
+    <span class="hljs-keyword">let</span> promoted = promotedTotal promoQty price promotion
+
+    <span class="hljs-keyword">let</span> notPromoQty = N + <span class="hljs-number">1</span>us
+    <span class="hljs-keyword">let</span> notPromoted = promotedTotal notPromoQty price promotion
+
+    <span class="hljs-keyword">let</span> promotedExpected = Promoted(promoQty * price, promoQty * price - promotedPrice , promotedPrice)
+    <span class="hljs-keyword">let</span> notPromotedExpected = NotPromoted(notPromoQty * price)
+
+    Expect.equal promoted promotedExpected <span class="hljs-string">"same price as promotion"</span>
+    Expect.equal notPromoted notPromotedExpected <span class="hljs-string">"multiplied by regular price"</span></code></pre>
+
+<p>We can also test that adding any quantity of non-promoted products to a basket with non-promoted lines results in a non-promoted basket:</p>
+<pre><code class="hljs fsharp">testProperty <span class="hljs-string">"not promoted products added to not promoted"</span> &lt;| <span class="hljs-keyword">fun</span> (N : Qty) -&gt;
+    <span class="hljs-keyword">let</span> initial = {
+        lines = [{ productSku = <span class="hljs-string">"a"</span> ; quantity = <span class="hljs-number">3</span>us ; lineTotal = NotPromoted <span class="hljs-number">30</span> }]
+        total = NotPromoted <span class="hljs-number">30</span>
+    }
+    <span class="hljs-keyword">let</span> prod = { sku = <span class="hljs-string">"sku"</span> ; price = <span class="hljs-number">10</span> ; promotion = None }
+    <span class="hljs-keyword">let</span> event = AddToBasket(prod, <span class="hljs-number">1</span>us)
+
+    <span class="hljs-keyword">let</span> basket =
+        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
+        |&gt; List.map (<span class="hljs-keyword">fun</span> _ -&gt; event)
+        |&gt; List.fold update initial
+
+    <span class="hljs-keyword">let</span> isNotPromoted =
+        <span class="hljs-keyword">match</span> basket.total <span class="hljs-keyword">with</span>
+        | NotPromoted _ -&gt; <span class="hljs-keyword">true</span>
+        | Promoted _ -&gt; <span class="hljs-keyword">false</span>
+
+    Expect.isTrue isNotPromoted <span class="hljs-string">"should stay not promoted"</span></code></pre>
+
+<p>We can also test that adding any quantity of not promoted products to a basket with a promoted line results in a promoted basket, with the same discount as before:</p>
+<pre><code class="hljs fsharp">testProperty <span class="hljs-string">"not promoted products added to promoted"</span> &lt;| <span class="hljs-keyword">fun</span> (N : Qty) -&gt;
+    <span class="hljs-keyword">let</span> initial = {
+        lines = [{ productSku = <span class="hljs-string">"a"</span> ; quantity = <span class="hljs-number">3</span>us ; lineTotal = Promoted(<span class="hljs-number">30</span>, <span class="hljs-number">11</span>, <span class="hljs-number">19</span>) }]
+        total = Promoted(<span class="hljs-number">30</span>, <span class="hljs-number">11</span>, <span class="hljs-number">19</span>)
+    }
+    <span class="hljs-keyword">let</span> prod = { sku = <span class="hljs-string">"sku"</span> ; price = <span class="hljs-number">10</span> ; promotion = None }
+    <span class="hljs-keyword">let</span> event = AddToBasket(prod, <span class="hljs-number">1</span>us)
+
+    <span class="hljs-keyword">let</span> basket =
+        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
+        |&gt; List.map (<span class="hljs-keyword">fun</span> _ -&gt; event)
+        |&gt; List.fold update initial
+
+    <span class="hljs-keyword">let</span> isPromoted =
+        <span class="hljs-keyword">match</span> basket.total <span class="hljs-keyword">with</span>
+        | NotPromoted _ -&gt; <span class="hljs-keyword">false</span>
+        | Promoted(_, discount, _) -&gt;
+            <span class="hljs-comment">// asserting here; I know, not very elegant :(</span>
+            Expect.equal discount <span class="hljs-number">11</span> <span class="hljs-string">"discount is the same"</span>
+            <span class="hljs-keyword">true</span>
+
+    Expect.isTrue isPromoted <span class="hljs-string">"should stay promoted"</span></code></pre>
+
+<p>I think these tests are enough to have a lot of confidence in the code, but of course they don&#39;t assure absolute correctness. So, if you have any other ideas for interesting properties to test, please write it in the comment section!</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>Now we have a function that transforms a list of events into a relatively complex basket. I really like how the code is very declarative, and is also self explanatory. The type system contributes to that. This, combined with the property tests, makes me feel very confident in the <em>correctness</em> of this code.</p>
+<p>As a side note, I&#39;m completely sold on ML languages now :). Not only do I tend to find my code more reliable and safe, it&#39;s also more concise <em>and</em> readable. After these last months experimenting with Elm and F#, I think that ML languages take all the benefits of a dynamic functional language like Clojure to a whole new level.</p>
+<p>The final code for the domain is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs">here</a>, and the final code for the tests are <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>That is my &quot;planned last part&quot; of this series. But this exercise could go in two different directions from here: either building an actual application using this domain model, a web API for example, or evolving the domain model, by adding either new commands or read models. Feel free to share any ideas you have!</p>
+]]></description>
+            <guid isPermaLink="false">Type Driven Domain Modelling, part 3</guid>
+            <pubDate>Wed, 01 Mar 2017 00:00:00 GMT</pubDate>
+        </item>
+        <item>
             <title><![CDATA[Type Driven Domain Modelling, part 2]]></title>
             <description><![CDATA[<p><em>This is part 2 of a series:</em></p>
 <ul>
 <li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-1/">Part 1: Types And Property Testing</a></li>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-3/">Part 3: One More Spec Change</a></li>
 </ul>
 <p>We wrote our initial domain in part 1. The user produces an event called <code>AddToBasket</code>, with a product and a quantity. Then we wrote a function that takes a list of events, and produces a read model to send to the client to be rendered.</p>
 <p>In this second part we&#39;ll add <em>promotions</em> to products, and make sure total calculations are right!</p>
@@ -141,7 +313,7 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
 <h2 id="conclusions">Conclusions</h2>
 <p>Changing F# code is so smooth, it&#39;s almost fun. And this is a good thing - it&#39;s a sign that it does not <em>drain a lot of energy</em> from the developer. We can focus on the models and algorithms without using a lot of energy with silly errors from the changes we&#39;re making.</p>
 <p>Whenever we do a lot of cognitive-intense work, we get tired. There&#39;s no escape to that. And when we get tired, we make mistakes. In the projects I&#39;ve worked on, I think 90% of the simple errors that were deployed to production were deployed by tired developers. So, that&#39;s another positive contribution from F# and its tooling and ecosystem to a project&#39;s <em>safety</em>, in the sense that <em>no unwanted accidents happen in production</em>.</p>
-<p>The final code for the domain is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs">here</a>, and the final code for the tests are <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>.</p>
+<p>The final code for the domain is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/DomainPart2.fs">here</a>, and the final code for the tests are <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/TestsPart2.fs">here</a>.</p>
 <h2 id="next-steps">Next Steps</h2>
 <p>Imagine we want not only to show the calculated totals, but we also want to show to our users <em>how much they are saving</em> on each line, and in the basket as a whole. I&#39;ll cover this in Part 3 of this series!</p>
 ]]></description>
@@ -153,6 +325,7 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
             <description><![CDATA[<p><em>This is part 1 of a series:</em></p>
 <ul>
 <li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/">Part 2: Evolving Models</a></li>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-3/">Part 3: One More Spec Change</a></li>
 </ul>
 <p>A while ago I saw this tweet:</p>
 <div style="display: flex; justify-content: center">
@@ -360,7 +533,7 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
 <p>It&#39;s incredible how reliable your code can feel when it&#39;s written in a strong typed language with some property tests. This is a trait of ML-type languages like F#, Haskell, Ocaml and Elm, and I think this is the the direction we should look in when looking for reliability and safety.</p>
 <p>Speaking on F# in particular, it&#39;s a very &quot;agile&quot; developing experience. Good type inferring, with the tooling that Ionide provides, makes it very easy and quick to experiment with different ways of writing the same thing, while still maintaining correctness through types.</p>
 <p>Another good surprise was Expecto, and how easy it was to setup, write and run the tests - even the property based ones.</p>
-<p>The final code can be found <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs">here</a>, and the tests <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>.</p>
+<p>The final code can be found <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/DomainPart1.fs">here</a>, and the tests <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/TestsPart1.fs">here</a>.</p>
 <h2 id="next-steps">Next Steps</h2>
 <p>Now that we have a simple model working, it&#39;s time to change the specs and add new features. In my next update I&#39;ll add promotions to the products. Stay tuned!</p>
 <p>And, as always, I&#39;m constantly learning - and would love to know if some of you have any ideas on how to better implement these specs, or if there&#39;s any library or framework that I&#39;m missing and would make my life easier. Thanks in advance :)</p>
@@ -4025,113 +4198,6 @@ angular.module(<span class="hljs-string">'simpleStateApp'</span>)
 ]]></description>
             <guid isPermaLink="false">A More Functional Approach to Angular, with Baobab</guid>
             <pubDate>Tue, 10 Mar 2015 00:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[A More Functional Approach to Angular]]></title>
-            <description><![CDATA[<p>We all know the story: a project is started with all the current best practices and an elegant architecture. Everything is beautiful - until it is not anymore. As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question <em>what is happening to my application right now?</em> Or the even more important <em>what was happening when that crazy error occurred?</em> In this post, I propose a solution to this problem.</p>
-<p>One day I was googling ways to deal with this type of complexity, and I came across the talk <a href="http://www.infoq.com/presentations/Simple-Made-Easy">Simple Made Easy</a> by Rich Hickey and the paper <a href="https://github.com/papers-we-love/papers-we-love/tree/master/design/out-of-the-tar-pit.pdf">Out of the Tar Pit</a>, by Ben Moseley and Peter Marks. This material changed the way I think about programming, and every time I come back to them, I learn a little bit more.</p>
-<p>I can see now that most of that complexity was coming from the way I was storing and dealing with the <em>state</em> of my application. It was all over the place. I was getting information from the APIs and storing them in the services themselves. It wasn&#39;t clear who was reading that information, who was transforming it, or who was writing it. A lot of debugging was needed to understand what was happening at any point in time, and it was really difficult to write tests for everything.</p>
-<h2 id="the-solution">The Solution</h2>
-<p>In order to solve this problem, I took a more <em>functional</em> approach by avoiding mutation as much possible and only changing variables in a few controlled places. In addition, to take it a step further, I stored <em>all the application state in a single place</em> (some React frameworks work this way, like <a href="https://github.com/omcljs/om">Om</a> and <a href="https://github.com/moreartyjs/moreartyjs">Morearty</a>).</p>
-<p>The architecture is simple: all the state will be in one factory. Other services will consist of pure functions. The controllers will listen and/or change the state. And that&#39;s it! Let me explain it more, and illustrate with an example.</p>
-<p>Remark: the solution will be illustrated in Angular, but it could, with little work, be implemented in other frameworks (or even vanilla JS for that matter).</p>
-<p>The state will be stored in the <code>AppStateService</code> service. It has two methods: <code>listen</code> and  <code>change</code>. <code>listen</code> is used to observe one part of the state. Every time the <code>change</code> method is called, the listeners will be updated.</p>
-<p>The controllers will have a <code>state</code> variable exposed to the views, which will be listening to <code>AppStateService</code>. It&#39;s important the that variable remain <em>immutable</em>; let&#39;s remember that <code>AppStateService</code> should only be mutated via the <code>change</code> method:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// INSIDE CONTROLLER</span>
-
-<span class="hljs-comment">// local variable to store the state values</span>
-<span class="hljs-keyword">var</span> state = {};
-
-<span class="hljs-comment">// every time AppStateService changes,</span>
-<span class="hljs-comment">// local state will change too:</span>
-AppStateService.listen(<span class="hljs-string">'somePart'</span>,
-  <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">s</span>) </span>{ state.somePart = s; });
-<span class="hljs-comment">// =&gt; state = { somePart: null }</span>
-
-<span class="hljs-comment">// change AppStateService:</span>
-AppStateService.change(<span class="hljs-string">'somePart'</span>, <span class="hljs-string">'someValue'</span>);
-<span class="hljs-comment">// =&gt; state = { somePart: 'someValue' }</span></code></pre>
-
-<p>The <code>state</code> variable should be exposed to the views, together with pure functions to transform it:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// using "Controller As" syntax</span>
-<span class="hljs-keyword">this</span>.state = state;
-<span class="hljs-keyword">this</span>.summary = SomeService.summary;</code></pre>
-
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">ng-controller</span>=<span class="hljs-string">"SomeController as ctrl"</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Some Part: {{ ctrl.state.somePart }}<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Summary: {{ ctrl.summary(ctrl.state) }}<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
-
-<p>If the view has any input, the controller will have another variable called <code>form</code>, to take advantadge of Angular&#39;s two-way binding:</p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> form = { newFoo: <span class="hljs-string">'initial value'</span> };
-<span class="hljs-keyword">this</span>.form = form;</code></pre>
-
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>
-  New Foo: <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text"</span> <span class="hljs-attr">ng-model</span>=<span class="hljs-string">"c.form.newFoo"</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span></code></pre>
-
-<p>Now let&#39;s take this Foo example a little further, and start changing the State.</p>
-<h2 id="a-more-complete-example">A More Complete Example</h2>
-<p>Let <code>AppStateService</code> hold a <code>foos</code> array. We want a view with an input and a button that, when pressed, add a new Foo to <code>foos</code>:</p>
-<pre><code class="hljs javascript">angular.module(<span class="hljs-string">'simpleStateApp'</span>)
-  .controller(<span class="hljs-string">'FooCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">AppStateService</span>) </span>{
-
-  <span class="hljs-keyword">var</span> state = {};
-  <span class="hljs-keyword">var</span> form = {
-    newFoo: <span class="hljs-string">''</span>
-  };
-
-  AppStateService.listen(<span class="hljs-string">'foos'</span>,
-    <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">f</span>) </span>{ state.foos = f; });
-
-  <span class="hljs-comment">// changeFoos is a function that</span>
-  <span class="hljs-comment">// only affects the foos property</span>
-  <span class="hljs-keyword">var</span> changeFoos = AppStateService.change(<span class="hljs-string">'foos'</span>);
-
-  <span class="hljs-keyword">var</span> addFoo = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">state, form</span>) </span>{
-    <span class="hljs-comment">// using Ramda library</span>
-    <span class="hljs-keyword">var</span> newFoos =
-      R.append(form.newFoo, state.foos);
-    changeFoos(newFoos);
-  };
-
-  <span class="hljs-comment">// exposed to the view:</span>
-  <span class="hljs-keyword">this</span>.state = state;
-  <span class="hljs-keyword">this</span>.form = form;
-
-  <span class="hljs-keyword">this</span>.addFoo = addFoo;
-});</code></pre>
-
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">ng-controller</span>=<span class="hljs-string">"FooCtrl as c"</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span>"Foo" form<span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>
-    New Foo: <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text"</span> <span class="hljs-attr">ng-model</span>=<span class="hljs-string">"c.form.newFoo"</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">ng-click</span>=<span class="hljs-string">"c.addFoo(c.state, c.form)"</span>&gt;</span>
-      Add Foo
-    <span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
-
-<p>So, now we have an <code>addFoo</code> function. It changes the state by appending <code>form.newFoo</code> to the <code>foos</code> array. The best part is: every part of the application listening to the <code>foos</code> array will be updated once the <code>changeFoos</code> function is called!</p>
-<p>I setup a small project illustrating that idea <a href="https://github.com/lucasmreis/simpleStateApp">on Github</a>. It illustrates well the benefits of using this approach:</p>
-<ol>
-<li>There&#39;s a &quot;read only&quot; controller, listening to both <code>foos</code> and <code>bars</code> arrays from <code>AppStateService</code>;</li>
-<li>There&#39;s a Foo controller;</li>
-<li>There&#39;s a Bar controller being used in <em>two</em> different views;</li>
-<li>The Bar controller also listens to <code>foos</code>, and the user can only add a Bar after a Foo named <code>requiredFoo</code> is created (I call this the &quot;weird spec&quot; :) ). This is used to illustrate how different controllers can interplay in intricate ways through the State;</li>
-<li>The application also listens to changes in state and save them on local storage.</li>
-</ol>
-<h2 id="conclusions">Conclusions</h2>
-<p>So, what have we gained from this architecture? In one word, <em>simplicity</em>. The entire application becomes more easily understandable. It&#39;s simple to reason about the whole application. Everything that changes with time is confined to <code>AppStateService</code>. You know exactly who changes and who listens to each part of it.</p>
-<p>In the example posted, I also implemented the method <code>AppStateService.get()</code>, that returns the whole state object. Inject it into the console, and you have an incredible debugging tool. This answers the question we ask at the beginning of this post: <em>what is happening to my application right now?</em></p>
-<h2 id="next-steps">Next Steps</h2>
-<p>This solution works really well for my current project, but, of course, I&#39;m sure it could be improved. I would appreciate any input!</p>
-<p>One feature I would love to see implemented: whenever a big problem happens, an error event would be sent to the server with the State object, so the developers can see exactly where the user was when the error ocurred. That would be awesome.</p>
-<p>Here&#39;s the <a href="https://github.com/lucasmreis/simpleStateApp">working demo</a>.</p>
-<p><strong>Update 2015-03-10</strong>: I illustrate again this idea in the <a href="../a-more-functional-approach-to-angular-with-baobab">next post</a>, this time using the Baobab library. Check it out, it even has <em>undo</em>! :)</p>
-]]></description>
-            <guid isPermaLink="false">A More Functional Approach to Angular</guid>
-            <pubDate>Sun, 22 Feb 2015 00:00:00 GMT</pubDate>
         </item>
     </channel>
 </rss>
