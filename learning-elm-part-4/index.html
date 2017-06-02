@@ -46,9 +46,9 @@
         <div class="lead">Property Based Testing And Better Modelling</div>
         <p>As I said in the conclusion of part 1 of this series, the function I wrote in <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">that post</a> felt very <em>reliable</em>, in a way that&#39;s difficult to achieve with any javascript code.</p>
 <p>As a reminder, here is the card type used in the code:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span> = <span class="hljs-type">Jack</span> | <span class="hljs-type">Queen</span> | <span class="hljs-type">King</span> | <span class="hljs-type">Ace</span> | <span class="hljs-type">Num</span> <span class="hljs-type">Int</span>
-<span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span> = <span class="hljs-type">Club</span> | <span class="hljs-type">Diamond</span> | <span class="hljs-type">Spade</span> | <span class="hljs-type">Heart</span>
-<span class="hljs-keyword">type</span> <span class="hljs-type">Card</span> = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span> | <span class="hljs-type">Joker</span></code></pre>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span> = <span class="hljs-type">Jack</span> | <span class="hljs-type">Queen</span> | <span class="hljs-type">King</span> | <span class="hljs-type">Ace</span> | <span class="hljs-type">Num</span> <span class="hljs-type">Int</span></span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span> = <span class="hljs-type">Club</span> | <span class="hljs-type">Diamond</span> | <span class="hljs-type">Spade</span> | <span class="hljs-type">Heart</span></span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span> = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span> | <span class="hljs-type">Joker</span></span></code></pre>
 
 <p>Looking at these types, a question arises: <em>how can I guarantee that I never end up with an invalid card?</em> By invalid card, I mean something like a thirteen of Clubs, or a minus five of Hearts.</p>
 <h2 id="unit-testing">Unit Testing</h2>
@@ -69,24 +69,24 @@
 <li>Edit <code>tests/Tests.elm</code> to introduce new tests.</li>
 </ol>
 <p>After writing the unit tests, this is how my <code>Tests.elm</code> file looks:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">module</span> Tests <span class="hljs-keyword">exposing</span> (..)
+<pre><code class="hljs elm">module Tests exposing (..)
 
-<span class="hljs-keyword">import</span> Test <span class="hljs-keyword">exposing</span> (..)
-<span class="hljs-keyword">import</span> Expect
-<span class="hljs-keyword">import</span> Cards <span class="hljs-keyword">exposing</span> (..)
+import Test exposing (..)
+import Expect
+import Cards exposing (..)
 
 
-<span class="hljs-title">all</span> : <span class="hljs-type">Test</span>
-<span class="hljs-title">all</span> =
-    describe <span class="hljs-string">"parseNumValue"</span>
-        [ test <span class="hljs-string">"cannot be less than 2"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"1"</span>) <span class="hljs-type">Nothing</span>
-        , test <span class="hljs-string">"minimum of 2"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"2"</span>) (<span class="hljs-type">Just</span> (<span class="hljs-type">Num</span> <span class="hljs-number">2</span>))
-        , test <span class="hljs-string">"maximum of 10"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"10"</span>) (<span class="hljs-type">Just</span> (<span class="hljs-type">Num</span> <span class="hljs-number">10</span>))
-        , test <span class="hljs-string">"cannot be more than 10"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"11"</span>) <span class="hljs-type">Nothing</span>
+all : Test
+all =
+    describe "parseNumValue"
+        [ test "cannot be less than 2"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "1") Nothing
+        , test "minimum of 2"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "2") (Just (Num 2))
+        , test "maximum of 10"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "10") (Just (Num 10))
+        , test "cannot be more than 10"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "11") Nothing
         ]</code></pre>
 
 <p>The syntax is direct: you describe a test suite, and then define the tests inside a list. I tested the &quot;corner cases&quot; of the function, to make sure that any value less than 2 or greater than 10 will not be parsed to a Card. I also like that tests in general also work as documentation to show how the function is supposed to behave.</p>
@@ -96,7 +96,7 @@
 <p>Elm Test has an easy way of doing property based tests. Instead of using the <code>test</code> function, you will use <code>fuzz</code> function, specify a &quot;fuzzer&quot;, and write your test using the generated value as a parameter:</p>
 <pre><code class="hljs elm">(...)
 
-<span class="hljs-keyword">import</span> Fuzz <span class="hljs-keyword">exposing</span> (..)
+<span class="hljs-import"><span class="hljs-keyword">import</span> Fuzz <span class="hljs-keyword">exposing</span> <span class="hljs-container">(..)</span></span>
 
 (...)
 
@@ -127,7 +127,7 @@
 <p>I believe the solution feels much more reliable with the addition of the property based tests. But one thing still bothers me: the fact that, if I do not use the parsers to build a card, I can still have an invalid card like <code>Just (Num 11)</code>.</p>
 <h2 id="can-we-do-better-">Can We Do Better?</h2>
 <p>Our cards have a small finite domain. Instead of having a <code>Num Int</code> case for the <code>Value</code> type, we could be explicit about every value possible:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span></span>
     = <span class="hljs-type">Jack</span>
     | <span class="hljs-type">Queen</span>
     | <span class="hljs-type">King</span>
@@ -143,14 +143,14 @@
     | <span class="hljs-type">Ten</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span></span>
     = <span class="hljs-type">Club</span>
     | <span class="hljs-type">Diamond</span>
     | <span class="hljs-type">Spade</span>
     | <span class="hljs-type">Heart</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Card</span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span></span>
     = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span>
     | <span class="hljs-type">Joker</span></code></pre>
 
@@ -159,13 +159,13 @@
 <h2 id="is-it-always-a-possibility-">Is It Always A Possibility?</h2>
 <p>I tend to think that we were kind of &quot;lucky&quot; here, in the sense that a normal deck of cards has about nine numbered cards only. It&#39;s easier to enumerate every case in that sense, but I do not know if it would be practical to do that if the numbered cards were in the 2 - 100 range, for example.</p>
 <p>I think that the simple way of dealing with it is to always first try to have all your modeling constraints through types. For example, imagine that the only way to have a user name is through logging in. That means that instead of:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">User</span> =
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">User</span> =</span>
     { isLogged : <span class="hljs-type">Bool</span>
     , name : <span class="hljs-type">String</span>
     }</code></pre>
 
 <p>You should have:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">User</span>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">User</span></span>
     = <span class="hljs-type">NotLogged</span>
     | <span class="hljs-type">Logged</span> <span class="hljs-type">String</span></code></pre>
 

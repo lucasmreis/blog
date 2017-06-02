@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>The Single Most Important Driver Of Software Quality | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>The Single Most Important Driver Of Software Quality</h1>
+        <div class="lead">A True Story</div>
+        <p>So, there I was, ready to press the button. All the while three hundred people were looking at me, thinking &quot;is this guy going to make my work more difficult?&quot;. I had nowhere to hide, and the button needed to be pushed.</p>
+<p>My claim: <strong>developers having skin in the game is the <em>main</em> driver of software quality</strong>. If your life depends on the software you are building, you can bet that the software will be of a much higher quality than any software that your life does not depend on. That being said, there are also &quot;second best&quot; scenarios, like being near <em>people whose lives</em> depend on the quality of your code, or being an <em>actual user</em> of the product yourself. I cannot imagine any better factor than skin in the game to drive quality.</p>
+<p>But let me start from the beginning.</p>
+<p>I work at a large online retail company, with millions and millions of  users. In addition to the millions of users using from home, a modified version of the website is leveraged by a telemarketing sector within my company. As you may have guessed, these are the three hundred people who were not very comfortable with my presence.</p>
+<p>I can&#39;t say that I blame them for being uncomfortable, because they do earn a share of what they sell for the company. In other words, they have a lot of skin in the game. They don&#39;t use the website as a normal user, to buy something; they use it <em>as a selling tool</em>. If the checkout doesn&#39;t work, they don&#39;t sell, and they don&#39;t make money. Needless to say some of them are thinking, &quot;I&#39;d kill the person who broke this thing!&quot; when the site goes down.</p>
+<p>When I pitched my idea to refactor/rewrite a part of our checkout to upper management, they were a little unsure of the project. First, I tried to sell them on it with a promise of an increase in code quality and better performance, and when they still seemed hesitant, I said, &quot;I&#39;ll deploy the changes to production in the middle of the telemarketers&quot;. At that moment they realized I was serious about idea, and they agreed to sign off on the project.</p>
+<p>As soon as I got back to my work station, I felt something different. As always we were very serious about our metrics and processes, and we took every action necessary to be sure the website would not have any problems for our millions of users. But just the thought of deploying the changes to production while at the telemarketing headquarters, next to people who depend on the site to make a living, gave us a different feeling. From early on, everyone on the team worked hard to avert potential disasters down the road.</p>
+<p>Not only were we super careful with our code, we also got very engaged with UX, UI, and with the infrastructure of the project. From the very beginning, our team came up with strategies to deploy the application while causing the least impact possible. We created a &quot;panic&quot; link for the telemarketers to go to the previous application. We even developed a new telemarketing-only feature to help them sell additional services and insurance, as an incentive not to press that panic link.</p>
+<p>Our website is really large, with lots of different micro-services and different clients interacting, and at this level of complexity, it&#39;s almost inevitable that problems will occur in production, no matter how much testing you do, or how careful you are in your process. With that in mind, it wasn&#39;t a huge surprise that on deploy day, in the first ten minutes, we had a small problem affecting the sale of gift wrap.</p>
+<p>Everybody had been cordial to us from the beginning, but I could feel the tension in the air during those ten minutes. And then, after rolling back and fixing the issue, I could still see that the telemarketers were not very confident. What other errors would affect the sales?</p>
+<p>But by the end of the day, everything had gone well. We had anticipated almost every scenario, and we were ready to fix all the problems that were raised. The application started to run smoothly, and no one was using the panic link anymore, success! By the end of a couple of weeks, we learned that services and insurance sales had risen by 20% for telemarketing, and we raised the overall conversion of the website by about 2%.</p>
+<p>So, when I see that <a href="https://zapier.com/blog/how-basecamp-uses-basecamp3/">Basecamp uses Basecamp</a>, and <a href="https://www.youtube.com/watch?v=uLrnQtAq5Ec&amp;t=4m10s">the VS Code team uses VS Code to build VS Code itself</a>, I understand why those products have really high quality. They have <em>skin in the game</em>.</p>
+<p><em>Final notes</em>: of course this is not a scientific claim :) It is a hypothesis raised from our own experience, and we continue to observe this property in different projects. The effects of skin in the game are usually very well described by some economists and philosophers, and especially by <a href="https://www.amazon.com/Nassim-Nicholas-Taleb/e/B000APVZ7W">Nassim Taleb</a>. He&#39;s actually writing a book called <em>Skin In The Game</em>, and <a href="https://medium.com/incerto/why-each-one-should-eat-his-own-turtles-equality-in-uncertainty-e2b2ee3bcddf">a lot</a> <a href="https://medium.com/incerto/the-skin-of-others-in-your-game-3f51d8ccc3fb">of really</a> <a href="https://medium.com/incerto/no-worship-without-skin-in-the-game-70b4aa341092">interesting chapters</a> <a href="https://medium.com/incerto/an-expert-called-lindy-fdb30f146eaf">are online</a>.</p>
+
+        <div class="signature">May 30, 2017.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'the-single-most-important-driver-of-software-quality';
+          var disqus_title = 'The Single Most Important Driver Of Software Quality';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

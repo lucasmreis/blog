@@ -60,22 +60,22 @@
 <p><em>Characters cards will be yellow, and film cards will be blue. By clicking on a card, it changes from one screen to the other.</em></p>
 <h2 id="film-and-character-components">Film And Character Components</h2>
 <p>I&#39;ll build both the Character and Film components in separate files. This is the initial implementation:</p>
-<pre><code class="hljs">-- Character<span class="hljs-selector-class">.elm</span>
+<pre><code class="hljs"><span class="hljs-comment">-- Character.elm</span>
 
-type alias Model =
-    { name : String
+type <span class="hljs-type">alias</span> Model =
+    { <span class="hljs-property">name</span> : String
     }
 
 
 view model =
-    <span class="hljs-selector-tag">div</span> [ mainStyle ]
-        [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]
+    <span class="hljs-keyword">div</span> [ mainStyle ]
+        [ <span class="hljs-keyword">div</span> [ nameStyle ] [ <span class="hljs-type">text</span> model.<span class="hljs-property">name</span> ] ]
 
--- imports and styles omitted <span class="hljs-keyword">for</span> brevity...</code></pre>
+<span class="hljs-comment">-- imports and styles omitted for brevity...</span></code></pre>
 
-<pre><code class="hljs">-- Film<span class="hljs-selector-class">.elm</span>
+<pre><code class="hljs"><span class="hljs-comment">-- Film.elm</span>
 
-type alias Model =
+type <span class="hljs-type">alias</span> Model =
     { title : String
     , episode_id : Int
     }
@@ -84,39 +84,39 @@ type alias Model =
 view model =
     let
         chapter =
-            toString model<span class="hljs-selector-class">.episode_id</span>
+            toString model.episode_id
     <span class="hljs-keyword">in</span>
-        <span class="hljs-selector-tag">div</span> [ mainStyle ]
-            [ <span class="hljs-selector-tag">div</span> [ numberStyle ]
-                [ text chapter ]
-            , <span class="hljs-selector-tag">div</span> [ nameStyle ]
-                [ text model<span class="hljs-selector-class">.title</span> ]
+        <span class="hljs-keyword">div</span> [ mainStyle ]
+            [ <span class="hljs-keyword">div</span> [ numberStyle ]
+                [ <span class="hljs-type">text</span> chapter ]
+            , <span class="hljs-keyword">div</span> [ nameStyle ]
+                [ <span class="hljs-type">text</span> model.title ]
             ]</code></pre>
 
 <p>If these examples do not feel straightforward to you, refer back to <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">Part 2</a>.</p>
 <p>To preview the views and fine tune the CSS, I&#39;ll create the <code>Main.elm</code> file and run Elm Reactor pointing to it:</p>
 <pre><code class="hljs">main =
-    Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.beginnerProgram</span>
+    Html.<span class="hljs-keyword">App</span>.beginnerProgram
         { model = model
-        , view = view
-        , update = update
+        , <span class="hljs-keyword">view</span> = <span class="hljs-keyword">view</span>
+        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
         }
 
 
-update model =
+<span class="hljs-keyword">update</span> model =
     model
 
 
-sampleCh : Character<span class="hljs-selector-class">.Model</span>
+sampleCh : Character.Model
 sampleCh =
     { name = <span class="hljs-string">"Luke Skywalker"</span>
     }
 
 
-sampleFilm : Film<span class="hljs-selector-class">.Model</span>
+sampleFilm : Film.Model
 sampleFilm =
     { title = <span class="hljs-string">"A New Hope"</span>
-    , episode_id = <span class="hljs-number">4</span>
+    , episode_id = 4
     }
 
 
@@ -124,10 +124,10 @@ model =
     ( sampleCh, sampleFilm )
 
 
-view ( ch, film ) =
-    <span class="hljs-selector-tag">div</span> []
-        [ Character<span class="hljs-selector-class">.view</span> ch
-        , Film<span class="hljs-selector-class">.view</span> film
+<span class="hljs-keyword">view</span> ( ch, film ) =
+    div []
+        [ Character.<span class="hljs-keyword">view</span> ch
+        , Film.<span class="hljs-keyword">view</span> film
         ]</code></pre>
 
 <p>That should render a sample component of each. Now it&#39;s time to start modeling our application.</p>
@@ -138,22 +138,22 @@ view ( ch, film ) =
 <span class="hljs-comment">-- Aliases added for reading simplicity</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">C</span> =
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">C</span> =</span>
     <span class="hljs-type">Character</span>.<span class="hljs-type">Model</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">F</span> =
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">F</span> =</span>
     <span class="hljs-type">Film</span>.<span class="hljs-type">Model</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Model</span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Model</span></span>
     = <span class="hljs-type">FilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
     | <span class="hljs-type">CharactersFromFilm</span> <span class="hljs-type">F</span> (<span class="hljs-type">List</span> <span class="hljs-type">C</span>)</code></pre>
 To build the view, I will once again define a sample model:
 
-<pre><code class="hljs"><span class="hljs-attr">model </span>=<span class="hljs-string">
-    FilmsFromCharacter sampleCh
-        [ sampleFilm
+<pre><code class="hljs"><span class="hljs-setting">model =
+    <span class="hljs-value">FilmsFromCharacter sampleCh</span></span>
+<span class="hljs-title">        [ sampleFilm
         , sampleFilm
         , sampleFilm
         ]</span></code></pre>
@@ -162,15 +162,15 @@ To build the view, I will once again define a sample model:
 <pre><code class="hljs">view model =
     case model of
         FilmsFromCharacter c fs -&gt;
-            <span class="hljs-selector-tag">div</span> [ twoColumns ]
-                [ Character<span class="hljs-selector-class">.view</span> c
-                , <span class="hljs-selector-tag">div</span> [] (List<span class="hljs-selector-class">.map</span> Film<span class="hljs-selector-class">.view</span> fs)
+            <span class="hljs-tag">div</span> [ twoColumns ]
+                [ Character<span class="hljs-class">.view</span> c
+                , <span class="hljs-tag">div</span> [] (List<span class="hljs-class">.map</span> Film<span class="hljs-class">.view</span> fs)
                 ]
 
         CharactersFromFilm f cs -&gt;
-            <span class="hljs-selector-tag">div</span> [ twoColumns ]
-                [ Film<span class="hljs-selector-class">.view</span> f
-                , <span class="hljs-selector-tag">div</span> [] (List<span class="hljs-selector-class">.map</span> Character<span class="hljs-selector-class">.view</span> cs)
+            <span class="hljs-tag">div</span> [ twoColumns ]
+                [ Film<span class="hljs-class">.view</span> f
+                , <span class="hljs-tag">div</span> [] (List<span class="hljs-class">.map</span> Character<span class="hljs-class">.view</span> cs)
                 ]
 
 
@@ -182,22 +182,22 @@ twoColumns =
 <h2 id="the-command">The Command</h2>
 <p>Because this scenario is much more complex, instead of using the  <code>beginnerProgram</code> , we&#39;ll use the <code>program</code> function. It&#39;s a little different:</p>
 <pre><code class="hljs">main =
-    Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.program</span>
-        { init = ( model, Cmd<span class="hljs-selector-class">.none</span> )
-        , view = view
-        , update = update
+    Html.<span class="hljs-keyword">App</span>.<span class="hljs-keyword">program</span>
+        { init = ( model, Cmd.none )
+        , <span class="hljs-keyword">view</span> = <span class="hljs-keyword">view</span>
+        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
         , subscriptions = subscriptions
         }
 
 -- (...)
 
-update msg model =
-    ( model, Cmd<span class="hljs-selector-class">.none</span> )
+<span class="hljs-keyword">update</span> msg model =
+    ( model, Cmd.none )
 
 -- (...)
 
 subscriptions x =
-    Sub.<span class="hljs-attribute">none</span></code></pre>
+    Sub.none</code></pre>
 
 <p>So, now instead of only a model, we have <code>init</code>. It is a tuple with a model to be rendered immediately and a command that will fire the update function in the future. Another thing to point out is that the update function also returns this same combination.  Subscriptions are listeners that can also fire the update function.</p>
 <p>Our next step is to build     <code>init</code>.  First, the app needs to get an initial character from the API and render it on the screen. Then, it has to render the films corresponding to that character. The http request will be the command, and I need an application state to wait for the request to complete.</p>
@@ -207,37 +207,37 @@ subscriptions x =
     | FilmsFromCharacter C (<span class="hljs-built_in">List</span> F)
     | CharactersFromFilm F (<span class="hljs-built_in">List</span> C)
 
-(<span class="hljs-attr">...</span>)
+(<span class="hljs-attribute">...</span>)
 
 view model =
     <span class="hljs-keyword">case</span> model of
-        InitialScreen -&gt;
-            simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
+        InitialScreen <span class="hljs-subst">-&gt;
+            </span>simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
 
-(<span class="hljs-attr">...</span>)
+(<span class="hljs-attribute">...</span>)
 
 simpleMessage t =
-    div <span class="hljs-meta">[</span> simpleMessageStyle <span class="hljs-meta">]</span> <span class="hljs-meta">[</span> text t <span class="hljs-meta">]</span></code></pre>
+    div <span class="hljs-preprocessor">[</span> simpleMessageStyle <span class="hljs-preprocessor">]</span><span class="hljs-markup"> </span><span class="hljs-preprocessor">[</span> text t <span class="hljs-preprocessor">]</span><span class="hljs-markup"></span></code></pre>
 
 <p>The elm-http <code>get</code> function receives a &quot;Decoder&quot; and a url. The decoder is the function that will convert the json response to a character model. So it makes sense that it&#39;s inside the Character module, right?</p>
 <p>Another thing that we realize at this point is that <em>I&#39;ll have to have the list of the films the character was in!</em> Of course. So let&#39;s change the model to also store the films&#39; urls that&#39;ll be in the character card returned by the API:</p>
-<pre><code class="hljs"><span class="hljs-comment">-- Character.elm</span>
-<span class="hljs-keyword">import</span> Json.Decode <span class="hljs-keyword">exposing</span> (<span class="hljs-type">Decoder</span>, succeed, string, list, int, (:=))
-<span class="hljs-keyword">import</span> Json.Decode.Extra <span class="hljs-keyword">exposing</span> ((|:))
+<pre><code class="hljs">-- Character<span class="hljs-built_in">.</span>elm
+<span class="hljs-keyword">import</span> Json<span class="hljs-built_in">.</span>Decode exposing (Decoder, succeed, <span class="hljs-built_in">string</span>, <span class="hljs-built_in">list</span>, int, (:=))
+<span class="hljs-keyword">import</span> Json<span class="hljs-built_in">.</span>Decode<span class="hljs-built_in">.</span>Extra exposing ((|:))
 
-(...)
+(<span class="hljs-attribute">...</span>)
 
-<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">Model</span> =
-    { name : <span class="hljs-type">String</span>
-    , films : <span class="hljs-type">List</span> <span class="hljs-type">String</span>
+<span class="hljs-keyword">type</span> alias Model =
+    { name : <span class="hljs-built_in">String</span>
+    , films : <span class="hljs-built_in">List</span> <span class="hljs-built_in">String</span>
     }
 
 
-<span class="hljs-title">characterDecoder</span> : <span class="hljs-type">Decoder</span> <span class="hljs-type">Model</span>
-<span class="hljs-title">characterDecoder</span> =
-    succeed <span class="hljs-type">Model</span>
-        |: (<span class="hljs-string">"name"</span> := string)
-        |: (<span class="hljs-string">"films"</span> := list string)</code></pre>
+characterDecoder : Decoder Model
+characterDecoder =
+    succeed Model
+        |: (<span class="hljs-string">"name"</span> := <span class="hljs-built_in">string</span>)
+        |: (<span class="hljs-string">"films"</span> := <span class="hljs-built_in">list</span> <span class="hljs-built_in">string</span>)</code></pre>
 
 <p>The <code>|:</code> comes from the <code>elm-community/elm-json-extra</code> package, and feels like a better way to parse a json than the standard library.</p>
 <p>So now I have the decoder. Let&#39;s go back to Main and implement the <code>getCharacter</code> command for init:</p>
@@ -246,18 +246,18 @@ simpleMessage t =
 (...)
 
 getCharacter url =
-    Http<span class="hljs-selector-class">.get</span> Character<span class="hljs-selector-class">.characterDecoder</span> url</code></pre>
+    Http<span class="hljs-class">.get</span> Character<span class="hljs-class">.characterDecoder</span> url</code></pre>
 
 <p>As soon as we define the <code>init</code> as <code>init = ( InitialScreen, getCharacter &quot;http://swapi.co/api/people/1/&quot; )</code> we&#39;ll receive the following message from the compiler:</p>
-<pre><code class="hljs">The argument to <span class="hljs-keyword">function</span> <span class="hljs-title">`program`</span> <span class="hljs-keyword">is</span> causing a mismatch. - <span class="hljs-keyword">Function</span> <span class="hljs-title">`program`</span> <span class="hljs-keyword">is</span> expecting the argument to be:
+<pre><code class="hljs">The argument to <span class="hljs-function"><span class="hljs-keyword">function</span></span> `<span class="hljs-function"><span class="hljs-keyword">program</span></span>` is causing a mismatch. - <span class="hljs-function"><span class="hljs-keyword">Function</span></span> `<span class="hljs-function"><span class="hljs-keyword">program</span></span>` is expecting the argument to be:
 
-    { init : ( <span class="hljs-type">Model</span>, Cmd a )
+    { init : ( Model, Cmd a )
 
 (...)
 
-But it <span class="hljs-keyword">is</span>:
+But it is:
 
-    { init : ( <span class="hljs-type">Model</span>, Platform.<span class="hljs-keyword">Task</span> Http.Error Character.Model )
+    { init : ( Model, Platform.Task Http.Error <span class="hljs-type">Character</span>.Model )
 
 (...)</code></pre>
 
@@ -268,48 +268,48 @@ But it <span class="hljs-keyword">is</span>:
         <span class="hljs-string">|&gt; Task.perform FetchFail LoadFilms</span></code></pre>
 
 <p>Now the task will run, and it&#39;s going to return a <code>Msg</code> of type <code>FetchFail Http.Error</code> if it fails, or a <code>LoadFilms Character.Model</code> if it succeeds. These two types should be part of the <code>Msg</code> that is sent to the update function:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg
-    </span>= LoadFilms C
-    | FetchFail Http.Error</code></pre>
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span></span>
+    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
+    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span></code></pre>
 
 <p>We also need to handle those two messages in our update function. Elm architecture, once more, reminds us that we haven&#39;t planned all the possible application states: we need an error state, and a &quot;I have a character and I&#39;m waiting for the films&quot; state:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Model</span>
-    = <span class="hljs-type">InitialScreen</span>
-    | <span class="hljs-type">ErrorScreen</span>
-    | <span class="hljs-type">WaitingForFilms</span> <span class="hljs-type">C</span>
-    | <span class="hljs-type">FilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
-    | <span class="hljs-type">CharactersFromFilm</span> <span class="hljs-type">F</span> (<span class="hljs-type">List</span> <span class="hljs-type">C</span>)
+<pre><code class="hljs">type Model
+    = InitialScreen
+    | ErrorScreen
+    | WaitingForFilms C
+    | FilmsFromCharacter C (List F)
+    | CharactersFromFilm F (List C)
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
-    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
-    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span>
+type Msg
+    = LoadFilms C
+    | FetchFail Http.Error
 
 
-<span class="hljs-title">update</span> msg model =
+<span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
     <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
-        <span class="hljs-type">FetchFail</span> _ -&gt;
-            ( <span class="hljs-type">ErrorScreen</span>, <span class="hljs-type">Cmd</span>.none )
+        FetchFail _ -&gt;
+            ( ErrorScreen, Cmd.<span class="hljs-keyword">none</span> )
 
-        <span class="hljs-type">LoadFilms</span> c -&gt;
-            ( <span class="hljs-type">WaitingForFilms</span> c, <span class="hljs-type">Cmd</span>.none )
+        LoadFilms <span class="hljs-keyword">c</span> -&gt;
+            ( WaitingForFilms <span class="hljs-keyword">c</span>, Cmd.<span class="hljs-keyword">none</span> )
 
 
-<span class="hljs-title">view</span> model =
-    <span class="hljs-keyword">case</span> model <span class="hljs-keyword">of</span>
-        <span class="hljs-type">InitialScreen</span> -&gt;
+<span class="hljs-keyword">view</span> <span class="hljs-keyword">model</span> =
+    <span class="hljs-keyword">case</span> <span class="hljs-keyword">model</span> <span class="hljs-keyword">of</span>
+        InitialScreen -&gt;
             simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
 
-        <span class="hljs-type">ErrorScreen</span> -&gt;
+        ErrorScreen -&gt;
             simpleMessage <span class="hljs-string">"Sorry, there was an error. Please try again!"</span>
 
-        <span class="hljs-type">WaitingForFilms</span> c -&gt;
-            div [ twoColumns ]
-                [ <span class="hljs-type">Character</span>.view c
+        WaitingForFilms <span class="hljs-keyword">c</span> -&gt;
+            <span class="hljs-keyword">div</span> [ twoColumns ]
+                [ <span class="hljs-built_in">Character</span>.<span class="hljs-keyword">view</span> <span class="hljs-keyword">c</span>
                 , simpleMessage <span class="hljs-string">"Loading Films..."</span>
                 ]
 
-(...)</code></pre>
+(...)</span></code></pre>
 
 <h2 id="good-tools-nudge-you-in-the-right-direction">Good Tools Nudge You in the Right Direction</h2>
 <p>I&#39;d like to express once again how awesome Elm is to have pointed out that alternative application states were needed. I &quot;naively&quot; thought only two screens were needed, and in reality I needed five :)</p>
@@ -321,54 +321,54 @@ But it <span class="hljs-keyword">is</span>:
 <h2 id="almost-finishing-our-application-">Almost Finishing Our Application...</h2>
 <p>We are almost there! First of all let&#39;s implement the function that, given a character, it gets all the corresponding films.</p>
 <p><em>Important:</em> We&#39;ll use the <code>Task.sequence</code> to batch all the tasks, but this is definitely not the best way to do it; these requests could and should be parallel. I invite you to suggest a better way to do it in the comments!</p>
-<pre><code class="hljs"><span class="hljs-comment">-- Film.elm</span>
+<pre><code class="hljs">-- Film<span class="hljs-built_in">.</span>elm
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">alias </span>Model =
-    { title : <span class="hljs-type">String</span>
-    , episode_id : <span class="hljs-type">Int</span>
-    , characters : <span class="hljs-type">List</span> String
+<span class="hljs-keyword">type</span> alias Model =
+    { title : <span class="hljs-built_in">String</span>
+    , episode_id : Int
+    , characters : <span class="hljs-built_in">List</span> <span class="hljs-built_in">String</span>
     }
 
 
-filmDecoder : <span class="hljs-type">Decoder</span> Model
+filmDecoder : Decoder Model
 filmDecoder =
     succeed Model
-        |: (<span class="hljs-string">"title"</span> := string)
+        |: (<span class="hljs-string">"title"</span> := <span class="hljs-built_in">string</span>)
         |: (<span class="hljs-string">"episode_id"</span> := int)
-        |: (<span class="hljs-string">"characters"</span> := list string)</code></pre>
+        |: (<span class="hljs-string">"characters"</span> := <span class="hljs-built_in">list</span> <span class="hljs-built_in">string</span>)</code></pre>
 
 <pre><code class="hljs"><span class="hljs-comment">-- Main.elm</span>
-<span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
-    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
-    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span>
-    | <span class="hljs-type">ToFilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
+type Msg
+    = LoadFilms C
+    | FetchFail Http.Error
+    | ToFilmsFromCharacter C (List F)
 
-<span class="hljs-title">update</span> msg model =
+<span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
     <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
 
 (...)
 
-        <span class="hljs-type">LoadFilms</span> c -&gt;
-            ( <span class="hljs-type">WaitingForFilms</span> c, getFilmsFromCharacter c )
+        LoadFilms <span class="hljs-keyword">c</span> -&gt;
+            ( WaitingForFilms <span class="hljs-keyword">c</span>, getFilmsFromCharacter <span class="hljs-keyword">c</span> )
 
-        <span class="hljs-type">ToFilmsFromCharacter</span> c fs -&gt;
-            ( <span class="hljs-type">FilmsFromCharacter</span> c fs, <span class="hljs-type">Cmd</span>.none )
+        ToFilmsFromCharacter <span class="hljs-keyword">c</span> fs -&gt;
+            ( FilmsFromCharacter <span class="hljs-keyword">c</span> fs, Cmd.<span class="hljs-keyword">none</span> )
 
-(...)</code></pre>
+(...)</span></code></pre>
 
 <p>There&#39;s only one detail missing from our components: they need to produce a message when clicked. I implemented it so each component would send a message with its model, so the update function would be able to use the list of films&#39; or characters&#39; urls:</p>
-<pre><code class="hljs">-- Character<span class="hljs-selector-class">.elm</span>
-import Html<span class="hljs-selector-class">.Events</span> exposing (onClick)
+<pre><code class="hljs">-- Character<span class="hljs-class">.elm</span>
+import Html<span class="hljs-class">.Events</span> exposing (onClick)
 
 (...)
 
-view : Model -&gt; Html<span class="hljs-selector-class">.Html</span> Model
+view : Model -&gt; Html<span class="hljs-class">.Html</span> Model
 view model =
-    <span class="hljs-selector-tag">div</span>
+    <span class="hljs-tag">div</span>
         [ onClick model
         , mainStyle
         ]
-        [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]</code></pre>
+        [ <span class="hljs-tag">div</span> [ nameStyle ] [ text model<span class="hljs-class">.name</span> ] ]</code></pre>
 
 <p>The type signature leaves it very clear: our view receives a Model, and returns an Html that produces messages of type Model. Good.</p>
 <p>Now, when we use those views in our Main view, we need to add information to them in order to produce a valid message. For instance, if we click a character, it will send a message of type <code>Character.Model</code> (or <code>C</code>). But our application will only understand a message of type <code>LoadFilms C</code>. So we need to call the Character view function and <em>map</em> the message it sends with the <code>LoadFilms</code> tag. It&#39;s easier to demonstrate than to explain:</p>
