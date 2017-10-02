@@ -4,11 +4,30 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Sun, 05 Mar 2017 17:21:05 GMT</lastBuildDate>
+        <lastBuildDate>Mon, 02 Oct 2017 01:44:18 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[The Single Most Important Driver Of Software Quality]]></title>
+            <description><![CDATA[<p>So, there I was, ready to press the button. All the while three hundred people were looking at me, thinking &quot;is this guy going to make my work more difficult?&quot;. I had nowhere to hide, and the button needed to be pushed.</p>
+<p>My claim: <strong>developers having skin in the game is the <em>main</em> driver of software quality</strong>. If your life depends on the software you are building, you can bet that the software will be of a much higher quality than any software that your life does not depend on.  That being said, there is also the second best scenario of being near <em>people whose lives</em> depend on the quality of your code. I cannot imagine any better factor than skin in the game to drive quality.</p>
+<p>But let me start from the beginning.</p>
+<p>I work at a large online retail company, with millions and millions of  users. In addition to the millions of users using from home, a modified version of the website is leveraged by a telemarketing sector within my company.  As you may have guessed, these are the three hundred people who were not very comfortable with my presence.</p>
+<p>I can&#39;t say that I blame them for being uncomfortable, because they do earn a share of what they sell for the company.  In other words, they have a lot of skin in the game. They don&#39;t use the website as a normal user, to buy something; they use it <em>as a selling tool</em>. If the checkout doesn&#39;t work, they don&#39;t sell, and they don&#39;t make money. Needless to say some of them are thinking, &quot;I&#39;d kill the person who broke this thing!&quot; when the site goes down.</p>
+<p>When I pitched my idea to refactor/rewrite a part of our checkout to upper management, they were a little unsure of the project.  First, I tried to sell them on it with a promise of an increase in code quality and better performance, and when they still seemed hesitant, I said, &quot;I&#39;ll deploy the changes to production in the middle of the telemarketers&quot;. At that moment they realized I was serious about idea, and they agreed to sign off on the project.</p>
+<p>As soon as I got back to my work station, I felt something different. As always we were very serious about our metrics and processes, and we took every action necessary to be sure the website would not have any problems for our millions of users. But just the thought of deploying the changes to production while at the telemarketing headquarters, next to people who depend on the site to make a living, gave us a different feeling. From early on, everyone on the team worked hard to avert potential disasters down the road.</p>
+<p>Not only were we super careful with our code, we also got very engaged with UX, UI, and with the infrastructure of the project. From the very beginning, our team came up with strategies to deploy the application while causing the least impact possible. We created a &quot;panic&quot; link for the telemarketers to go to the previous application. We even developed a new telemarketing-only feature to help them sell additional services and insurance, as an incentive not to press that panic link.</p>
+<p>Our website is really large, with lots of different micro-services and different clients interacting, and at this level of complexity, it&#39;s almost inevitable that problems will occur in production, no matter how much testing you do, or how careful you are in your process.  With that in mind, it wasn&#39;t a huge surprise that on deploy day, in the first ten minutes, we had a small problem affecting the sale of gift wrap.</p>
+<p>Everybody had been cordial to us from the beginning, but I could feel the tension in the air during those ten minutes. And then, after rolling back and fixing the issue, I could still see that the telemarketers were not very confident. What other errors would affect the sales?</p>
+<p>But by the end of the day, everything had gone well. We had anticipated almost every scenario, and we were ready to fix all the problems that were raised. The application started to run smoothly, and no one was using the panic link anymore, success! By the end of a couple of weeks, we learned that services and insurance sales had risen by 20% for telemarketing, and we raised the overall conversion of the website by about 2%.</p>
+<p>So, when I see that <a href="https://zapier.com/blog/how-basecamp-uses-basecamp3/">Basecamp uses Basecamp</a>, and <a href="https://www.youtube.com/watch?v=uLrnQtAq5Ec&amp;t=4m10s">the VS Code team uses VS Code to build VS Code itself</a>, I understand why those products have really high quality. They have <em>skin in the game</em>.</p>
+<p><em>Final notes</em>: of course this is not a scientific claim :) It is a hypothesis raised from our own experience, and we continue to observe this property in different projects. The effects of skin in the game are usually very well described by some economists and philosophers, and especially by <a href="https://www.amazon.com/Nassim-Nicholas-Taleb/e/B000APVZ7W">Nassim Taleb</a>. He&#39;s actually writing a book called <em>Skin In The Game</em>, and <a href="https://medium.com/incerto/why-each-one-should-eat-his-own-turtles-equality-in-uncertainty-e2b2ee3bcddf">a lot</a> <a href="https://medium.com/incerto/the-skin-of-others-in-your-game-3f51d8ccc3fb">of really</a> <a href="https://medium.com/incerto/no-worship-without-skin-in-the-game-70b4aa341092">interesting chapters</a> <a href="https://medium.com/incerto/an-expert-called-lindy-fdb30f146eaf">are online</a>.</p>
+]]></description>
+            <guid isPermaLink="false">The Single Most Important Driver Of Software Quality</guid>
+            <pubDate>Wed, 31 May 2017 00:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Type Driven Domain Modelling, part 3]]></title>
             <description><![CDATA[<p><em>This is part 3 of a series:</em></p>
@@ -3921,283 +3940,6 @@ I want the state to be a string that&#39;s the concatenation of every past user 
 ]]></description>
             <guid isPermaLink="false">Pointfree Javascript</guid>
             <pubDate>Fri, 20 Mar 2015 00:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[A More Functional Approach to Angular, with Baobab]]></title>
-            <description><![CDATA[<p>In my <a href="../a-more-functional-approach-to-angular/">last post</a> I described a simple way to deal with state in an Angular application. I didn&#39;t detail the actual <code>AppStateService</code> implementation, and was about to do it in a &quot;part 2&quot;.  I was about to do just that when I came across <a href="https://github.com/Yomguithereal/baobab">Baobab</a>, a framework-agnostic library that actually implements the idea of a centralized state. In this post I&#39;ll recap a little bit on why the concept of a centralized state is important, then I&#39;ll present the Baobab library, and finally I&#39;ll describe an adaptation of my last post&#39;s sample app which uses a centralized state.</p>
-<h2 id="why-is-having-a-central-state-important-">Why is having a central state important?</h2>
-<p>A <em>state</em> can be thought as a &quot;picture&quot;, or the &quot;value&quot;, of something in a certain point in time. I&#39;ll call <em>central state</em> the value of your <em>whole application</em> at a certain point in time. So, as your application changes, every little part of that change will be stored in this central place.</p>
-<p>Having present and past states stored in a single place makes it easier to implement new features in an application, and change old ones. It also makes it easier to make sense of what&#39;s going on in your application at any given moment. As I said in the <a href="../a-more-functional-approach-to-angular/">previously mentioned post</a>:</p>
-<blockquote>
-<p>As the project grows, the complexity seems to grow at a higher rate, and it becomes more and more difficult to answer the simple question <em>what is happening to my application right now?</em> Or the even more important <em>what was happening when that crazy error occurred?</em></p>
-</blockquote>
-<h2 id="presenting-baobab">Presenting Baobab</h2>
-<p>In Baobab, the central state is created by passing a regular object to the constructor:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// if using node or browserify:</span>
-<span class="hljs-keyword">var</span> Baobab = <span class="hljs-built_in">require</span>(<span class="hljs-string">'baobab'</span>);
-
-<span class="hljs-keyword">var</span> appState = <span class="hljs-keyword">new</span> Baobab({
-  cart: {
-    products: []
-  },
-  paymentOptions: []
-});</code></pre>
-
-<p>One can refer to any part of the tree with the <code>select</code> function:</p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> cartCursor = appState.select(<span class="hljs-string">'cart'</span>);
-<span class="hljs-keyword">var</span> productsCursor = appState.select(<span class="hljs-string">'cart'</span>, <span class="hljs-string">'products'</span>);</code></pre>
-
-<p><code>select</code> returns a <em>cursor</em>. The first thing you can do with a cursor is <em>extracting its value</em>:</p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> currentCart = cartCursor.get();
-<span class="hljs-comment">// =&gt; currentCart = { products: [] }</span>
-<span class="hljs-keyword">var</span> currentProducts = productsCursor.get();
-<span class="hljs-comment">// =&gt; currentProducts = []</span></code></pre>
-
-<p>You can also <em>update its value</em>, and <em>listen to updates</em>:</p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> cartCursor = appState.select(<span class="hljs-string">'cart'</span>);
-<span class="hljs-keyword">var</span> productsCursor = appState.select(<span class="hljs-string">'cart'</span>, <span class="hljs-string">'products'</span>);
-<span class="hljs-keyword">var</span> paymentOptionsCursor = appState.select(<span class="hljs-string">'paymentOptions'</span>);
-
-cartCursor.on(<span class="hljs-string">'update'</span>, someCallback);
-productsCursor.on(<span class="hljs-string">'update'</span>, anotherCallback);
-paymentOptionsCursor.on(<span class="hljs-string">'update'</span>, yetAnotherCallback);
-
-productCursor.push({ id: <span class="hljs-number">123</span> });
-<span class="hljs-comment">// only someCallback and anotherCallback will be called</span></code></pre>
-
-<p>So, what&#39;s so great about all that? First, the &quot;listening&quot; part of your application does not need to know anything about the &quot;changing&quot; part. You just listen to updates to the tree, and act on it. Also, if you have a view that only needs to know about the products, just listen to updates on the products. No need to listen to the whole tree.</p>
-<h2 id="a-sample-app">A sample app</h2>
-<p>Now let&#39;s use Baobab in a sample application. In the sample, we&#39;ll have two arrays: Foos and Bars. Both will hold strings. To add a weird spec to the mix, the user should not be able to add any Bar unless Foos has the string <code>&#39;requiredFoo&#39;</code>. Let&#39;s implement it piece by piece, starting with the central state:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// app.js</span>
-angular.module(<span class="hljs-string">'simpleStateApp'</span>, []);
-
-<span class="hljs-comment">// services/appState.js</span>
-angular.module(<span class="hljs-string">'simpleStateApp'</span>)
-  .factory(<span class="hljs-string">'AppState'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-
-  <span class="hljs-keyword">var</span> initial = {
-    foos: [],
-    bars: []
-  };
-  <span class="hljs-keyword">var</span> state = <span class="hljs-keyword">new</span> Baobab(initial);
-
-  <span class="hljs-keyword">return</span> state;</code></pre>
-
-<p>Simple and elegant. Don&#39;t we like it when that happens? :) Now let&#39;s implement <code>ReadOnlyCtrl</code>, a controller that only reads the central state values:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/readOnlyController.js</span>
-angular.module(<span class="hljs-string">'simpleStateApp'</span>)
-  .controller(<span class="hljs-string">'ReadOnlyCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">AppState</span>) </span>{
-
-  <span class="hljs-keyword">var</span> state = AppState.get();
-
-  <span class="hljs-keyword">var</span> foosCursor = AppState.select(<span class="hljs-string">'foos'</span>);
-  <span class="hljs-keyword">var</span> barsCursor = AppState.select(<span class="hljs-string">'bars'</span>);
-
-  foosCursor.on(<span class="hljs-string">'update'</span>,
-    <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{ state.foos = foosCursor.get(); });
-
-  barsCursor.on(<span class="hljs-string">'update'</span>,
-    <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{ state.bars = barsCursor.get(); });
-
-  <span class="hljs-comment">// exposes to view</span>
-  <span class="hljs-keyword">this</span>.state = state;
-});</code></pre>
-
-<p><code>state</code> will be rendered in the view like any other variable:</p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">ng-controller</span>=<span class="hljs-string">"ReadOnlyCtrl as c"</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span>Read Only Controller<span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Foos:
-    <span class="hljs-tag">&lt;<span class="hljs-name">ul</span>&gt;</span>
-      <span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">ng-repeat</span>=<span class="hljs-string">"foo in c.state.foos"</span>&gt;</span>{{ foo }}<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
-    <span class="hljs-tag">&lt;/<span class="hljs-name">ul</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Bars:
-    <span class="hljs-tag">&lt;<span class="hljs-name">ul</span>&gt;</span>
-      <span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">ng-repeat</span>=<span class="hljs-string">"bar in c.state.bars"</span>&gt;</span>{{ bar }}<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>&gt;</span>
-    <span class="hljs-tag">&lt;/<span class="hljs-name">ul</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
-
-<p>That was easy! Now let&#39;s implement a controller that changes the central state:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/fooController.js</span>
-angular.module(<span class="hljs-string">'simpleStateApp'</span>)
-  .controller(<span class="hljs-string">'FooCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">AppState</span>) </span>{
-
-  <span class="hljs-keyword">var</span> foosCursor = AppState.select(<span class="hljs-string">'foos'</span>);
-
-  <span class="hljs-keyword">var</span> state = {
-    foos: foosCursor.get()
-  };
-
-  <span class="hljs-comment">// the inputs in the view will refer to</span>
-  <span class="hljs-comment">// this variable</span>
-  <span class="hljs-keyword">var</span> form = {
-    newFoo: <span class="hljs-string">''</span>
-  };
-
-  foosCursor.on(<span class="hljs-string">'update'</span>,
-    <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{ state.foos = foosCursor.get() });
-
-  <span class="hljs-keyword">var</span> addFoo = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">form</span>) </span>{
-    foosCursor.push(form.newFoo);
-  };
-
-  <span class="hljs-keyword">this</span>.state = state;
-  <span class="hljs-keyword">this</span>.form = form;
-
-  <span class="hljs-keyword">this</span>.addFoo = addFoo;
-});</code></pre>
-
-<p>Note the <code>form</code> variable. It holds the temporary values of the HTML inputs. The <code>addFoo</code> function receives this as the parameter, and changes the value of the tree. We&#39;ll call <code>addFoo</code> with a button <code>ng-click</code>, but that&#39;s a design decision. It could also be done with the input <code>ng-change</code>, for instance. Let&#39;s see the view code:</p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">ng-controller</span>=<span class="hljs-string">"FooCtrl as c"</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span>"Foo" form<span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>
-    New Foo: <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text"</span> <span class="hljs-attr">ng-model</span>=<span class="hljs-string">"c.form.newFoo"</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">ng-click</span>=<span class="hljs-string">"c.addFoo(c.form)"</span>&gt;</span>Add Foo<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
-
-<p><code>BarCtrl</code> has more features: <code>cannotAddBar</code>, the function that that we used to implement the weird spec, and <code>clearState</code>, the function that clears central state:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/barController.js</span>
-angular.module(<span class="hljs-string">'simpleStateApp'</span>)
-  .controller(<span class="hljs-string">'BarCtrl'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">AppState</span>) </span>{
-
-  <span class="hljs-keyword">var</span> foosCursor = AppState.select(<span class="hljs-string">'foos'</span>);
-  <span class="hljs-keyword">var</span> barsCursor = AppState.select(<span class="hljs-string">'bars'</span>);
-
-  <span class="hljs-keyword">var</span> state = AppState.get();
-  <span class="hljs-keyword">var</span> form = {
-    newBar: <span class="hljs-string">''</span>
-  };
-
-  foosCursor.on(<span class="hljs-string">'update'</span>,
-    <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{ state.foos = foosCursor.get(); });
-  barsCursor.on(<span class="hljs-string">'update'</span>,
-    <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{ state.bars = barsCursor.get(); });
-
-  <span class="hljs-keyword">var</span> addBar = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">form</span>) </span>{
-    barsCursor.push(form.newBar);
-  };
-
-  <span class="hljs-keyword">var</span> cannotAddBar = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">state</span>) </span>{
-    <span class="hljs-keyword">return</span> state.foos.indexOf(<span class="hljs-string">'requiredFoo'</span>) === <span class="hljs-number">-1</span>;
-  };
-
-  <span class="hljs-keyword">var</span> clearState = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-    foosCursor.edit([]);
-    barsCursor.edit([]);
-  };
-
-  <span class="hljs-keyword">this</span>.state = state;
-  <span class="hljs-keyword">this</span>.form = form;
-
-  <span class="hljs-keyword">this</span>.addBar = addBar;
-  <span class="hljs-keyword">this</span>.cannotAddBar = cannotAddBar;
-  <span class="hljs-keyword">this</span>.clearState = clearState;
-  <span class="hljs-keyword">this</span>.undo = undo;
-});</code></pre>
-
-<p>With the view:</p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">ng-controller</span>=<span class="hljs-string">"BarCtrl as c"</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">h3</span>&gt;</span>Second "Bar" form<span class="hljs-tag">&lt;/<span class="hljs-name">h3</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>
-      New Bar: <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"text"</span> <span class="hljs-attr">ng-model</span>=<span class="hljs-string">"c.form.newBar"</span>&gt;</span>
-      <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">ng-click</span>=<span class="hljs-string">"c.addBar(c.form)"</span>
-              <span class="hljs-attr">ng-disabled</span>=<span class="hljs-string">"c.cannotAddBar(c.state)"</span>&gt;</span>
-        Add Bar
-      <span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
-    <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>
-      Click <span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">""</span> <span class="hljs-attr">ng-click</span>=<span class="hljs-string">"c.clearState()"</span>&gt;</span>here to clear the State<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>.
-    <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
-
-<p>And that&#39;s it! But wait, there&#39;s a little problem we need to deal with. The views do not update as soon as the central state is updated. This happens because Angular&#39;s change detection mechanism is not triggered by an update to the central state. We can fix this by putting the following piece of code inside <code>AppState</code>:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// services/appState.js</span>
-state.on(<span class="hljs-string">'update'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
-  setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
-    $rootScope.$apply();
-  }, <span class="hljs-number">0</span>);
-});</code></pre>
-
-<p>And our application will run smoothly!</p>
-<h2 id="adding-features">Adding features</h2>
-<p>Because everything that  changes is stored in one place, we can easily plug new functionalities by interacting with the central state. That&#39;s when this architecture shines.</p>
-<p>Let&#39;s suppose we want to save our state in the local storage, so that every time the user goes back to it, the last state will be loaded.</p>
-<p>The idea is to load the saved state when starting the app, and save it after every change. Let&#39;s first implement a <code>save</code> and a <code>load</code> function in a service:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// services/storageService.js</span>
-angular.module(<span class="hljs-string">'simpleStateApp'</span>)
-  .factory(<span class="hljs-string">'StorageService'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-
-  <span class="hljs-keyword">var</span> save = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">prop, items</span>) </span>{
-    <span class="hljs-built_in">window</span>.localStorage.setItem(
-      <span class="hljs-string">'baobab-app-'</span> + prop,
-      <span class="hljs-built_in">JSON</span>.stringify(items));
-    <span class="hljs-keyword">return</span> items;
-  };
-
-  <span class="hljs-keyword">var</span> load = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">prop, defaultValue</span>) </span>{
-    <span class="hljs-keyword">var</span> items = <span class="hljs-built_in">JSON</span>.parse(
-      <span class="hljs-built_in">window</span>.localStorage.getItem(
-        <span class="hljs-string">'baobab-app-'</span> + prop));
-    <span class="hljs-keyword">return</span> items ? items : defaultValue;
-  };
-
-  <span class="hljs-keyword">return</span> {
-    save: save,
-    load: load
-  };
-});</code></pre>
-
-<p>Now let&#39;s change <code>AppState</code> to load local storage on startup:</p>
-<pre><code class="hljs javascript"><span class="hljs-keyword">var</span> initial = {
-  foos: [],
-  bars: []
-};
-<span class="hljs-keyword">var</span> state = <span class="hljs-keyword">new</span> Baobab(
-  StorageService.load(<span class="hljs-string">'baobab'</span>, initial),
-);</code></pre>
-
-<p>And let&#39;s use a <code>.run</code> to save the state on every update:</p>
-<pre><code class="hljs javascript">angular.module(<span class="hljs-string">'simpleStateApp'</span>, [])
-  .run(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">StorageService, AppState</span>) </span>{
-    AppState.on(<span class="hljs-string">'update'</span>,
-      <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-        StorageService.save(<span class="hljs-string">'baobab'</span>, AppState.get());
-      });
-  });</code></pre>
-
-<p>And the new feature is added. It shines, doesn&#39;t it? :)</p>
-<h2 id="one-little-baobab-bonus">One Little Baobab Bonus</h2>
-<p>Baobab works very well, and still gives us a free important and amazing bonus: undo. We just have to first pass a config to the constructor:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// services/appState.js</span>
-<span class="hljs-keyword">var</span> state = <span class="hljs-keyword">new</span> Baobab(
-  StorageService.load(<span class="hljs-string">'baobab'</span>, initial),
-  {
-    maxHistory: <span class="hljs-number">10</span>
-  }
-);</code></pre>
-
-<p>And implement the <code>undo</code> function on the controller:</p>
-<pre><code class="hljs javascript"><span class="hljs-comment">// controllers/barController.js</span>
-<span class="hljs-keyword">var</span> undo = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
-  <span class="hljs-keyword">if</span> (AppState.hasHistory()) {
-    AppState.undo();
-  }
-};</code></pre>
-
-<p>And our undo is done.</p>
-<h2 id="conclusions">Conclusions</h2>
-<p>That was a lot for one post! But I hope I could show some benefits of having a centralized state application architecture. It&#39;s all about having the ability to add new features and change old ones with ease, and, as was said before, being able to answer the really important question <em>what is happening in my application right now?</em></p>
-<h2 id="next-steps">Next Steps</h2>
-<p>Javascript is going through a big change now with ES6, and Angular 2 is on its way. I&#39;m looking forward to see how to implement a centralized state using these tools.</p>
-<p>React is a great framework, that&#39;s gaining a lot of traction. I knew about Baobab through <a href="http://christianalfoni.github.io/">Christian Alfoni</a>&#39;s amazing blog, and he wrote a post on <a href="http://christianalfoni.github.io/javascript/2015/02/06/plant-a-baobab-tree-in-your-flux-application.html">how to use it with React</a>.</p>
-<p>There&#39;s a new project experimenting with Baobab and Angular, <a href="https://github.com/christianalfoni/baobab-angular">baobab-angular</a>. I&#39;m definitely going to have a look at it.</p>
-<p>On another note, I will also implement the app in a <em>point-free functional</em> style. I try to write my functions point-free whenever I can; it&#39;s also a way to bring simplicity to the function level. More details in an upcoming post!</p>
-<p>The example presented in this post has a <a href="http://lucasmreis.github.io/baobabStateApp/">live demo here</a>. Complete source code can be found <a href="https://github.com/lucasmreis/baobabStateApp">here</a>.</p>
-]]></description>
-            <guid isPermaLink="false">A More Functional Approach to Angular, with Baobab</guid>
-            <pubDate>Tue, 10 Mar 2015 00:00:00 GMT</pubDate>
         </item>
     </channel>
 </rss>
