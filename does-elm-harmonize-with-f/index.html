@@ -202,7 +202,7 @@ socket {
 <img src="../assets/event-source-b.gif" alt="Event Source B"></p>
 <p>One of the best parts of Elm is that the structure of the code does not seem to change from application to application. The &quot;framework&quot; is so close to the language itself, that one simply does not try to do things differently - I&#39;m not even sure it&#39;s possible. Because of that, we can focus more on the real complexity of the problem, and think less and less about implementation details.</p>
 <p>The only different part from my <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">earlier</a> <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">learning Elm</a> <a href="http://lucasmreis.github.io/blog/learning-elm-part-3/">series</a> is the websockets part. But it&#39;s really, really simple:</p>
-<pre><code class="hljs"><span class="hljs-symbol">type</span> Msg
+<pre><code class="hljs"><span class="hljs-label">type</span> Msg
     = EventReceived <span class="hljs-keyword">String
 </span>
 <span class="hljs-keyword">subscriptions </span>: Model -&gt; <span class="hljs-keyword">Sub </span>Msg

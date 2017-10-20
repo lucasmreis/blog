@@ -66,22 +66,22 @@
   }
 
   renderLoading() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderError() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderPlanet() {
     <span class="hljs-keyword">const</span> { name, climate, terrain } = <span class="hljs-keyword">this</span>.state.planet;
     <span class="hljs-keyword">return</span> (
-      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-    );
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-title">h2</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
   }
 
   render() {
@@ -102,22 +102,22 @@
 <h3 id="the-container-view-pattern">The Container / View Pattern</h3>
 <pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PlanetView</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
   renderLoading() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderError() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderPlanet() {
     <span class="hljs-keyword">const</span> { name, climate, terrain } = <span class="hljs-keyword">this</span>.props.planet;
     <span class="hljs-keyword">return</span> (
-      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-    );
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-title">h2</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
   }
 
   render() {
@@ -149,62 +149,62 @@
   }
 
   render() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">PlanetView</span> {<span class="hljs-attr">...this.state</span>} /&gt;</span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...this.state</span>} /&gt;</span>;</span>
   }
 }
 
-export default DagobahContainer;</span></code></pre>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> DagobahContainer;</code></pre>
 
 <p>That&#39;s it. You&#39;ve just seen the majority of the code I write today. A simple view-only generic planet component, and a logic-only component, that simply calls the view in its render function.</p>
 <p>With the separated view component, we can very easily use it in a style guide, and fine tune each of the variants just by providing different props. Also, we can easily test the view using <a href="https://github.com/airbnb/enzyme">Enzyme</a> for instance.</p>
 <p>Also, my experience shows that this pattern scales better: maybe one of the view states gets big, and it&#39;s straightforward to extract it through a new component. On the logic side, it&#39;s also much easier to understand and change code not polluted with view related stuff.</p>
 <p>Notice that the view component has some &quot;if&quot; logic to define what to render. We can extract it into its own component, in what could be considered a variant of the Container / View pattern:</p>
 <h3 id="the-container-branch-view-pattern">The Container / Branch / View Pattern</h3>
-<pre><code class="hljs js"><span class="hljs-keyword">const</span> LoadingView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> LoadingView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
 
-<span class="hljs-keyword">const</span> ErrorView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+<span class="hljs-keyword">const</span> ErrorView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
 
 <span class="hljs-keyword">const</span> PlanetView = ({ name, climate, terrain }) =&gt; (
-  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-);
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-title">h2</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+)</span>;
 
 <span class="hljs-keyword">const</span> PlanetBranch = ({ loading, planet }) =&gt; {
   <span class="hljs-keyword">if</span> (loading) {
-    <span class="hljs-keyword">return</span> &lt;LoadingView /&gt;;
-  } else if (planet) {
-    return &lt;PlanetView {...planet} /&gt;;
-  } else {
-    return &lt;ErrorView /&gt;;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">LoadingView</span> /&gt;</span>;</span>
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (planet) {
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>;</span>
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>;</span>
   }
 };
 
-// State:
-// { loading: true }
-// { loading: false, planet: { name, climate, terrain } }
-// { loading: false, error: any }
+<span class="hljs-comment">// State:</span>
+<span class="hljs-comment">// { loading: true }</span>
+<span class="hljs-comment">// { loading: false, planet: { name, climate, terrain } }</span>
+<span class="hljs-comment">// { loading: false, error: any }</span>
 
-class DagobahContainer extends React.Component {
-  state = { loading: true };
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DagobahContainer</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = { loading: <span class="hljs-literal">true</span> };
 
   componentDidMount() {
-    fetch("https://swapi.co/api/planets/5")
+    fetch(<span class="hljs-string">"https://swapi.co/api/planets/5"</span>)
       .then(res =&gt; res.json())
       .then(
-        planet =&gt; this.setState({ loading: false, planet }),
-        error =&gt; this.setState({ loading: false, error })
+        planet =&gt; <span class="hljs-keyword">this</span>.setState({ loading: <span class="hljs-literal">false</span>, planet }),
+        error =&gt; <span class="hljs-keyword">this</span>.setState({ loading: <span class="hljs-literal">false</span>, error })
       );
   }
 
   render() {
-    return &lt;PlanetBranch {...this.state} /&gt;;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetBranch</span> {<span class="hljs-attribute">...this.state</span>} /&gt;</span>;</span>
   }
 }
 
-export default DagobahContainer;</code></pre>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> DagobahContainer;</code></pre>
 
 <p>Now the individual views are even more isolated, which can help the testing, showcasing and development workflow. Deciding how much to break the view is best done with a case by case analysis, and the rule of thumb is to keep it simple to understand. This can vary a lot, so use your best judgment!</p>
 <p>The only situation that these initial patterns are not useful for is when we need to <em>reuse the logic with different views</em>. These can be interesting cases, and there are two main ways of dealing with them. Let start with the &quot;oldest&quot; one:</p>
@@ -224,11 +224,11 @@ export default DagobahContainer;</code></pre>
     }
 
     render() {
-      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">PlanetViewComponent</span> {<span class="hljs-attr">...this.state</span>} /&gt;</span>;
+      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetViewComponent</span> {<span class="hljs-attribute">...this.state</span>} /&gt;</span>;</span>
     }
   };
 
-export default withDagobah(PlanetBranch);</span></code></pre>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> withDagobah(PlanetBranch);</code></pre>
 
 <p>Now, all the planet fetching logic is inside this HOC, and is <em>not dependent on any view logic</em>. It does not have any dependency on any particular React views, and it only adds some props to a passed component. That way, you can, for instance, use it in all your routes, with different components rendering planets differently.</p>
 <p><strong>Note:</strong> if you use this HOC in two components being rendered on the same screen, it will fetch the data twice. Fetching data is an expensive side effect, and usually, we try to do it as little as possible. I&#39;ll talk about how to deal with it in the last pattern of this post, so keep on reading! :)</p>
@@ -239,10 +239,10 @@ export default withDagobah(PlanetBranch);</span></code></pre>
 <span class="hljs-comment">// somewhere else inside a component:</span>
 render() {
   <span class="hljs-keyword">return</span> (
-    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-      <span class="hljs-tag">&lt;<span class="hljs-name">Tatooine</span> /&gt;</span>
-    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-  );
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">Tatooine</span> /&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  )</span>;
 }</code></pre>
 
 <p>An example of a HOC with this ability is <a href="https://github.com/ctrlplusb/react-sizeme">react-sizeme</a>. It receives an options object and a component and returns another component with a <code>size</code> prop containing height, width, and position information.</p>
@@ -269,17 +269,17 @@ render() {
 
     render() {
       <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.state.loading) {
-        <span class="hljs-keyword">return</span> &lt;LoadingViewComponent /&gt;;
-      } else if (this.state.planet) {
-        return &lt;PlanetViewComponent {...this.state.planet} /&gt;;
-      } else {
-        return &lt;ErrorViewComponent /&gt;;
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">LoadingViewComponent</span> /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.state.planet) {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetViewComponent</span> {<span class="hljs-attribute">...this.state.planet</span>} /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">ErrorViewComponent</span> /&gt;</span>;</span>
       }
     }
   };
 
-// and the HOC would be called like this:
-export default withDagobah({
+<span class="hljs-comment">// and the HOC would be called like this:</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> withDagobah({
   LoadingViewComponent: LoadingView,
   ErrorViewComponent: ErrorView,
   PlanetViewComponent: PlanetView
@@ -307,14 +307,14 @@ export default withDagobah({
 
 <span class="hljs-comment">// notice that a function is passed to the render prop:</span>
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> () =&gt; (
-  &lt;DagobahRP
-    render={({ loading, error, planet }) =&gt; {
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">DagobahRP</span>
+    <span class="hljs-attribute">render</span>=<span class="hljs-value">{({</span> <span class="hljs-attribute">loading</span>, <span class="hljs-attribute">error</span>, <span class="hljs-attribute">planet</span> }) =&gt;</span> {
       if (loading) {
-        return &lt;LoadingView /&gt;;
-      } else if (planet) {
-        return &lt;PlanetView {...planet} /&gt;;
-      } else {
-        return &lt;ErrorView /&gt;;
+        return <span class="hljs-tag">&lt;<span class="hljs-title">LoadingView</span> /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (planet) {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>;</span>
       }
     }}
   /&gt;
@@ -350,24 +350,19 @@ export default withDagobah({
 
 <span class="hljs-comment">// different callback for different branches:</span>
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> () =&gt; (
-  &lt;DagobahRP
-    renderLoading={() =&gt; &lt;LoadingView /&gt;}
-    renderError={error =&gt; &lt;ErrorView /&gt;}
-    renderPlanet={planet =&gt; &lt;PlanetView {...planet} /&gt;}
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">DagobahRP</span>
+    <span class="hljs-attribute">renderLoading</span>=<span class="hljs-value">{()</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">LoadingView</span> /&gt;</span>}
+    renderError={error =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>}
+    renderPlanet={planet =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>}
   /&gt;
-);</code></pre>
-And that's it.
+)</span>;</code></pre>
 
-## What if the side effects are costly?
-
-In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?
-
-## The Provider Pattern
-
-This is one of the most powerful patterns in React. It's relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don't know what the context object is in React, please [head to the official docs](https://reactjs.org/docs/context.html).
-
-Let's implement it for our Dagobah example. First, we need to implement the `DagobahProvider`:
-
+<p>And that&#39;s it.</p>
+<h2 id="what-if-the-side-effects-are-costly-">What if the side effects are costly?</h2>
+<p>In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?</p>
+<h2 id="the-provider-pattern">The Provider Pattern</h2>
+<p>This is one of the most powerful patterns in React. It&#39;s relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don&#39;t know what the context object is in React, please <a href="https://reactjs.org/docs/context.html">head to the official docs</a>.</p>
+<p>Let&#39;s implement it for our Dagobah example. First, we need to implement the <code>DagobahProvider</code>:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
 <span class="hljs-keyword">import</span> PropTypes <span class="hljs-keyword">from</span> <span class="hljs-string">"prop-types"</span>;
 
@@ -397,7 +392,7 @@ Let's implement it for our Dagobah example. First, we need to implement the `Dag
       );
   }
 
-  <span class="hljs-keyword">static</span> childContextTypes = contextTypes;
+  static childContextTypes = contextTypes;
 
   getChildContext() {
     <span class="hljs-keyword">return</span> { dagobah: <span class="hljs-keyword">this</span>.state };
@@ -412,13 +407,13 @@ Let's implement it for our Dagobah example. First, we need to implement the `Dag
 <p>Now, any component under the provider will have access to the <code>dagobah</code> object inside the context. But accessing the context object in a component is usually considered bad practice, since the context is kind of an &quot;invisible&quot; input, and it makes testing and reasoning about the code a little bit tougher. Let&#39;s implement a HOC to access the context and inject the <code>dagobah</code> object in a component props:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = PlanetViewComponent =&gt;
   <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
-    <span class="hljs-keyword">static</span> contextTypes = contextTypes;
+    static contextTypes = contextTypes;
 
     render() {
       <span class="hljs-keyword">const</span> { props, context } = <span class="hljs-keyword">this</span>;
-      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">PlanetViewComponent</span> {<span class="hljs-attr">...props</span>} {<span class="hljs-attr">...context.dagobah</span>} /&gt;</span>;
+      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetViewComponent</span> {<span class="hljs-attribute">...props</span>} {<span class="hljs-attribute">...context.dagobah</span>} /&gt;</span>;</span>
     }
-  };</span></code></pre>
+  };</code></pre>
 
 <p>Easy, right? Notice the <code>contextTypes</code> property: we need it to be defined with the same schema of the provider to be able to access the context. Then, we spread it to the passed component. That way, we can use as many <code>withDagobah</code> in the same screen, and data will only be fetched once!</p>
 <p>And of course, we could also access the context through a Render Props:</p>
@@ -432,15 +427,15 @@ DagobahRp.contextTypes = contextTypes;</code></pre>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Component</span> </span>{
   render() {
     <span class="hljs-keyword">return</span> (
-      &lt;DagobahProvider&gt;
-        &lt;DagobahPlanet /&gt;
-        &lt;DagobahPlanet /&gt;
-        &lt;DagobahPlanet /&gt;
-        &lt;DagobahRp render={props =&gt; &lt;View {...props} /&gt;} /&gt;
-        &lt;DagobahRp render={props =&gt; &lt;View {...props} /&gt;} /&gt;
-        &lt;DagobahRp render={props =&gt; &lt;View {...props} /&gt;} /&gt;
-      &lt;/DagobahProvider&gt;
-    );
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">DagobahProvider</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahPlanet</span> /&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahPlanet</span> /&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahPlanet</span> /&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahRp</span> <span class="hljs-attribute">render</span>=<span class="hljs-value">{props</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">View</span> {<span class="hljs-attribute">...props</span>} /&gt;</span>} /&gt;
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahRp</span> <span class="hljs-attribute">render</span>=<span class="hljs-value">{props</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">View</span> {<span class="hljs-attribute">...props</span>} /&gt;</span>} /&gt;
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahRp</span> <span class="hljs-attribute">render</span>=<span class="hljs-value">{props</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">View</span> {<span class="hljs-attribute">...props</span>} /&gt;</span>} /&gt;
+      <span class="hljs-tag">&lt;/<span class="hljs-title">DagobahProvider</span>&gt;</span>
+    )</span>;
   }
 }</code></pre>
 

@@ -4,7 +4,7 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Fri, 20 Oct 2017 12:20:44 GMT</lastBuildDate>
+        <lastBuildDate>Fri, 20 Oct 2017 14:41:51 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
@@ -33,22 +33,22 @@
   }
 
   renderLoading() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderError() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderPlanet() {
     <span class="hljs-keyword">const</span> { name, climate, terrain } = <span class="hljs-keyword">this</span>.state.planet;
     <span class="hljs-keyword">return</span> (
-      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-    );
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-title">h2</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
   }
 
   render() {
@@ -69,22 +69,22 @@
 <h3 id="the-container-view-pattern">The Container / View Pattern</h3>
 <pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PlanetView</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
   renderLoading() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderError() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
 
   renderPlanet() {
     <span class="hljs-keyword">const</span> { name, climate, terrain } = <span class="hljs-keyword">this</span>.props.planet;
     <span class="hljs-keyword">return</span> (
-      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-    );
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-title">h2</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
   }
 
   render() {
@@ -116,62 +116,62 @@
   }
 
   render() {
-    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">PlanetView</span> {<span class="hljs-attr">...this.state</span>} /&gt;</span>;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...this.state</span>} /&gt;</span>;</span>
   }
 }
 
-export default DagobahContainer;</span></code></pre>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> DagobahContainer;</code></pre>
 
 <p>That&#39;s it. You&#39;ve just seen the majority of the code I write today. A simple view-only generic planet component, and a logic-only component, that simply calls the view in its render function.</p>
 <p>With the separated view component, we can very easily use it in a style guide, and fine tune each of the variants just by providing different props. Also, we can easily test the view using <a href="https://github.com/airbnb/enzyme">Enzyme</a> for instance.</p>
 <p>Also, my experience shows that this pattern scales better: maybe one of the view states gets big, and it&#39;s straightforward to extract it through a new component. On the logic side, it&#39;s also much easier to understand and change code not polluted with view related stuff.</p>
 <p>Notice that the view component has some &quot;if&quot; logic to define what to render. We can extract it into its own component, in what could be considered a variant of the Container / View pattern:</p>
 <h3 id="the-container-branch-view-pattern">The Container / Branch / View Pattern</h3>
-<pre><code class="hljs js"><span class="hljs-keyword">const</span> LoadingView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> LoadingView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
 
-<span class="hljs-keyword">const</span> ErrorView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>;
+<span class="hljs-keyword">const</span> ErrorView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
 
 <span class="hljs-keyword">const</span> PlanetView = ({ name, climate, terrain }) =&gt; (
-  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-);
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">h2</span>&gt;</span>{name}<span class="hljs-tag">&lt;/<span class="hljs-title">h2</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Climate: {climate}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Terrain: {terrain}<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+)</span>;
 
 <span class="hljs-keyword">const</span> PlanetBranch = ({ loading, planet }) =&gt; {
   <span class="hljs-keyword">if</span> (loading) {
-    <span class="hljs-keyword">return</span> &lt;LoadingView /&gt;;
-  } else if (planet) {
-    return &lt;PlanetView {...planet} /&gt;;
-  } else {
-    return &lt;ErrorView /&gt;;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">LoadingView</span> /&gt;</span>;</span>
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (planet) {
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>;</span>
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>;</span>
   }
 };
 
-// State:
-// { loading: true }
-// { loading: false, planet: { name, climate, terrain } }
-// { loading: false, error: any }
+<span class="hljs-comment">// State:</span>
+<span class="hljs-comment">// { loading: true }</span>
+<span class="hljs-comment">// { loading: false, planet: { name, climate, terrain } }</span>
+<span class="hljs-comment">// { loading: false, error: any }</span>
 
-class DagobahContainer extends React.Component {
-  state = { loading: true };
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DagobahContainer</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = { loading: <span class="hljs-literal">true</span> };
 
   componentDidMount() {
-    fetch("https://swapi.co/api/planets/5")
+    fetch(<span class="hljs-string">"https://swapi.co/api/planets/5"</span>)
       .then(res =&gt; res.json())
       .then(
-        planet =&gt; this.setState({ loading: false, planet }),
-        error =&gt; this.setState({ loading: false, error })
+        planet =&gt; <span class="hljs-keyword">this</span>.setState({ loading: <span class="hljs-literal">false</span>, planet }),
+        error =&gt; <span class="hljs-keyword">this</span>.setState({ loading: <span class="hljs-literal">false</span>, error })
       );
   }
 
   render() {
-    return &lt;PlanetBranch {...this.state} /&gt;;
+    <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetBranch</span> {<span class="hljs-attribute">...this.state</span>} /&gt;</span>;</span>
   }
 }
 
-export default DagobahContainer;</code></pre>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> DagobahContainer;</code></pre>
 
 <p>Now the individual views are even more isolated, which can help the testing, showcasing and development workflow. Deciding how much to break the view is best done with a case by case analysis, and the rule of thumb is to keep it simple to understand. This can vary a lot, so use your best judgment!</p>
 <p>The only situation that these initial patterns are not useful for is when we need to <em>reuse the logic with different views</em>. These can be interesting cases, and there are two main ways of dealing with them. Let start with the &quot;oldest&quot; one:</p>
@@ -191,11 +191,11 @@ export default DagobahContainer;</code></pre>
     }
 
     render() {
-      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">PlanetViewComponent</span> {<span class="hljs-attr">...this.state</span>} /&gt;</span>;
+      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetViewComponent</span> {<span class="hljs-attribute">...this.state</span>} /&gt;</span>;</span>
     }
   };
 
-export default withDagobah(PlanetBranch);</span></code></pre>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> withDagobah(PlanetBranch);</code></pre>
 
 <p>Now, all the planet fetching logic is inside this HOC, and is <em>not dependent on any view logic</em>. It does not have any dependency on any particular React views, and it only adds some props to a passed component. That way, you can, for instance, use it in all your routes, with different components rendering planets differently.</p>
 <p><strong>Note:</strong> if you use this HOC in two components being rendered on the same screen, it will fetch the data twice. Fetching data is an expensive side effect, and usually, we try to do it as little as possible. I&#39;ll talk about how to deal with it in the last pattern of this post, so keep on reading! :)</p>
@@ -206,10 +206,10 @@ export default withDagobah(PlanetBranch);</span></code></pre>
 <span class="hljs-comment">// somewhere else inside a component:</span>
 render() {
   <span class="hljs-keyword">return</span> (
-    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-      <span class="hljs-tag">&lt;<span class="hljs-name">Tatooine</span> /&gt;</span>
-    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
-  );
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">Tatooine</span> /&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  )</span>;
 }</code></pre>
 
 <p>An example of a HOC with this ability is <a href="https://github.com/ctrlplusb/react-sizeme">react-sizeme</a>. It receives an options object and a component and returns another component with a <code>size</code> prop containing height, width, and position information.</p>
@@ -236,17 +236,17 @@ render() {
 
     render() {
       <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.state.loading) {
-        <span class="hljs-keyword">return</span> &lt;LoadingViewComponent /&gt;;
-      } else if (this.state.planet) {
-        return &lt;PlanetViewComponent {...this.state.planet} /&gt;;
-      } else {
-        return &lt;ErrorViewComponent /&gt;;
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">LoadingViewComponent</span> /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.state.planet) {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetViewComponent</span> {<span class="hljs-attribute">...this.state.planet</span>} /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">ErrorViewComponent</span> /&gt;</span>;</span>
       }
     }
   };
 
-// and the HOC would be called like this:
-export default withDagobah({
+<span class="hljs-comment">// and the HOC would be called like this:</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> withDagobah({
   LoadingViewComponent: LoadingView,
   ErrorViewComponent: ErrorView,
   PlanetViewComponent: PlanetView
@@ -274,14 +274,14 @@ export default withDagobah({
 
 <span class="hljs-comment">// notice that a function is passed to the render prop:</span>
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> () =&gt; (
-  &lt;DagobahRP
-    render={({ loading, error, planet }) =&gt; {
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">DagobahRP</span>
+    <span class="hljs-attribute">render</span>=<span class="hljs-value">{({</span> <span class="hljs-attribute">loading</span>, <span class="hljs-attribute">error</span>, <span class="hljs-attribute">planet</span> }) =&gt;</span> {
       if (loading) {
-        return &lt;LoadingView /&gt;;
-      } else if (planet) {
-        return &lt;PlanetView {...planet} /&gt;;
-      } else {
-        return &lt;ErrorView /&gt;;
+        return <span class="hljs-tag">&lt;<span class="hljs-title">LoadingView</span> /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (planet) {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>;</span>
+      } <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>;</span>
       }
     }}
   /&gt;
@@ -317,24 +317,19 @@ export default withDagobah({
 
 <span class="hljs-comment">// different callback for different branches:</span>
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> () =&gt; (
-  &lt;DagobahRP
-    renderLoading={() =&gt; &lt;LoadingView /&gt;}
-    renderError={error =&gt; &lt;ErrorView /&gt;}
-    renderPlanet={planet =&gt; &lt;PlanetView {...planet} /&gt;}
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">DagobahRP</span>
+    <span class="hljs-attribute">renderLoading</span>=<span class="hljs-value">{()</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">LoadingView</span> /&gt;</span>}
+    renderError={error =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>}
+    renderPlanet={planet =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>}
   /&gt;
-);</code></pre>
-And that's it.
+)</span>;</code></pre>
 
-## What if the side effects are costly?
-
-In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?
-
-## The Provider Pattern
-
-This is one of the most powerful patterns in React. It's relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don't know what the context object is in React, please [head to the official docs](https://reactjs.org/docs/context.html).
-
-Let's implement it for our Dagobah example. First, we need to implement the `DagobahProvider`:
-
+<p>And that&#39;s it.</p>
+<h2 id="what-if-the-side-effects-are-costly-">What if the side effects are costly?</h2>
+<p>In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?</p>
+<h2 id="the-provider-pattern">The Provider Pattern</h2>
+<p>This is one of the most powerful patterns in React. It&#39;s relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don&#39;t know what the context object is in React, please <a href="https://reactjs.org/docs/context.html">head to the official docs</a>.</p>
+<p>Let&#39;s implement it for our Dagobah example. First, we need to implement the <code>DagobahProvider</code>:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
 <span class="hljs-keyword">import</span> PropTypes <span class="hljs-keyword">from</span> <span class="hljs-string">"prop-types"</span>;
 
@@ -364,7 +359,7 @@ Let's implement it for our Dagobah example. First, we need to implement the `Dag
       );
   }
 
-  <span class="hljs-keyword">static</span> childContextTypes = contextTypes;
+  static childContextTypes = contextTypes;
 
   getChildContext() {
     <span class="hljs-keyword">return</span> { dagobah: <span class="hljs-keyword">this</span>.state };
@@ -379,13 +374,13 @@ Let's implement it for our Dagobah example. First, we need to implement the `Dag
 <p>Now, any component under the provider will have access to the <code>dagobah</code> object inside the context. But accessing the context object in a component is usually considered bad practice, since the context is kind of an &quot;invisible&quot; input, and it makes testing and reasoning about the code a little bit tougher. Let&#39;s implement a HOC to access the context and inject the <code>dagobah</code> object in a component props:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = PlanetViewComponent =&gt;
   <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
-    <span class="hljs-keyword">static</span> contextTypes = contextTypes;
+    static contextTypes = contextTypes;
 
     render() {
       <span class="hljs-keyword">const</span> { props, context } = <span class="hljs-keyword">this</span>;
-      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">PlanetViewComponent</span> {<span class="hljs-attr">...props</span>} {<span class="hljs-attr">...context.dagobah</span>} /&gt;</span>;
+      <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">PlanetViewComponent</span> {<span class="hljs-attribute">...props</span>} {<span class="hljs-attribute">...context.dagobah</span>} /&gt;</span>;</span>
     }
-  };</span></code></pre>
+  };</code></pre>
 
 <p>Easy, right? Notice the <code>contextTypes</code> property: we need it to be defined with the same schema of the provider to be able to access the context. Then, we spread it to the passed component. That way, we can use as many <code>withDagobah</code> in the same screen, and data will only be fetched once!</p>
 <p>And of course, we could also access the context through a Render Props:</p>
@@ -399,15 +394,15 @@ DagobahRp.contextTypes = contextTypes;</code></pre>
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Component</span> </span>{
   render() {
     <span class="hljs-keyword">return</span> (
-      &lt;DagobahProvider&gt;
-        &lt;DagobahPlanet /&gt;
-        &lt;DagobahPlanet /&gt;
-        &lt;DagobahPlanet /&gt;
-        &lt;DagobahRp render={props =&gt; &lt;View {...props} /&gt;} /&gt;
-        &lt;DagobahRp render={props =&gt; &lt;View {...props} /&gt;} /&gt;
-        &lt;DagobahRp render={props =&gt; &lt;View {...props} /&gt;} /&gt;
-      &lt;/DagobahProvider&gt;
-    );
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">DagobahProvider</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahPlanet</span> /&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahPlanet</span> /&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahPlanet</span> /&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahRp</span> <span class="hljs-attribute">render</span>=<span class="hljs-value">{props</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">View</span> {<span class="hljs-attribute">...props</span>} /&gt;</span>} /&gt;
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahRp</span> <span class="hljs-attribute">render</span>=<span class="hljs-value">{props</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">View</span> {<span class="hljs-attribute">...props</span>} /&gt;</span>} /&gt;
+        <span class="hljs-tag">&lt;<span class="hljs-title">DagobahRp</span> <span class="hljs-attribute">render</span>=<span class="hljs-value">{props</span> =&gt;</span> <span class="hljs-tag">&lt;<span class="hljs-title">View</span> {<span class="hljs-attribute">...props</span>} /&gt;</span>} /&gt;
+      <span class="hljs-tag">&lt;/<span class="hljs-title">DagobahProvider</span>&gt;</span>
+    )</span>;
   }
 }</code></pre>
 
@@ -666,8 +661,8 @@ DagobahRp.contextTypes = contextTypes;</code></pre>
 
 <span class="hljs-keyword">let</span> lineTotal quantity product =
     <span class="hljs-keyword">match</span> product.promotion with
-    <span class="hljs-params">| None -&gt; quantity * product.price
-    |</span> <span class="hljs-literal">Some</span> promotion -&gt; <span class="hljs-number">0</span> <span class="hljs-comment">// implement it!</span></code></pre>
+    | <span class="hljs-built_in">None</span> -&gt; quantity * product.price
+    | <span class="hljs-built_in">Some</span> promotion -&gt; <span class="hljs-number">0</span> <span class="hljs-comment">// implement it!</span></code></pre>
 
 <p>Much cleaner. Now, the difficult part: actually calculating the total of a line, when the product is promoted. Let&#39;s do some TDD-ish programming, since it&#39;s easy to make some mistakes in calculations like these. First, a stub of the function itself:</p>
 <pre><code class="hljs fsharp"><span class="hljs-comment">// Domain.fs</span>
@@ -791,19 +786,19 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
 
 <p>After the project is created, we need to create a new file. I created a <code>Domain.fs</code> file inside the project folder, together with the <code>Main.fs</code> and <code>Tests.fs</code> that were there. Now - and this is particular to F# - the file needs to be <em>added to the project</em>. In every F# project, we need to specify not only the files to be compiled, but the <em>order in which they should be compiled</em>. That may sound weird and too old-school, but today I agree that <a href="https://fsharpforfunandprofit.com/posts/cyclic-dependencies/">its a good thing</a>, since it helps to avoid circular dependencies among other problems.</p>
 <p>So, to add it, open the <code>.fsproj</code> file in the project folder. It&#39;s a big messy XML, I know :) The file ordering is easy to do, though. Just search for the <code>Main.fs</code> file, and you&#39;ll find this XML node:</p>
-<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-name">ItemGroup</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Tests.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Main.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">None</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"App.config"</span> /&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">ItemGroup</span>&gt;</span></code></pre>
+<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-title">ItemGroup</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Tests.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Main.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">None</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"App.config"</span> /&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">ItemGroup</span>&gt;</span></code></pre>
 
 <p>The <code>Domain.fs</code> file needs to be compiled before the other files, so we only need to change the config to:</p>
-<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-name">ItemGroup</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Domain.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Tests.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Main.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">None</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"App.config"</span> /&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">ItemGroup</span>&gt;</span></code></pre>
+<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-title">ItemGroup</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Domain.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Tests.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Main.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">None</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"App.config"</span> /&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">ItemGroup</span>&gt;</span></code></pre>
 
 <p>This way our file is going to be compiled first, and we can use it in the tests and in the main function.</p>
 <h2 id="starting-with-the-domain">Starting With The Domain</h2>
@@ -886,7 +881,7 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
 <p>Now, in the <code>Tests.fs</code> file, let&#39;s write the following test:</p>
 <pre><code class="hljs fsharp"><span class="hljs-keyword">open</span> Domain
 
-<span class="hljs-meta">[&lt;Tests&gt;]</span>
+<span class="hljs-annotation">[&lt;Tests&gt;]</span>
 <span class="hljs-keyword">let</span> tests =
     testList <span class="hljs-string">"basket promotions"</span> [
         testProperty <span class="hljs-string">"total of single line"</span> &lt;| <span class="hljs-keyword">fun</span> (quantity : Qty ) (price : Price) -&gt;
@@ -901,15 +896,15 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
     ]</code></pre>
 
 <p>That&#39;s the first property to our model that we&#39;re going to test. Another property is <em>whenever a new product is added, if it&#39;s already in the basket, the number of lines stays the same</em>:</p>
-<pre><code class="hljs">testProperty <span class="hljs-string">"adding product multiple times downto the basket"</span> &lt;| <span class="hljs-function"><span class="hljs-title">fun</span> <span class="hljs-params">(N : <span class="hljs-type">uint16</span> )</span></span> -&gt;
+<pre><code class="hljs">testProperty <span class="hljs-string">"adding product multiple times downto the basket"</span> &lt;| <span class="hljs-function"><span class="hljs-keyword">fun</span> (<span class="hljs-title">N</span></span> : uint16 ) -&gt;
     let prod = { sku = <span class="hljs-string">"sku"</span> ; price = <span class="hljs-number">10</span> }
-    let event = AddToBasket(prod, <span class="hljs-number">1</span>)
+    let event = <span class="hljs-constant">AddToBasket</span>(prod, <span class="hljs-number">1</span>)
     let basket =
-        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
-        |&gt; List.map (<span class="hljs-function"><span class="hljs-keyword">fun</span> _ -&gt; event)</span>
-        |&gt; List.fold update empty
+        [<span class="hljs-number">1</span>..(int <span class="hljs-constant">N</span> + <span class="hljs-number">1</span>)]
+        |&gt; <span class="hljs-constant">List</span>.map (<span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">_</span></span> -&gt; event)
+        |&gt; <span class="hljs-constant">List</span>.fold update empty
 
-    Expect.equal basket.lines.Length <span class="hljs-number">1</span> <span class="hljs-string">"must have one line"</span></code></pre>
+    <span class="hljs-constant">Expect</span>.equal basket.lines.<span class="hljs-constant">Length</span> <span class="hljs-number">1</span> <span class="hljs-string">"must have one line"</span></code></pre>
 
 <p>Note the use of <code>N : uint16</code> in the parameter. I chose it because of the range: it goes from 0 to 65535, so it&#39;s never negative, and it has a reasonable range for this application. Calling <code>(int N + 1)</code> converts it to the desired type and range.</p>
 <p>And, of course, the property <em>if we add N different products, our basket will have N lines</em>:</p>
@@ -990,17 +985,17 @@ testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span 
 <h2 id="starting-a-new-fable-project">Starting A New Fable Project</h2>
 <p>Elm is very &quot;beginner friendly&quot; - <em>it has always been one of its main goals</em>. This makes it very easy to start out playing with the language, be it with <a href="http://elm-lang.org/try">Try Elm online</a> or using <a href="https://github.com/elm-lang/elm-reactor">Elm Reactor</a> locally. Fable works more like a regular Javascript transpiler; so we need to do the initial pumbling, and then run our project through a local server.</p>
 <p>Fortunately, it&#39;s simple. This is what I did: first, I wrote an index.html file that imports a <code>build/bundle.js</code> script:</p>
-<pre><code class="hljs html"><span class="hljs-meta">&lt;!doctype html&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">http-equiv</span>=<span class="hljs-string">'Content-Type'</span> <span class="hljs-attr">content</span>=<span class="hljs-string">'text/html; charset=utf-8'</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>Star Wars - Fable<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"app"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"build/bundle.js"</span>&gt;</span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></code></pre>
+<pre><code class="hljs html"><span class="hljs-doctype">&lt;!doctype html&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">meta</span> <span class="hljs-attribute">http-equiv</span>=<span class="hljs-value">'Content-Type'</span> <span class="hljs-attribute">content</span>=<span class="hljs-value">'text/html; charset=utf-8'</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">title</span>&gt;</span>Star Wars - Fable<span class="hljs-tag">&lt;/<span class="hljs-title">title</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">id</span>=<span class="hljs-value">"app"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">script</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">"build/bundle.js"</span>&gt;</span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-title">script</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">html</span>&gt;</span></code></pre>
 
 <p>Then I globally installed the Fable compiler, and locally installed the <code>fable-core</code> and <code>fable-compiler</code> packages in the project:</p>
 <pre><code class="hljs bash">$ npm install -g fable-compiler
@@ -1187,11 +1182,11 @@ createApp initialModel view update Virtualdom.createRender
 
 <p>Everything is looking good, right? But try compiling it. It doesn&#39;t, and outputs the following error:</p>
 <pre><code class="hljs bash">▶ fable src/Main.fsx --outDir build --rollup
-fable-compiler 0.7.17: Start compilation...
-Compiled fable-arch/Fable.Arch.Html.js at 11:35:51 PM
-Compiled fable-arch/Fable.Arch.App.js at 11:35:51 PM
-Compiled fable-arch/Fable.Arch.Virtualdom.js at 11:35:51 PM
-Compiled src/Main.js at 11:35:51 PM
+fable-compiler <span class="hljs-number">0.7</span>.<span class="hljs-number">17</span>: Start compilation...
+Compiled fable-arch/Fable.Arch.Html.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled fable-arch/Fable.Arch.App.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled fable-arch/Fable.Arch.Virtualdom.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled src/Main.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
 Bundling...
 [BUNDLE ERROR] <span class="hljs-string">'h'</span> is not exported by node_modules/virtual-dom/index.js (imported by build/fable-arch/Fable.Arch.Virtualdom.js). For <span class="hljs-built_in">help</span> fixing this error see https://github.com/rollup/rollup/wiki/Troubleshooting<span class="hljs-comment">#name-is-not-exported-by-module</span>
 (...)</code></pre>
@@ -1200,27 +1195,27 @@ Bundling...
 <p>We need to configure Rollup to see the <code>virtual-dom</code> module and it&#39;s exported functions, so let me introduce you to the <code>fableconfig.json</code> file.</p>
 <p>Instead of calling <code>fable src/Main.fsx --outDir ./build --rollup</code> every time, we can put the compiling configuration inside <code>fableconfig.json</code>. For example, if we have this config:</p>
 <pre><code class="hljs json">{
- <span class="hljs-attr">"outDir"</span>: <span class="hljs-string">"build"</span>,
- <span class="hljs-attr">"projFile"</span>: <span class="hljs-string">"./src/Main.fsx"</span>,
- <span class="hljs-attr">"sourceMaps"</span>: <span class="hljs-literal">true</span>
-}</code></pre>
+ "<span class="hljs-attribute">outDir</span>": <span class="hljs-value"><span class="hljs-string">"build"</span></span>,
+ "<span class="hljs-attribute">projFile</span>": <span class="hljs-value"><span class="hljs-string">"./src/Main.fsx"</span></span>,
+ "<span class="hljs-attribute">sourceMaps</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
+</span>}</code></pre>
 
 <p>We can just run <code>fable</code> or <code>fable --watch</code> in the terminal and get the same output plus a sourcemap.</p>
 <p>Now we can add the Rollup CommonJS configuration:</p>
 <pre><code class="hljs json">{
-  <span class="hljs-attr">"outDir"</span>: <span class="hljs-string">"build"</span>,
-  <span class="hljs-attr">"projFile"</span>: <span class="hljs-string">"./src/Main.fsx"</span>,
-  <span class="hljs-attr">"sourceMaps"</span>: <span class="hljs-literal">true</span>,
-  <span class="hljs-attr">"rollup"</span>: {
-    <span class="hljs-attr">"plugins"</span>: [
+  "<span class="hljs-attribute">outDir</span>": <span class="hljs-value"><span class="hljs-string">"build"</span></span>,
+  "<span class="hljs-attribute">projFile</span>": <span class="hljs-value"><span class="hljs-string">"./src/Main.fsx"</span></span>,
+  "<span class="hljs-attribute">sourceMaps</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+  "<span class="hljs-attribute">rollup</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">plugins</span>": <span class="hljs-value">[
       [<span class="hljs-string">"commonjs"</span>, {
-        <span class="hljs-attr">"namedExports"</span>: {
-          <span class="hljs-attr">"virtual-dom"</span>: [ <span class="hljs-string">"h"</span>, <span class="hljs-string">"create"</span>, <span class="hljs-string">"diff"</span>, <span class="hljs-string">"patch"</span> ]
-        }
-      }]
+        "<span class="hljs-attribute">namedExports</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">virtual-dom</span>": <span class="hljs-value">[ <span class="hljs-string">"h"</span>, <span class="hljs-string">"create"</span>, <span class="hljs-string">"diff"</span>, <span class="hljs-string">"patch"</span> ]
+        </span>}
+      </span>}]
     ]
-  }
-}</code></pre>
+  </span>}
+</span>}</code></pre>
 
 <p>This step is a small complication in our build system. It&#39;s definitely more complex than anything related to an Elm project build, but, on the other hand, it&#39;s the effect of using a very good and used <em>Javascript</em> tool. Efficient bundles are a central and important issue in frontend projects, and since we cannot escape it, I actually like that we are using a good tool for that.</p>
 <h2 id="messages-and-the-rest-of-the-views">Messages And The Rest Of The Views</h2>
@@ -1505,9 +1500,9 @@ createApp InitialScreen view update Virtualdom.createRender
       episode_id : int
       characters : string list }
 
-<span class="hljs-keyword">let</span> <span class="hljs-meta">[&lt;PassGenericsAttribute&gt;]</span> betterOfJson&lt;<span class="hljs-symbol">'a</span>&gt; text =
+<span class="hljs-keyword">let</span> <span class="hljs-annotation">[&lt;PassGenericsAttribute&gt;]</span> betterOfJson&lt;<span class="hljs-attribute">'a</span>&gt; text =
     <span class="hljs-keyword">try</span>
-        <span class="hljs-keyword">let</span> json = ofJson&lt;<span class="hljs-symbol">'a</span>&gt; text
+        <span class="hljs-keyword">let</span> json = ofJson&lt;<span class="hljs-attribute">'a</span>&gt; text
         Some json
     <span class="hljs-keyword">with</span> _ -&gt;
         None
@@ -1631,9 +1626,9 @@ createApp InitialScreen view update Virtualdom.createRender
             <title><![CDATA[Learning Elm, part 4]]></title>
             <description><![CDATA[<p>As I said in the conclusion of part 1 of this series, the function I wrote in <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">that post</a> felt very <em>reliable</em>, in a way that&#39;s difficult to achieve with any javascript code.</p>
 <p>As a reminder, here is the card type used in the code:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span> = <span class="hljs-type">Jack</span> | <span class="hljs-type">Queen</span> | <span class="hljs-type">King</span> | <span class="hljs-type">Ace</span> | <span class="hljs-type">Num</span> <span class="hljs-type">Int</span>
-<span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span> = <span class="hljs-type">Club</span> | <span class="hljs-type">Diamond</span> | <span class="hljs-type">Spade</span> | <span class="hljs-type">Heart</span>
-<span class="hljs-keyword">type</span> <span class="hljs-type">Card</span> = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span> | <span class="hljs-type">Joker</span></code></pre>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span> = <span class="hljs-type">Jack</span> | <span class="hljs-type">Queen</span> | <span class="hljs-type">King</span> | <span class="hljs-type">Ace</span> | <span class="hljs-type">Num</span> <span class="hljs-type">Int</span></span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span> = <span class="hljs-type">Club</span> | <span class="hljs-type">Diamond</span> | <span class="hljs-type">Spade</span> | <span class="hljs-type">Heart</span></span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span> = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span> | <span class="hljs-type">Joker</span></span></code></pre>
 
 <p>Looking at these types, a question arises: <em>how can I guarantee that I never end up with an invalid card?</em> By invalid card, I mean something like a thirteen of Clubs, or a minus five of Hearts.</p>
 <h2 id="unit-testing">Unit Testing</h2>
@@ -1654,24 +1649,24 @@ createApp InitialScreen view update Virtualdom.createRender
 <li>Edit <code>tests/Tests.elm</code> to introduce new tests.</li>
 </ol>
 <p>After writing the unit tests, this is how my <code>Tests.elm</code> file looks:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">module</span> Tests <span class="hljs-keyword">exposing</span> (..)
+<pre><code class="hljs elm">module Tests exposing (..)
 
-<span class="hljs-keyword">import</span> Test <span class="hljs-keyword">exposing</span> (..)
-<span class="hljs-keyword">import</span> Expect
-<span class="hljs-keyword">import</span> Cards <span class="hljs-keyword">exposing</span> (..)
+import Test exposing (..)
+import Expect
+import Cards exposing (..)
 
 
-<span class="hljs-title">all</span> : <span class="hljs-type">Test</span>
-<span class="hljs-title">all</span> =
-    describe <span class="hljs-string">"parseNumValue"</span>
-        [ test <span class="hljs-string">"cannot be less than 2"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"1"</span>) <span class="hljs-type">Nothing</span>
-        , test <span class="hljs-string">"minimum of 2"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"2"</span>) (<span class="hljs-type">Just</span> (<span class="hljs-type">Num</span> <span class="hljs-number">2</span>))
-        , test <span class="hljs-string">"maximum of 10"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"10"</span>) (<span class="hljs-type">Just</span> (<span class="hljs-type">Num</span> <span class="hljs-number">10</span>))
-        , test <span class="hljs-string">"cannot be more than 10"</span>
-            &lt;| \() -&gt; <span class="hljs-type">Expect</span>.equal (parseNumValue <span class="hljs-string">"11"</span>) <span class="hljs-type">Nothing</span>
+all : Test
+all =
+    describe "parseNumValue"
+        [ test "cannot be less than 2"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "1") Nothing
+        , test "minimum of 2"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "2") (Just (Num 2))
+        , test "maximum of 10"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "10") (Just (Num 10))
+        , test "cannot be more than 10"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "11") Nothing
         ]</code></pre>
 
 <p>The syntax is direct: you describe a test suite, and then define the tests inside a list. I tested the &quot;corner cases&quot; of the function, to make sure that any value less than 2 or greater than 10 will not be parsed to a Card. I also like that tests in general also work as documentation to show how the function is supposed to behave.</p>
@@ -1681,7 +1676,7 @@ createApp InitialScreen view update Virtualdom.createRender
 <p>Elm Test has an easy way of doing property based tests. Instead of using the <code>test</code> function, you will use <code>fuzz</code> function, specify a &quot;fuzzer&quot;, and write your test using the generated value as a parameter:</p>
 <pre><code class="hljs elm">(...)
 
-<span class="hljs-keyword">import</span> Fuzz <span class="hljs-keyword">exposing</span> (..)
+<span class="hljs-import"><span class="hljs-keyword">import</span> Fuzz <span class="hljs-keyword">exposing</span> <span class="hljs-container">(..)</span></span>
 
 (...)
 
@@ -1712,7 +1707,7 @@ createApp InitialScreen view update Virtualdom.createRender
 <p>I believe the solution feels much more reliable with the addition of the property based tests. But one thing still bothers me: the fact that, if I do not use the parsers to build a card, I can still have an invalid card like <code>Just (Num 11)</code>.</p>
 <h2 id="can-we-do-better-">Can We Do Better?</h2>
 <p>Our cards have a small finite domain. Instead of having a <code>Num Int</code> case for the <code>Value</code> type, we could be explicit about every value possible:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span></span>
     = <span class="hljs-type">Jack</span>
     | <span class="hljs-type">Queen</span>
     | <span class="hljs-type">King</span>
@@ -1728,14 +1723,14 @@ createApp InitialScreen view update Virtualdom.createRender
     | <span class="hljs-type">Ten</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span></span>
     = <span class="hljs-type">Club</span>
     | <span class="hljs-type">Diamond</span>
     | <span class="hljs-type">Spade</span>
     | <span class="hljs-type">Heart</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Card</span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span></span>
     = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span>
     | <span class="hljs-type">Joker</span></code></pre>
 
@@ -1744,13 +1739,13 @@ createApp InitialScreen view update Virtualdom.createRender
 <h2 id="is-it-always-a-possibility-">Is It Always A Possibility?</h2>
 <p>I tend to think that we were kind of &quot;lucky&quot; here, in the sense that a normal deck of cards has about nine numbered cards only. It&#39;s easier to enumerate every case in that sense, but I do not know if it would be practical to do that if the numbered cards were in the 2 - 100 range, for example.</p>
 <p>I think that the simple way of dealing with it is to always first try to have all your modeling constraints through types. For example, imagine that the only way to have a user name is through logging in. That means that instead of:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">User</span> =
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">User</span> =</span>
     { isLogged : <span class="hljs-type">Bool</span>
     , name : <span class="hljs-type">String</span>
     }</code></pre>
 
 <p>You should have:</p>
-<pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">User</span>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">User</span></span>
     = <span class="hljs-type">NotLogged</span>
     | <span class="hljs-type">Logged</span> <span class="hljs-type">String</span></code></pre>
 
@@ -1923,7 +1918,7 @@ socket {
 <img src="../assets/event-source-b.gif" alt="Event Source B"></p>
 <p>One of the best parts of Elm is that the structure of the code does not seem to change from application to application. The &quot;framework&quot; is so close to the language itself, that one simply does not try to do things differently - I&#39;m not even sure it&#39;s possible. Because of that, we can focus more on the real complexity of the problem, and think less and less about implementation details.</p>
 <p>The only different part from my <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">earlier</a> <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">learning Elm</a> <a href="http://lucasmreis.github.io/blog/learning-elm-part-3/">series</a> is the websockets part. But it&#39;s really, really simple:</p>
-<pre><code class="hljs"><span class="hljs-symbol">type</span> Msg
+<pre><code class="hljs"><span class="hljs-label">type</span> Msg
     = EventReceived <span class="hljs-keyword">String
 </span>
 <span class="hljs-keyword">subscriptions </span>: Model -&gt; <span class="hljs-keyword">Sub </span>Msg
@@ -1988,22 +1983,22 @@ socket {
 <p><em>Characters cards will be yellow, and film cards will be blue. By clicking on a card, it changes from one screen to the other.</em></p>
 <h2 id="film-and-character-components">Film And Character Components</h2>
 <p>I&#39;ll build both the Character and Film components in separate files. This is the initial implementation:</p>
-<pre><code class="hljs">-- Character<span class="hljs-selector-class">.elm</span>
+<pre><code class="hljs"><span class="hljs-comment">-- Character.elm</span>
 
-type alias Model =
-    { name : String
+type <span class="hljs-type">alias</span> Model =
+    { <span class="hljs-property">name</span> : String
     }
 
 
 view model =
-    <span class="hljs-selector-tag">div</span> [ mainStyle ]
-        [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]
+    <span class="hljs-keyword">div</span> [ mainStyle ]
+        [ <span class="hljs-keyword">div</span> [ nameStyle ] [ <span class="hljs-type">text</span> model.<span class="hljs-property">name</span> ] ]
 
--- imports and styles omitted <span class="hljs-keyword">for</span> brevity...</code></pre>
+<span class="hljs-comment">-- imports and styles omitted for brevity...</span></code></pre>
 
-<pre><code class="hljs">-- Film<span class="hljs-selector-class">.elm</span>
+<pre><code class="hljs"><span class="hljs-comment">-- Film.elm</span>
 
-type alias Model =
+type <span class="hljs-type">alias</span> Model =
     { title : String
     , episode_id : Int
     }
@@ -2012,39 +2007,39 @@ type alias Model =
 view model =
     let
         chapter =
-            toString model<span class="hljs-selector-class">.episode_id</span>
+            toString model.episode_id
     <span class="hljs-keyword">in</span>
-        <span class="hljs-selector-tag">div</span> [ mainStyle ]
-            [ <span class="hljs-selector-tag">div</span> [ numberStyle ]
-                [ text chapter ]
-            , <span class="hljs-selector-tag">div</span> [ nameStyle ]
-                [ text model<span class="hljs-selector-class">.title</span> ]
+        <span class="hljs-keyword">div</span> [ mainStyle ]
+            [ <span class="hljs-keyword">div</span> [ numberStyle ]
+                [ <span class="hljs-type">text</span> chapter ]
+            , <span class="hljs-keyword">div</span> [ nameStyle ]
+                [ <span class="hljs-type">text</span> model.title ]
             ]</code></pre>
 
 <p>If these examples do not feel straightforward to you, refer back to <a href="http://lucasmreis.github.io/blog/learning-elm-part-2/">Part 2</a>.</p>
 <p>To preview the views and fine tune the CSS, I&#39;ll create the <code>Main.elm</code> file and run Elm Reactor pointing to it:</p>
 <pre><code class="hljs">main =
-    Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.beginnerProgram</span>
+    Html.<span class="hljs-keyword">App</span>.beginnerProgram
         { model = model
-        , view = view
-        , update = update
+        , <span class="hljs-keyword">view</span> = <span class="hljs-keyword">view</span>
+        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
         }
 
 
-update model =
+<span class="hljs-keyword">update</span> model =
     model
 
 
-sampleCh : Character<span class="hljs-selector-class">.Model</span>
+sampleCh : Character.Model
 sampleCh =
     { name = <span class="hljs-string">"Luke Skywalker"</span>
     }
 
 
-sampleFilm : Film<span class="hljs-selector-class">.Model</span>
+sampleFilm : Film.Model
 sampleFilm =
     { title = <span class="hljs-string">"A New Hope"</span>
-    , episode_id = <span class="hljs-number">4</span>
+    , episode_id = 4
     }
 
 
@@ -2052,10 +2047,10 @@ model =
     ( sampleCh, sampleFilm )
 
 
-view ( ch, film ) =
-    <span class="hljs-selector-tag">div</span> []
-        [ Character<span class="hljs-selector-class">.view</span> ch
-        , Film<span class="hljs-selector-class">.view</span> film
+<span class="hljs-keyword">view</span> ( ch, film ) =
+    div []
+        [ Character.<span class="hljs-keyword">view</span> ch
+        , Film.<span class="hljs-keyword">view</span> film
         ]</code></pre>
 
 <p>That should render a sample component of each. Now it&#39;s time to start modeling our application.</p>
@@ -2066,22 +2061,22 @@ view ( ch, film ) =
 <span class="hljs-comment">-- Aliases added for reading simplicity</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">C</span> =
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">C</span> =</span>
     <span class="hljs-type">Character</span>.<span class="hljs-type">Model</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">F</span> =
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">F</span> =</span>
     <span class="hljs-type">Film</span>.<span class="hljs-type">Model</span>
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Model</span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Model</span></span>
     = <span class="hljs-type">FilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
     | <span class="hljs-type">CharactersFromFilm</span> <span class="hljs-type">F</span> (<span class="hljs-type">List</span> <span class="hljs-type">C</span>)</code></pre>
 To build the view, I will once again define a sample model:
 
-<pre><code class="hljs"><span class="hljs-attr">model </span>=<span class="hljs-string">
-    FilmsFromCharacter sampleCh
-        [ sampleFilm
+<pre><code class="hljs"><span class="hljs-setting">model =
+    <span class="hljs-value">FilmsFromCharacter sampleCh</span></span>
+<span class="hljs-title">        [ sampleFilm
         , sampleFilm
         , sampleFilm
         ]</span></code></pre>
@@ -2090,15 +2085,15 @@ To build the view, I will once again define a sample model:
 <pre><code class="hljs">view model =
     case model of
         FilmsFromCharacter c fs -&gt;
-            <span class="hljs-selector-tag">div</span> [ twoColumns ]
-                [ Character<span class="hljs-selector-class">.view</span> c
-                , <span class="hljs-selector-tag">div</span> [] (List<span class="hljs-selector-class">.map</span> Film<span class="hljs-selector-class">.view</span> fs)
+            <span class="hljs-tag">div</span> [ twoColumns ]
+                [ Character<span class="hljs-class">.view</span> c
+                , <span class="hljs-tag">div</span> [] (List<span class="hljs-class">.map</span> Film<span class="hljs-class">.view</span> fs)
                 ]
 
         CharactersFromFilm f cs -&gt;
-            <span class="hljs-selector-tag">div</span> [ twoColumns ]
-                [ Film<span class="hljs-selector-class">.view</span> f
-                , <span class="hljs-selector-tag">div</span> [] (List<span class="hljs-selector-class">.map</span> Character<span class="hljs-selector-class">.view</span> cs)
+            <span class="hljs-tag">div</span> [ twoColumns ]
+                [ Film<span class="hljs-class">.view</span> f
+                , <span class="hljs-tag">div</span> [] (List<span class="hljs-class">.map</span> Character<span class="hljs-class">.view</span> cs)
                 ]
 
 
@@ -2110,22 +2105,22 @@ twoColumns =
 <h2 id="the-command">The Command</h2>
 <p>Because this scenario is much more complex, instead of using the  <code>beginnerProgram</code> , we&#39;ll use the <code>program</code> function. It&#39;s a little different:</p>
 <pre><code class="hljs">main =
-    Html<span class="hljs-selector-class">.App</span><span class="hljs-selector-class">.program</span>
-        { init = ( model, Cmd<span class="hljs-selector-class">.none</span> )
-        , view = view
-        , update = update
+    Html.<span class="hljs-keyword">App</span>.<span class="hljs-keyword">program</span>
+        { init = ( model, Cmd.none )
+        , <span class="hljs-keyword">view</span> = <span class="hljs-keyword">view</span>
+        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
         , subscriptions = subscriptions
         }
 
 -- (...)
 
-update msg model =
-    ( model, Cmd<span class="hljs-selector-class">.none</span> )
+<span class="hljs-keyword">update</span> msg model =
+    ( model, Cmd.none )
 
 -- (...)
 
 subscriptions x =
-    Sub.<span class="hljs-attribute">none</span></code></pre>
+    Sub.none</code></pre>
 
 <p>So, now instead of only a model, we have <code>init</code>. It is a tuple with a model to be rendered immediately and a command that will fire the update function in the future. Another thing to point out is that the update function also returns this same combination.  Subscriptions are listeners that can also fire the update function.</p>
 <p>Our next step is to build     <code>init</code>.  First, the app needs to get an initial character from the API and render it on the screen. Then, it has to render the films corresponding to that character. The http request will be the command, and I need an application state to wait for the request to complete.</p>
@@ -2135,37 +2130,37 @@ subscriptions x =
     | FilmsFromCharacter C (<span class="hljs-built_in">List</span> F)
     | CharactersFromFilm F (<span class="hljs-built_in">List</span> C)
 
-(<span class="hljs-attr">...</span>)
+(<span class="hljs-attribute">...</span>)
 
 view model =
     <span class="hljs-keyword">case</span> model of
-        InitialScreen -&gt;
-            simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
+        InitialScreen <span class="hljs-subst">-&gt;
+            </span>simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
 
-(<span class="hljs-attr">...</span>)
+(<span class="hljs-attribute">...</span>)
 
 simpleMessage t =
-    div <span class="hljs-meta">[</span> simpleMessageStyle <span class="hljs-meta">]</span> <span class="hljs-meta">[</span> text t <span class="hljs-meta">]</span></code></pre>
+    div <span class="hljs-preprocessor">[</span> simpleMessageStyle <span class="hljs-preprocessor">]</span><span class="hljs-markup"> </span><span class="hljs-preprocessor">[</span> text t <span class="hljs-preprocessor">]</span><span class="hljs-markup"></span></code></pre>
 
 <p>The elm-http <code>get</code> function receives a &quot;Decoder&quot; and a url. The decoder is the function that will convert the json response to a character model. So it makes sense that it&#39;s inside the Character module, right?</p>
 <p>Another thing that we realize at this point is that <em>I&#39;ll have to have the list of the films the character was in!</em> Of course. So let&#39;s change the model to also store the films&#39; urls that&#39;ll be in the character card returned by the API:</p>
-<pre><code class="hljs"><span class="hljs-comment">-- Character.elm</span>
-<span class="hljs-keyword">import</span> Json.Decode <span class="hljs-keyword">exposing</span> (<span class="hljs-type">Decoder</span>, succeed, string, list, int, (:=))
-<span class="hljs-keyword">import</span> Json.Decode.Extra <span class="hljs-keyword">exposing</span> ((|:))
+<pre><code class="hljs">-- Character<span class="hljs-built_in">.</span>elm
+<span class="hljs-keyword">import</span> Json<span class="hljs-built_in">.</span>Decode exposing (Decoder, succeed, <span class="hljs-built_in">string</span>, <span class="hljs-built_in">list</span>, int, (:=))
+<span class="hljs-keyword">import</span> Json<span class="hljs-built_in">.</span>Decode<span class="hljs-built_in">.</span>Extra exposing ((|:))
 
-(...)
+(<span class="hljs-attribute">...</span>)
 
-<span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">Model</span> =
-    { name : <span class="hljs-type">String</span>
-    , films : <span class="hljs-type">List</span> <span class="hljs-type">String</span>
+<span class="hljs-keyword">type</span> alias Model =
+    { name : <span class="hljs-built_in">String</span>
+    , films : <span class="hljs-built_in">List</span> <span class="hljs-built_in">String</span>
     }
 
 
-<span class="hljs-title">characterDecoder</span> : <span class="hljs-type">Decoder</span> <span class="hljs-type">Model</span>
-<span class="hljs-title">characterDecoder</span> =
-    succeed <span class="hljs-type">Model</span>
-        |: (<span class="hljs-string">"name"</span> := string)
-        |: (<span class="hljs-string">"films"</span> := list string)</code></pre>
+characterDecoder : Decoder Model
+characterDecoder =
+    succeed Model
+        |: (<span class="hljs-string">"name"</span> := <span class="hljs-built_in">string</span>)
+        |: (<span class="hljs-string">"films"</span> := <span class="hljs-built_in">list</span> <span class="hljs-built_in">string</span>)</code></pre>
 
 <p>The <code>|:</code> comes from the <code>elm-community/elm-json-extra</code> package, and feels like a better way to parse a json than the standard library.</p>
 <p>So now I have the decoder. Let&#39;s go back to Main and implement the <code>getCharacter</code> command for init:</p>
@@ -2174,18 +2169,18 @@ simpleMessage t =
 (...)
 
 getCharacter url =
-    Http<span class="hljs-selector-class">.get</span> Character<span class="hljs-selector-class">.characterDecoder</span> url</code></pre>
+    Http<span class="hljs-class">.get</span> Character<span class="hljs-class">.characterDecoder</span> url</code></pre>
 
 <p>As soon as we define the <code>init</code> as <code>init = ( InitialScreen, getCharacter &quot;http://swapi.co/api/people/1/&quot; )</code> we&#39;ll receive the following message from the compiler:</p>
-<pre><code class="hljs">The argument to <span class="hljs-keyword">function</span> <span class="hljs-title">`program`</span> <span class="hljs-keyword">is</span> causing a mismatch. - <span class="hljs-keyword">Function</span> <span class="hljs-title">`program`</span> <span class="hljs-keyword">is</span> expecting the argument to be:
+<pre><code class="hljs">The argument to <span class="hljs-function"><span class="hljs-keyword">function</span></span> `<span class="hljs-function"><span class="hljs-keyword">program</span></span>` is causing a mismatch. - <span class="hljs-function"><span class="hljs-keyword">Function</span></span> `<span class="hljs-function"><span class="hljs-keyword">program</span></span>` is expecting the argument to be:
 
-    { init : ( <span class="hljs-type">Model</span>, Cmd a )
+    { init : ( Model, Cmd a )
 
 (...)
 
-But it <span class="hljs-keyword">is</span>:
+But it is:
 
-    { init : ( <span class="hljs-type">Model</span>, Platform.<span class="hljs-keyword">Task</span> Http.Error Character.Model )
+    { init : ( Model, Platform.Task Http.Error <span class="hljs-type">Character</span>.Model )
 
 (...)</code></pre>
 
@@ -2196,48 +2191,48 @@ But it <span class="hljs-keyword">is</span>:
         <span class="hljs-string">|&gt; Task.perform FetchFail LoadFilms</span></code></pre>
 
 <p>Now the task will run, and it&#39;s going to return a <code>Msg</code> of type <code>FetchFail Http.Error</code> if it fails, or a <code>LoadFilms Character.Model</code> if it succeeds. These two types should be part of the <code>Msg</code> that is sent to the update function:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg
-    </span>= LoadFilms C
-    | FetchFail Http.Error</code></pre>
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span></span>
+    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
+    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span></code></pre>
 
 <p>We also need to handle those two messages in our update function. Elm architecture, once more, reminds us that we haven&#39;t planned all the possible application states: we need an error state, and a &quot;I have a character and I&#39;m waiting for the films&quot; state:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Model</span>
-    = <span class="hljs-type">InitialScreen</span>
-    | <span class="hljs-type">ErrorScreen</span>
-    | <span class="hljs-type">WaitingForFilms</span> <span class="hljs-type">C</span>
-    | <span class="hljs-type">FilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
-    | <span class="hljs-type">CharactersFromFilm</span> <span class="hljs-type">F</span> (<span class="hljs-type">List</span> <span class="hljs-type">C</span>)
+<pre><code class="hljs">type Model
+    = InitialScreen
+    | ErrorScreen
+    | WaitingForFilms C
+    | FilmsFromCharacter C (List F)
+    | CharactersFromFilm F (List C)
 
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
-    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
-    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span>
+type Msg
+    = LoadFilms C
+    | FetchFail Http.Error
 
 
-<span class="hljs-title">update</span> msg model =
+<span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
     <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
-        <span class="hljs-type">FetchFail</span> _ -&gt;
-            ( <span class="hljs-type">ErrorScreen</span>, <span class="hljs-type">Cmd</span>.none )
+        FetchFail _ -&gt;
+            ( ErrorScreen, Cmd.<span class="hljs-keyword">none</span> )
 
-        <span class="hljs-type">LoadFilms</span> c -&gt;
-            ( <span class="hljs-type">WaitingForFilms</span> c, <span class="hljs-type">Cmd</span>.none )
+        LoadFilms <span class="hljs-keyword">c</span> -&gt;
+            ( WaitingForFilms <span class="hljs-keyword">c</span>, Cmd.<span class="hljs-keyword">none</span> )
 
 
-<span class="hljs-title">view</span> model =
-    <span class="hljs-keyword">case</span> model <span class="hljs-keyword">of</span>
-        <span class="hljs-type">InitialScreen</span> -&gt;
+<span class="hljs-keyword">view</span> <span class="hljs-keyword">model</span> =
+    <span class="hljs-keyword">case</span> <span class="hljs-keyword">model</span> <span class="hljs-keyword">of</span>
+        InitialScreen -&gt;
             simpleMessage <span class="hljs-string">"Loading amazing characters and films..."</span>
 
-        <span class="hljs-type">ErrorScreen</span> -&gt;
+        ErrorScreen -&gt;
             simpleMessage <span class="hljs-string">"Sorry, there was an error. Please try again!"</span>
 
-        <span class="hljs-type">WaitingForFilms</span> c -&gt;
-            div [ twoColumns ]
-                [ <span class="hljs-type">Character</span>.view c
+        WaitingForFilms <span class="hljs-keyword">c</span> -&gt;
+            <span class="hljs-keyword">div</span> [ twoColumns ]
+                [ <span class="hljs-built_in">Character</span>.<span class="hljs-keyword">view</span> <span class="hljs-keyword">c</span>
                 , simpleMessage <span class="hljs-string">"Loading Films..."</span>
                 ]
 
-(...)</code></pre>
+(...)</span></code></pre>
 
 <h2 id="good-tools-nudge-you-in-the-right-direction">Good Tools Nudge You in the Right Direction</h2>
 <p>I&#39;d like to express once again how awesome Elm is to have pointed out that alternative application states were needed. I &quot;naively&quot; thought only two screens were needed, and in reality I needed five :)</p>
@@ -2249,54 +2244,54 @@ But it <span class="hljs-keyword">is</span>:
 <h2 id="almost-finishing-our-application-">Almost Finishing Our Application...</h2>
 <p>We are almost there! First of all let&#39;s implement the function that, given a character, it gets all the corresponding films.</p>
 <p><em>Important:</em> We&#39;ll use the <code>Task.sequence</code> to batch all the tasks, but this is definitely not the best way to do it; these requests could and should be parallel. I invite you to suggest a better way to do it in the comments!</p>
-<pre><code class="hljs"><span class="hljs-comment">-- Film.elm</span>
+<pre><code class="hljs">-- Film<span class="hljs-built_in">.</span>elm
 
-<span class="hljs-keyword">type</span> <span class="hljs-type">alias </span>Model =
-    { title : <span class="hljs-type">String</span>
-    , episode_id : <span class="hljs-type">Int</span>
-    , characters : <span class="hljs-type">List</span> String
+<span class="hljs-keyword">type</span> alias Model =
+    { title : <span class="hljs-built_in">String</span>
+    , episode_id : Int
+    , characters : <span class="hljs-built_in">List</span> <span class="hljs-built_in">String</span>
     }
 
 
-filmDecoder : <span class="hljs-type">Decoder</span> Model
+filmDecoder : Decoder Model
 filmDecoder =
     succeed Model
-        |: (<span class="hljs-string">"title"</span> := string)
+        |: (<span class="hljs-string">"title"</span> := <span class="hljs-built_in">string</span>)
         |: (<span class="hljs-string">"episode_id"</span> := int)
-        |: (<span class="hljs-string">"characters"</span> := list string)</code></pre>
+        |: (<span class="hljs-string">"characters"</span> := <span class="hljs-built_in">list</span> <span class="hljs-built_in">string</span>)</code></pre>
 
 <pre><code class="hljs"><span class="hljs-comment">-- Main.elm</span>
-<span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
-    = <span class="hljs-type">LoadFilms</span> <span class="hljs-type">C</span>
-    | <span class="hljs-type">FetchFail</span> <span class="hljs-type">Http</span>.<span class="hljs-type">Error</span>
-    | <span class="hljs-type">ToFilmsFromCharacter</span> <span class="hljs-type">C</span> (<span class="hljs-type">List</span> <span class="hljs-type">F</span>)
+type Msg
+    = LoadFilms C
+    | FetchFail Http.Error
+    | ToFilmsFromCharacter C (List F)
 
-<span class="hljs-title">update</span> msg model =
+<span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
     <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
 
 (...)
 
-        <span class="hljs-type">LoadFilms</span> c -&gt;
-            ( <span class="hljs-type">WaitingForFilms</span> c, getFilmsFromCharacter c )
+        LoadFilms <span class="hljs-keyword">c</span> -&gt;
+            ( WaitingForFilms <span class="hljs-keyword">c</span>, getFilmsFromCharacter <span class="hljs-keyword">c</span> )
 
-        <span class="hljs-type">ToFilmsFromCharacter</span> c fs -&gt;
-            ( <span class="hljs-type">FilmsFromCharacter</span> c fs, <span class="hljs-type">Cmd</span>.none )
+        ToFilmsFromCharacter <span class="hljs-keyword">c</span> fs -&gt;
+            ( FilmsFromCharacter <span class="hljs-keyword">c</span> fs, Cmd.<span class="hljs-keyword">none</span> )
 
-(...)</code></pre>
+(...)</span></code></pre>
 
 <p>There&#39;s only one detail missing from our components: they need to produce a message when clicked. I implemented it so each component would send a message with its model, so the update function would be able to use the list of films&#39; or characters&#39; urls:</p>
-<pre><code class="hljs">-- Character<span class="hljs-selector-class">.elm</span>
-import Html<span class="hljs-selector-class">.Events</span> exposing (onClick)
+<pre><code class="hljs">-- Character<span class="hljs-class">.elm</span>
+import Html<span class="hljs-class">.Events</span> exposing (onClick)
 
 (...)
 
-view : Model -&gt; Html<span class="hljs-selector-class">.Html</span> Model
+view : Model -&gt; Html<span class="hljs-class">.Html</span> Model
 view model =
-    <span class="hljs-selector-tag">div</span>
+    <span class="hljs-tag">div</span>
         [ onClick model
         , mainStyle
         ]
-        [ <span class="hljs-selector-tag">div</span> [ nameStyle ] [ text model<span class="hljs-selector-class">.name</span> ] ]</code></pre>
+        [ <span class="hljs-tag">div</span> [ nameStyle ] [ text model<span class="hljs-class">.name</span> ] ]</code></pre>
 
 <p>The type signature leaves it very clear: our view receives a Model, and returns an Html that produces messages of type Model. Good.</p>
 <p>Now, when we use those views in our Main view, we need to add information to them in order to produce a valid message. For instance, if we click a character, it will send a message of type <code>Character.Model</code> (or <code>C</code>). But our application will only understand a message of type <code>LoadFilms C</code>. So we need to call the Character view function and <em>map</em> the message it sends with the <code>LoadFilms</code> tag. It&#39;s easier to demonstrate than to explain:</p>
@@ -2371,37 +2366,37 @@ view model =
 <p>Let&#39;s start by coding the layout. We will use a &quot;standard&quot; library called <code>elm-html</code>. It uses a virtual-dom technique to render the view, and we declare it as code:</p>
 <pre><code class="hljs">module Main exposing (..)
 
-import Html exposing (<span class="hljs-selector-tag">div</span>, <span class="hljs-selector-tag">input</span>, <span class="hljs-selector-tag">p</span>, text)
+import Html exposing (<span class="hljs-tag">div</span>, <span class="hljs-tag">input</span>, <span class="hljs-tag">p</span>, text)
 
 
 main =
-    <span class="hljs-selector-tag">div</span>
+    <span class="hljs-tag">div</span>
         []
-        [ <span class="hljs-selector-tag">input</span> [] []
-        , <span class="hljs-selector-tag">p</span> [] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        [ <span class="hljs-tag">input</span> [] []
+        , <span class="hljs-tag">p</span> [] [ text <span class="hljs-string">"Seven of Club"</span> ]
         ]</code></pre>
 
 <p>Every Html node is a function of two parameters: attributes and the children nodes. So, the above code produces the following html:</p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">input</span> /&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Seven of Club<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">input</span> /&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Seven of Club<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
 
 <p>It takes a little time to get used to it, but it&#39;s actually very simple. We could style it with CSS, but for the sake of learning, let&#39;s do it inside Elm:</p>
 <pre><code class="hljs">module Main exposing (..)
 
-import Html exposing (<span class="hljs-selector-tag">div</span>, <span class="hljs-selector-tag">input</span>, <span class="hljs-selector-tag">p</span>, text)
-import Html<span class="hljs-selector-class">.Attributes</span> exposing (style, placeholder)
+import Html exposing (<span class="hljs-tag">div</span>, <span class="hljs-tag">input</span>, <span class="hljs-tag">p</span>, text)
+import Html<span class="hljs-class">.Attributes</span> exposing (style, placeholder)
 
 
 main =
-    <span class="hljs-selector-tag">div</span> [ mainStyle ]
-        [ <span class="hljs-selector-tag">input</span>
+    <span class="hljs-tag">div</span> [ mainStyle ]
+        [ <span class="hljs-tag">input</span>
             [ inputStyle
             , placeholder <span class="hljs-string">"Type your card..."</span>
             ]
             []
-        , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        , <span class="hljs-tag">p</span> [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
         ]
 
 
@@ -2444,17 +2439,17 @@ cardStyle =
 <p>The view is then a function of the model. It takes the data and renders it.</p>
 <p>After rendering, the application &quot;waits&quot; for user interaction or any other event. When that happens, it triggers the update function. The update function is a function that receives the old model and data of the event, and returns a new model. This model is then rendered, and the loop continues.</p>
 <p>Elm gives us a function that does all the &quot;plumbing&quot; for us, and it&#39;s called <code>Html.App.program</code>. We&#39;ll use a simpler version of it, because that&#39;s everything we need for our small app, and it&#39;s called <code>beginnerProgram</code>. With it, you only need to define your model, update and view and the program does the heavy work for you:</p>
-<pre><code class="hljs"><span class="hljs-attr">main</span> =
+<pre><code class="hljs">main =
     Html.beginnerProgram
-        { <span class="hljs-attr">model</span> = init <span class="hljs-string">""</span>
-        , <span class="hljs-attr">view</span> = view
-        , <span class="hljs-attr">update</span> = update
+        { model = init <span class="hljs-string">""</span>
+        , <span class="hljs-built_in">view</span> = <span class="hljs-built_in">view</span>
+        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
         }</code></pre>
 
 <p>Now let&#39;s define <code>init</code>,  <code>view</code> and <code>update</code>.</p>
 <h2 id="the-model">The Model</h2>
 <p>The user interacts through an input. That means we need a String in our model to hold it. We do not need anything else, since the other changing part of our view is simply a function of that String.</p>
-<pre><code class="hljs"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">alias</span></span> Model =
+<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">alias</span> <span class="hljs-title">Model</span> =
     <span class="hljs-built_in">String</span>
 
 
@@ -2465,14 +2460,14 @@ init <span class="hljs-keyword">str</span> =
 <p>That&#39;s all the model we need for our spec, and a function to initialize it.</p>
 <h2 id="the-view">The View</h2>
 <p>The view will be a function of our model. Let&#39;s use our layout as a starting point:</p>
-<pre><code class="hljs">view model =
-    div [ mainStyle ]
-        [ input
-            [ inputStyle
-            , placeholder <span class="hljs-string">"Type your card..."</span>
+<pre><code class="hljs"><span class="hljs-atom">view</span> <span class="hljs-atom">model</span> =
+    <span class="hljs-atom">div</span> [ <span class="hljs-atom">mainStyle</span> ]
+        [ <span class="hljs-atom">input</span>
+            [ <span class="hljs-atom">inputStyle</span>
+            , <span class="hljs-atom">placeholder</span> <span class="hljs-string">"Type your card..."</span>
             ]
             []
-        , p [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        , <span class="hljs-atom">p</span> [ <span class="hljs-atom">cardStyle</span> ] [ <span class="hljs-atom">text</span> <span class="hljs-string">"Seven of Club"</span> ]
         ]</code></pre>
 
 <p>So, our view still does not use the model. Remember that we need to render the model string after parsing it, so let&#39;s do it:</p>
@@ -2483,27 +2478,27 @@ init <span class="hljs-keyword">str</span> =
 view model =
   let
     card =
-      CardParser<span class="hljs-selector-class">.spellCard</span> model
+      CardParser<span class="hljs-class">.spellCard</span> model
   <span class="hljs-keyword">in</span>
-    <span class="hljs-selector-tag">div</span>
+    <span class="hljs-tag">div</span>
       [ mainStyle ]
-      [ <span class="hljs-selector-tag">input</span>
+      [ <span class="hljs-tag">input</span>
           [ inputStyle
           , placeholder <span class="hljs-string">"Type your card..."</span>
           ]
           []
-      , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text card ]
+      , <span class="hljs-tag">p</span> [ cardStyle ] [ text card ]
       ]</code></pre>
 
 <p>Add a generic update function to the code to see the page rendered:</p>
-<pre><code class="hljs"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
-    <span class="hljs-keyword">model</span></code></pre>
+<pre><code class="hljs"><span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
+    <span class="hljs-keyword">model</span></span></code></pre>
 
 <p>And we can see our app working! Change the initial value of the model in the beginnerProgram function and see the difference in the parsed string. Good work! Now let&#39;s make the app respond to some user interaction.</p>
 <h2 id="the-update">The Update</h2>
 <p>The update function is also simple: as the user types something in the input field, it changes the model. Html.App will make sure our new model is then rendered through the view function.</p>
 <p>The update mechanism works through message passing. The view sends messages that are processed by the update function, and then it produces a new model:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span></span>
     = <span class="hljs-type">ChangeText</span> <span class="hljs-type">String</span>
 
 
@@ -2514,23 +2509,23 @@ view model =
             newText</code></pre>
 
 <p>Now we need to send those messages on user input:</p>
-<pre><code class="hljs">import Html<span class="hljs-selector-class">.Events</span> exposing (onInput)
+<pre><code class="hljs">import Html<span class="hljs-class">.Events</span> exposing (onInput)
 
 (...)
 
 view model =
     let
         card =
-            CardParser<span class="hljs-selector-class">.spellCard</span> model
+            CardParser<span class="hljs-class">.spellCard</span> model
     <span class="hljs-keyword">in</span>
-        <span class="hljs-selector-tag">div</span> [ mainStyle ]
-            [ <span class="hljs-selector-tag">input</span>
+        <span class="hljs-tag">div</span> [ mainStyle ]
+            [ <span class="hljs-tag">input</span>
                 [ inputStyle
                 , placeholder <span class="hljs-string">"Type your card..."</span>
                 , onInput ChangeText -- HERE!!!
                 ]
                 []
-            , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text card ]
+            , <span class="hljs-tag">p</span> [ cardStyle ] [ text card ]
             ]</code></pre>
 
 <p>Refresh your Elm Reactor page and play with the input now. That&#39;s it, our work is done!</p>
@@ -2538,21 +2533,21 @@ view model =
 <p>Don&#39;t they always? :)</p>
 <p>Our app now needs <em>two inputs</em> that work the same way. The first thing that pops into our head is making a component of our current app, and then showing two of them. Let&#39;s do it.</p>
 <p>Let&#39;s first create a new file called <code>ParserComponent.elm</code>, and move all the model, view and update code there. Our Main module will look like:</p>
-<pre><code class="hljs"><span class="hljs-keyword">module</span> Main <span class="hljs-keyword">exposing</span> (..)
+<pre><code class="hljs">module Main exposing (..)
 
-<span class="hljs-keyword">import</span> Html <span class="hljs-keyword">exposing</span> (beginnerProgram)
-<span class="hljs-keyword">import</span> ParserComponent <span class="hljs-keyword">exposing</span> (<span class="hljs-type">Model</span>, <span class="hljs-type">Msg</span>, init, view, update)
+import Html exposing (beginnerProgram)
+import ParserComponent exposing (Model, Msg, init, view, <span class="hljs-operator"><span class="hljs-keyword">update</span>)
 
 
-<span class="hljs-title">main</span> =
-    <span class="hljs-type">Html</span>.beginnerProgram
-        { model = <span class="hljs-type">ParserComponent</span>.init <span class="hljs-string">""</span>
-        , view = <span class="hljs-type">ParserComponent</span>.view
-        , update = <span class="hljs-type">ParserComponent</span>.update
-        }</code></pre>
+<span class="hljs-keyword">main</span> =
+    Html.beginnerProgram
+        { <span class="hljs-keyword">model</span> = ParserComponent.init <span class="hljs-string">""</span>
+        , <span class="hljs-keyword">view</span> = ParserComponent.<span class="hljs-keyword">view</span>
+        , <span class="hljs-keyword">update</span> = ParserComponent.<span class="hljs-keyword">update</span>
+        }</span></code></pre>
 
 <p>And our app will work the same way. Now, to have two of the same components, let&#39;s define a new model, view and update for our app:</p>
-<pre><code class="hljs">type <span class="hljs-built_in">alias</span> Model =
+<pre><code class="hljs">type <span class="hljs-type">alias</span> Model =
     { firstParser : ParserComponent.Model
     , secondParser : ParserComponent.Model
     }
@@ -2566,22 +2561,22 @@ init <span class="hljs-keyword">first</span> <span class="hljs-keyword">second</
     = First ParserComponent.Msg
     | Second ParserComponent.Msg
 
-<span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
+<span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
  <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
-   <span class="hljs-keyword">First</span> m -&gt;
-     { <span class="hljs-keyword">model</span> | firstParser = ParserComponent.update m model.firstParser}
+   <span class="hljs-keyword">First</span> <span class="hljs-keyword">m</span> -&gt;
+     { <span class="hljs-keyword">model</span> | firstParser = ParserComponent.<span class="hljs-keyword">update</span> <span class="hljs-keyword">m</span> <span class="hljs-keyword">model</span>.firstParser}
 
-   <span class="hljs-keyword">Second</span> m -&gt;
-     { <span class="hljs-keyword">model</span> | secondParser = ParserComponent.update m model.secondParser}</code></pre>
+   <span class="hljs-keyword">Second</span> <span class="hljs-keyword">m</span> -&gt;
+     { <span class="hljs-keyword">model</span> | secondParser = ParserComponent.<span class="hljs-keyword">update</span> <span class="hljs-keyword">m</span> <span class="hljs-keyword">model</span>.secondParser}</span></code></pre>
 
 <p>So, now our messages can be sent by the first or second component, and we&#39;ll tag each with <code>First</code> and <code>Second</code>. Then, a <code>First</code> message will update the <code>firstParser</code> portion of our model, and a <code>Second</code> message will update the <code>secondParser</code> portion of our model.</p>
 <p>Now let&#39;s see how to actually tag those messages in the new view:</p>
 <pre><code class="hljs">view model =
-    <span class="hljs-selector-tag">div</span> []
-        [ Html<span class="hljs-selector-class">.map</span> First
-            (ParserComponent<span class="hljs-selector-class">.view</span> model.firstParser)
-        , Html<span class="hljs-selector-class">.map</span> Second
-            (ParserComponent<span class="hljs-selector-class">.view</span> model.secondParser)
+    <span class="hljs-tag">div</span> []
+        [ Html<span class="hljs-class">.map</span> First
+            (ParserComponent<span class="hljs-class">.view</span> model.firstParser)
+        , Html<span class="hljs-class">.map</span> Second
+            (ParserComponent<span class="hljs-class">.view</span> model.secondParser)
         ]</code></pre>
 
 <p>By using the <code>Html.map</code> we tag, with the first parameter, every message that is sent by the view rendered in the second parameter.</p>
@@ -2590,17 +2585,17 @@ init <span class="hljs-keyword">first</span> <span class="hljs-keyword">second</
 <h2 id="but-the-specs-can-change-again-">But The Specs Can Change Again...</h2>
 <p>To test even more how easy and safe it is to change our Elm code, let&#39;s change our spec once more. Let&#39;s say each component has now to parse a <em>list of cards</em>, separated by comma.</p>
 <p>We can achieve that by <em>only changing the view function of the component</em>:</p>
-<pre><code class="hljs">sentence <span class="hljs-attr">card</span> =
-    p [ cardStyle ] [ text card ]
+<pre><code class="hljs">sentence card =
+    p [ cardStyle ] [ <span class="hljs-built_in">text</span> card ]
 
-view <span class="hljs-attr">model</span> =
-    <span class="hljs-keyword">let</span>
-        <span class="hljs-attr">cards</span> =
+view model =
+    let
+        cards =
             model
-                |&gt; String.split <span class="hljs-string">","</span>
-                |&gt; List.<span class="hljs-built_in">map</span> String.trim
+                |&gt; <span class="hljs-keyword">String</span>.<span class="hljs-built_in">split</span> <span class="hljs-string">","</span>
+                |&gt; List.<span class="hljs-built_in">map</span> <span class="hljs-keyword">String</span>.<span class="hljs-built_in">trim</span>
                 |&gt; List.<span class="hljs-built_in">map</span> CardParser.spellCard
-    <span class="hljs-keyword">in</span>
+    in
         div [ mainStyle ]
             [ input
                 [ inputStyle
@@ -2668,10 +2663,10 @@ That seems like a nice model for our problem. Now let's implement the functions 
 
 I'll first print a Suit. It's a no brainer:
 
-<pre><code class="hljs">printSuit <span class="hljs-attr">suit</span> = <span class="hljs-built_in">toString</span> suit</code></pre>
+<pre><code class="hljs"><span class="hljs-built_in">print</span>Suit suit = toString suit</code></pre>
 
 <p>I&#39;m testing it by replacing the following values in the last line:</p>
-<pre><code class="hljs"><span class="hljs-keyword">import</span> Html <span class="hljs-keyword">exposing</span> (text)
+<pre><code class="hljs"><span class="hljs-import"><span class="hljs-keyword">import</span> Html <span class="hljs-keyword">exposing</span> <span class="hljs-container">(text)</span></span>
 
 <span class="hljs-comment">-- code (...)</span>
 
@@ -2682,37 +2677,37 @@ I'll first print a Suit. It's a no brainer:
 
 <p>The <code>|&gt;</code> operator chains function calls. In the above line I get Spade, call <code>printSuit</code> with it as a parameter, then get the result of that computation and call the function <code>text</code> with it. It shows &quot;Spade&quot; in the output screen, so it works! :)</p>
 <p>To print a Value, calling <code>toString</code> is not enough. I need to handle the <code>Num Int</code> case differently. I&#39;ll use <em>pattern matching</em> to do that:</p>
-<pre><code class="hljs">printValue value =
-  case value of
-    N<span class="hljs-function"><span class="hljs-title">um</span> 2 -&gt;</span>
+<pre><code class="hljs">printValue <span class="hljs-keyword">value</span> =
+  case <span class="hljs-keyword">value</span> <span class="hljs-keyword">of</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">2</span> -&gt;
       <span class="hljs-string">"Two"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 3 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">3</span> -&gt;
       <span class="hljs-string">"Three"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 4 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">4</span> -&gt;
       <span class="hljs-string">"Four"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 5 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">5</span> -&gt;
       <span class="hljs-string">"Five"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 6 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">6</span> -&gt;
       <span class="hljs-string">"Six"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 7 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">7</span> -&gt;
       <span class="hljs-string">"Seven"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 8 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">8</span> -&gt;
       <span class="hljs-string">"Eight"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 9 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">9</span> -&gt;
       <span class="hljs-string">"Nine"</span>
 
-    N<span class="hljs-function"><span class="hljs-title">um</span> 10 -&gt;</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">10</span> -&gt;
       <span class="hljs-string">"Ten"</span>
 
     _ -&gt;
-      toString value</code></pre>
+      toString <span class="hljs-keyword">value</span></code></pre>
 
 <p>A little boring, but I went through every case possible - unless someone enters a number less than 2 or more than 10. I&#39;ll deal with that in the function that actually creates the card.</p>
 <p>To print the whole card, I&#39;ll make a function that concatenates a list that consists of: the value string, <code>&quot; of &quot;</code> and the suit string. I&#39;ll represent a card as a tuple <code>(Value, Suit)</code>:</p>
@@ -2720,7 +2715,7 @@ I'll first print a Suit. It's a no brainer:
   [<span class="hljs-built_in">print</span>Value value, <span class="hljs-string">" of "</span>, <span class="hljs-built_in">print</span>Suit suit] |&gt; String.concat
 
 main =
-  (Num 10, Spade)
+  (Num <span class="hljs-number">10</span>, Spade)
     |&gt; <span class="hljs-built_in">print</span>Card
     |&gt; text
 
@@ -2729,7 +2724,7 @@ main =
 <p>The code above works, and I can be sure that all the combinations of Value and Suit will print well. That&#39;s really good.</p>
 <p>I&#39;ll add another layer of safety and documentation by writing the type signatures of the functions. I catch myself writing &quot;type signatures&quot; as comments even to my Javascript code from time to time, and it helps when dealing with a piece of code months later. I&#39;m starting to believe that having a compiler that ensures that your type signatures are in sync with the implementations can help a lot with maintainability.</p>
 <p><code>printCard</code> signature is: <code>printCard : (Value, Suit) -&gt; String</code>, but I think we can be more expressive if it is <code>printCard : Card -&gt; String</code>. That is possible with Elm, by writing a <em>type alias</em>:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">Card</span> = (<span class="hljs-type">Value</span>, <span class="hljs-type">Suit</span>)
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">Card</span> = <span class="hljs-container">(<span class="hljs-type">Value</span>, <span class="hljs-type">Suit</span>)</span></span>
 
 (...)
 
@@ -2757,28 +2752,28 @@ parseSuit char =
 
 <p>When I compile it - even before calling this function anywhere - the compiler screams an error. This is the message I get:</p>
 <pre><code class="hljs">MISSING PATTERNS
-This `<span class="hljs-keyword">case</span>` does <span class="hljs-keyword">not</span> have branches <span class="hljs-keyword">for</span> all possibilities.
+This `<span class="hljs-keyword">case</span>` does <span class="hljs-operator">not</span> have branches <span class="hljs-keyword">for</span> all possibilities.
 
-<span class="hljs-number">11</span>| <span class="hljs-keyword">case</span> <span class="hljs-keyword">char</span> <span class="hljs-keyword">of</span>
+<span class="hljs-number">11</span>| <span class="hljs-keyword">case</span> <span class="hljs-keyword">char</span> <span class="hljs-operator">of</span>
 <span class="hljs-number">12</span>| <span class="hljs-string">'C'</span> -&gt; Club
 <span class="hljs-number">13</span>| <span class="hljs-string">'D'</span> -&gt; Diamond
 <span class="hljs-number">14</span>| <span class="hljs-string">'S'</span> -&gt; Spade
 <span class="hljs-number">15</span>| <span class="hljs-string">'H'</span> -&gt; Heart
-You need <span class="hljs-built_in">to</span> account <span class="hljs-keyword">for</span> <span class="hljs-keyword">the</span> following values:
+You need <span class="hljs-built_in">to</span> account <span class="hljs-keyword">for</span> <span class="hljs-operator">the</span> following values:
 
- &lt;values besides <span class="hljs-string">'C'</span>, <span class="hljs-string">'D'</span>, <span class="hljs-string">'H'</span>, <span class="hljs-keyword">and</span> <span class="hljs-string">'S'</span>&gt;
+ &lt;values besides <span class="hljs-string">'C'</span>, <span class="hljs-string">'D'</span>, <span class="hljs-string">'H'</span>, <span class="hljs-operator">and</span> <span class="hljs-string">'S'</span>&gt;
 
-Add <span class="hljs-keyword">a</span> branch <span class="hljs-built_in">to</span> cover this pattern!
+Add <span class="hljs-operator">a</span> branch <span class="hljs-built_in">to</span> cover this pattern!
 
-If you are seeing this error <span class="hljs-keyword">for</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">first</span> <span class="hljs-built_in">time</span>, check out these hints:
+If you are seeing this error <span class="hljs-keyword">for</span> <span class="hljs-operator">the</span> <span class="hljs-keyword">first</span> <span class="hljs-built_in">time</span>, check out these hints:
 &lt;<span class="hljs-keyword">https</span>://github.com/elm-lang/elm-compiler/blob/<span class="hljs-number">0.16</span><span class="hljs-number">.0</span>/hints/missing-patterns.md&gt;
-The recommendations about wildcard patterns <span class="hljs-keyword">and</span> `Debug.crash` are important!</code></pre>
+The recommendations about wildcard patterns <span class="hljs-operator">and</span> `Debug.crash` are important!</code></pre>
 
 <p>Oh my god, now that&#39;s an error message! First of all, the subject of the error is already outstanding: I coded that the function receives a Char as a parameter, and I did not handle all the Char cases. That means the compiler is preventing me from having code that behaves unexpectedly. What would be the return value if an <code>&#39;X&#39;</code> was passed? That case needs to be handled.</p>
 <p>But, better than that, I really like how <em>didatic</em> the message was. Not only does it give some tips, it gives a link to a page teaching the subject! I&#39;ve read that <a href="https://twitter.com/czaplic?lang=en">Evan Czaplicki</a>, the language designer, is working hard on making the error messages better. Good job!</p>
 <p>By reading that link, I learned that the best way to deal with this in this case is by using a Maybe type. Maybe is native to Elm, and represented by:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Maybe </span>a
-  = Just a
+<pre><code class="hljs">type Maybe <span class="hljs-literal">a</span>
+  = Just <span class="hljs-literal">a</span>
   | Nothing</code></pre>
 
 <p>Maybe represents a value that may or may not exist. So I&#39;ll make the assumption that if the Char inputted by the user is not one of the four, the Suit will not exist and will be represented by a Nothing:</p>
@@ -2801,23 +2796,23 @@ main =
 
 <p>The best part of using <em>a maybe</em> is that the functions that deal with the value returned by the parsers <em>will have to deal with the fact that they may not exist</em>. This will be enforced by the compiler, and is one way of making sure we have to explicitly deal with errors or unexpected behaviors in the code. I&#39;ll talk more about that later. Let&#39;s now write the Value parser.</p>
 <p>A simple implementation would be:</p>
-<pre><code class="hljs"><span class="hljs-title">parseValue</span> : <span class="hljs-type">String</span> -&gt; <span class="hljs-type">Maybe</span> <span class="hljs-type">Value</span>
-<span class="hljs-title">parseValue</span> v =
-  <span class="hljs-keyword">case</span> v <span class="hljs-keyword">of</span>
-    <span class="hljs-string">"J"</span> -&gt;
-      <span class="hljs-type">Just</span> <span class="hljs-type">Jack</span>
+<pre><code class="hljs">parseValue : <span class="hljs-built_in">String</span> <span class="hljs-subst">-&gt; </span>Maybe Value
+parseValue v =
+  <span class="hljs-keyword">case</span> v of
+    <span class="hljs-string">"J"</span> <span class="hljs-subst">-&gt;
+      </span>Just Jack
 
-    <span class="hljs-string">"Q"</span> -&gt;
-      <span class="hljs-type">Just</span> <span class="hljs-type">Queen</span>
+    <span class="hljs-string">"Q"</span> <span class="hljs-subst">-&gt;
+      </span>Just Queen
 
-    <span class="hljs-string">"K"</span> -&gt;
-      <span class="hljs-type">Just</span> <span class="hljs-type">King</span>
+    <span class="hljs-string">"K"</span> <span class="hljs-subst">-&gt;
+      </span>Just King
 
-    <span class="hljs-string">"A"</span> -&gt;
-      <span class="hljs-type">Just</span> <span class="hljs-type">Ace</span>
+    <span class="hljs-string">"A"</span> <span class="hljs-subst">-&gt;
+      </span>Just Ace
 
-    _ -&gt;
-      <span class="hljs-type">String</span>.toInt v</code></pre>
+    _ <span class="hljs-subst">-&gt;
+      </span><span class="hljs-built_in">String</span><span class="hljs-built_in">.</span>toInt v</code></pre>
 
 <p>But the compiler screams that <code>String.toInt</code> does not return a Maybe Value. It returns a Result String Int which is described by <code>type Result error value = Ok value | Err error</code>. Let&#39;s extract this case to a different function so we can manage better <code>toInt</code>:</p>
 <pre><code class="hljs"><span class="hljs-title">parseNumValue</span> : <span class="hljs-type">String</span> -&gt; <span class="hljs-type">Maybe</span> <span class="hljs-type">Value</span>
@@ -2863,20 +2858,20 @@ main =
 <p>Now we can parse a Value and a Suit. The next step is parsing the whole abbreviation, like <code>&quot;10H&quot;</code> or <code>&quot;KS&quot;</code>.</p>
 <h2 id="parsing-an-abbreviation-string">Parsing An Abbreviation String</h2>
 <p>We need to separate the abbreviation string into a value string and a suit character. Now this is a fun function:</p>
-<pre><code class="hljs">divideCardString : <span class="hljs-built_in">String</span> -&gt; (Maybe <span class="hljs-built_in">String</span>, Maybe Char)
+<pre><code class="hljs">divideCardString : <span class="hljs-built_in">String</span> <span class="hljs-subst">-&gt; </span>(Maybe <span class="hljs-built_in">String</span>, Maybe Char)
 divideCardString str =
   <span class="hljs-keyword">let</span>
-    chars = <span class="hljs-built_in">String</span>.toList str
+    chars = <span class="hljs-built_in">String</span><span class="hljs-built_in">.</span>toList str
 
     suit = chars
-      |&gt; <span class="hljs-built_in">List</span>.reverse
-      |&gt; <span class="hljs-built_in">List</span>.head
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>reverse
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>head
 
     value = chars
-      |&gt; <span class="hljs-built_in">List</span>.reverse
-      |&gt; <span class="hljs-built_in">List</span>.tail
-      |&gt; Maybe.<span class="hljs-built_in">map</span> <span class="hljs-built_in">List</span>.reverse
-      |&gt; Maybe.<span class="hljs-built_in">map</span> <span class="hljs-built_in">String</span>.fromList
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>reverse
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>tail
+      |&gt; Maybe<span class="hljs-built_in">.</span><span class="hljs-built_in">map</span> <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>reverse
+      |&gt; Maybe<span class="hljs-built_in">.</span><span class="hljs-built_in">map</span> <span class="hljs-built_in">String</span><span class="hljs-built_in">.</span>fromList
 
   <span class="hljs-keyword">in</span>
     (value, suit)
@@ -2919,32 +2914,32 @@ main =
 <pre><code class="hljs">spellCard : <span class="hljs-built_in">String</span> -&gt; <span class="hljs-built_in">String</span>
 spellCard <span class="hljs-keyword">str</span> =
   <span class="hljs-keyword">str</span>
-    <span class="hljs-params">|&gt; divideCardString
-    |</span>&gt; parseCardTuple
-    <span class="hljs-params">|&gt; printCard</span></code></pre>
+    |&gt; divideCardString
+    |&gt; parseCardTuple
+    |&gt; printCard</code></pre>
 
 <p>It does not compile. The compiler tells us that <code>parseCardTuple</code> returns a Maybe Card, and <code>printCard</code> was expecting a Card. We already know how to solve it, we just change it to <code>Maybe.map printCard</code>. The problem is that the function would still return a Maybe String, and we want to extract a String from it.</p>
 <p>The <code>Maybe</code> module has a function for that: <code>Maybe.withDefault</code>. It accepts a default value and a Maybe. If the Maybe is a Just, it returns the value inside the Just. If it&#39;s a Nothing, it returns the default value. Here is the official implementation of <a href="https://github.com/elm-lang/core/blob/master/src/Maybe.elm#L51"><code>Maybe.withDefault</code></a>:</p>
 <pre><code class="hljs"><span class="hljs-title">withDefault</span> : a -&gt; <span class="hljs-type">Maybe</span> a -&gt; a
-<span class="hljs-title">withDefault</span> <span class="hljs-keyword">default</span> maybe =
+<span class="hljs-title">withDefault</span> <span class="hljs-default"><span class="hljs-keyword">default</span> maybe =</span>
   <span class="hljs-keyword">case</span> maybe <span class="hljs-keyword">of</span>
     <span class="hljs-type">Just</span> value -&gt; value
-    <span class="hljs-type">Nothing</span> -&gt; <span class="hljs-keyword">default</span></code></pre>
+    <span class="hljs-type">Nothing</span> -&gt; <span class="hljs-default"><span class="hljs-keyword">default</span></span></code></pre>
 
 <p>Using it, our final function is described as:</p>
-<pre><code class="hljs">spellCard : <span class="hljs-built_in">String</span> -&gt; <span class="hljs-built_in">String</span>
-spellCard <span class="hljs-keyword">str</span> =
-  <span class="hljs-keyword">str</span>
-    <span class="hljs-params">|&gt; divideCardString
-    |</span>&gt; parseCardTuple
-    <span class="hljs-params">|&gt; Maybe.map printCard
-    |</span>&gt; Maybe.withDefault <span class="hljs-string">"-- unknown card --"</span>
+<pre><code class="hljs">spellCard : String -&gt; String
+spellCard str =
+  str
+    <span class="hljs-string">|&gt; divideCardString</span>
+    <span class="hljs-string">|&gt; parseCardTuple</span>
+    <span class="hljs-string">|&gt; Maybe.map printCard</span>
+    <span class="hljs-string">|&gt; Maybe.withDefault "</span>-- unknown card --<span class="hljs-string">"</span>
 
 
 main =
   <span class="hljs-string">"AH"</span>
-    <span class="hljs-params">|&gt; spellCard
-    |</span>&gt; text
+    <span class="hljs-string">|&gt; spellCard</span>
+    <span class="hljs-string">|&gt; text</span>
 
 -- Ace of Heart</code></pre>
 
@@ -2955,7 +2950,7 @@ main =
 <pre><code class="hljs"><span class="hljs-string">"J"</span> -&gt; <span class="hljs-string">"Joker"</span></code></pre>
 
 <p>The first thing I notice is that our model is not sufficient anymore. A card is not a tuple of value and suit; now we also have a joker. I&#39;m gonna change the <code>Card</code> type, and run the compiler to see what it says:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Card </span>= OrdinaryCard Value Suit | Joker</code></pre>
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span> = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span> | <span class="hljs-type">Joker</span></span></code></pre>
 
 <p>The compiler complains that <code>printCard</code> does not print a Card, it prints a tuple. Let&#39;s change it:</p>
 <pre><code class="hljs">printCard : <span class="hljs-type">Card</span> -&gt; <span class="hljs-type">String</span>
@@ -2977,8 +2972,8 @@ parseCardString <span class="hljs-keyword">str</span> =
 
     _ -&gt;
       <span class="hljs-keyword">str</span>
-        <span class="hljs-params">|&gt; divideCardString
-        |</span>&gt; parseCardTuple</code></pre>
+        |&gt; divideCardString
+        |&gt; parseCardTuple</code></pre>
 
 <p>It handles the case <code>&quot;J&quot;</code> separately, and calls our previous function if it&#39;s not a Joker. Now we only have to change <code>parseCardTuple</code> to return an OrdinaryCard instead of the tuple in case of success:</p>
 <pre><code class="hljs">parseCardTuple : <span class="hljs-function"><span class="hljs-params">(Maybe String, Maybe Char)</span> -&gt;</span> Maybe Card
@@ -3021,9 +3016,9 @@ main =
 <pre><code class="hljs">import Html exposing (text)
 import <span class="hljs-built_in">String</span>
 
-<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Value</span></span> = Jack <span class="hljs-params">| Queen |</span> King <span class="hljs-params">| Ace |</span> Num Int
-<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Suit</span></span> = Club <span class="hljs-params">| Diamond |</span> Spade <span class="hljs-params">| Heart
-<span class="hljs-keyword">type</span> Card = OrdinaryCard Value Suit |</span> Joker
+<span class="hljs-keyword">type</span> <span class="hljs-title">Value</span> = Jack | Queen | King | Ace | Num Int
+<span class="hljs-keyword">type</span> <span class="hljs-title">Suit</span> = Club | Diamond | Spade | Heart
+<span class="hljs-keyword">type</span> <span class="hljs-title">Card</span> = OrdinaryCard Value Suit | Joker
 
 
 parseSuit : Char -&gt; Maybe Suit
@@ -3039,13 +3034,13 @@ parseSuit s =
 parseNumValue : <span class="hljs-built_in">String</span> -&gt; Maybe Value
 parseNumValue v =
   case <span class="hljs-built_in">String</span>.toInt v of
-    <span class="hljs-literal">Ok</span> num -&gt;
+    <span class="hljs-built_in">Ok</span> num -&gt;
       <span class="hljs-keyword">if</span> (num &gt;= <span class="hljs-number">2</span> &amp;&amp; num &lt;= <span class="hljs-number">10</span>) then
         Just (Num num)
       <span class="hljs-keyword">else</span>
         Nothing
 
-    <span class="hljs-literal">Err</span> _ -&gt;
+    <span class="hljs-built_in">Err</span> _ -&gt;
       Nothing
 
 
@@ -3074,14 +3069,14 @@ divideCardString <span class="hljs-keyword">str</span> =
     chars = <span class="hljs-built_in">String</span>.toList <span class="hljs-keyword">str</span>
 
     suit = chars
-      <span class="hljs-params">|&gt; List.reverse
-      |</span>&gt; List.head
+      |&gt; List.reverse
+      |&gt; List.head
 
     value = chars
-      <span class="hljs-params">|&gt; List.reverse
-      |</span>&gt; List.tail
-      <span class="hljs-params">|&gt; Maybe.map List.reverse
-      |</span>&gt; Maybe.map <span class="hljs-built_in">String</span>.fromList
+      |&gt; List.reverse
+      |&gt; List.tail
+      |&gt; Maybe.map List.reverse
+      |&gt; Maybe.map <span class="hljs-built_in">String</span>.fromList
 
   <span class="hljs-keyword">in</span>
     (value, suit)
@@ -3105,8 +3100,8 @@ parseCardString <span class="hljs-keyword">str</span> =
 
     _ -&gt;
       <span class="hljs-keyword">str</span>
-        <span class="hljs-params">|&gt; divideCardString
-        |</span>&gt; parseCardTuple
+        |&gt; divideCardString
+        |&gt; parseCardTuple
 
 
 printSuit : Suit -&gt; <span class="hljs-built_in">String</span>
@@ -3151,24 +3146,24 @@ printCard : Card -&gt; <span class="hljs-built_in">String</span>
 printCard card =
   case card of
     OrdinaryCard value suit -&gt;
-      [printValue value, <span class="hljs-string">" of "</span>, printSuit suit] <span class="hljs-params">|&gt; String.concat
+      [printValue value, <span class="hljs-string">" of "</span>, printSuit suit] |&gt; <span class="hljs-built_in">String</span>.concat
 
   Joker -&gt;
-    "Joker"
+    <span class="hljs-string">"Joker"</span>
 
 
-spellCard : String -&gt; String
+spellCard : <span class="hljs-built_in">String</span> -&gt; <span class="hljs-built_in">String</span>
 spellCard <span class="hljs-keyword">str</span> =
   <span class="hljs-keyword">str</span>
-    |</span>&gt; parseCardString
-    <span class="hljs-params">|&gt; Maybe.map printCard
-    |</span>&gt; Maybe.withDefault <span class="hljs-string">"-- unknown card --"</span>
+    |&gt; parseCardString
+    |&gt; Maybe.map printCard
+    |&gt; Maybe.withDefault <span class="hljs-string">"-- unknown card --"</span>
 
 
 main =
   <span class="hljs-string">"J"</span>
-    <span class="hljs-params">|&gt; spellCard
-    |</span>&gt; text</code></pre>]]></description>
+    |&gt; spellCard
+    |&gt; text</code></pre>]]></description>
             <guid isPermaLink="false">Learning Elm, part 1</guid>
             <pubDate>Fri, 22 Apr 2016 00:00:00 GMT</pubDate>
         </item>
@@ -3856,7 +3851,7 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<spa
 }</code></pre>
 
 <p>Which we use by running:</p>
-<pre><code class="hljs">$ npm <span class="hljs-built_in">run</span> js</code></pre>
+<pre><code class="hljs">$ npm <span class="hljs-command">run</span> js</code></pre>
 
 <p><strong>Important:</strong> the <code>test</code> and <code>start</code> are &quot;default&quot; scripts, and can be called directly with <code>npm test</code> and <code>npm start</code>. The other scripts we are going to write need to be called with <code>npm run</code>.</p>
 <p>You can also call simple commands in scripts. For instance, sometimes we only need to copy files to <code>dist</code> folder:</p>
@@ -4187,7 +4182,7 @@ For the most part, Excel was the main spreadsheet platform that was used by the 
 <span class="hljs-keyword">state</span>Foo(t) = foo <span class="hljs-keyword">state</span> <span class="hljs-keyword">in</span> t</code></pre>
 
 <p>So, what I&#39;m doing here is <em>thinking of both interactions and application state as functions of time</em>. Let&#39;s detail more <code>stateFoo</code>:</p>
-<pre><code class="hljs">stateFoo(<span class="hljs-name">t</span>) = f(<span class="hljs-name">userFoo</span>(<span class="hljs-name">t</span>))</code></pre>
+<pre><code class="hljs">stateFoo<span class="hljs-list">(<span class="hljs-keyword">t</span>)</span> = f<span class="hljs-list">(<span class="hljs-keyword">userFoo</span><span class="hljs-list">(<span class="hljs-keyword">t</span>)</span>)</span></code></pre>
 
 <p>In this case, the application state will depend only on the current user interaction. To keep it really simple, let&#39;s define:</p>
 <pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = <span class="hljs-keyword">user</span>Foo(t)</code></pre>
@@ -4232,20 +4227,20 @@ I want the state to be a string that&#39;s the concatenation of every past user 
 <p>Back to our spreadsheet, let&#39;s implement the user interactions streams again:</p>
 <p><img src="../assets/stateBar.png" alt="userBar(t)"></p>
 <p>The interaction between Foos and Bars will be done with the <code>hasRequiredFoo</code> stream:</p>
-<pre><code class="hljs">hasRequiredFoo(t) =
-  <span class="hljs-keyword">state</span>Foo(t) contains <span class="hljs-string">"requiredFoo"</span></code></pre>
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> contains <span class="hljs-string">"requiredFoo"</span></code></pre>
 
 <p>For simplicity, let&#39;s assume <code>contains</code> means &quot;has substring <code>&quot;requiredFoo&quot;</code>&quot;:</p>
 <p><img src="../assets/stateBar2.png" alt="hasRequiredFoo(t)"></p>
 <p>And <code>stateBar</code> logic would be:</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) =
-  if (<span class="hljs-keyword">user</span>Bar(t) is blank or
-      not hasRequiredFoo(t))
-    return <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>)
-  else
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span> is blank or
+      not <span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span>)
+    return <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
+  <span class="hljs-keyword">else</span>
     return concat(
-      <span class="hljs-keyword">user</span>Bar(t),
-      <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>))</code></pre>
+      <span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span>,
+      <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)</code></pre>
 
 <p><img src="../assets/stateBar3.png" alt="stateBar(t)">
 <em>(in the above image, the &quot;C&quot; column refers to userBar)</em></p>

@@ -61,7 +61,7 @@ For the most part, Excel was the main spreadsheet platform that was used by the 
 <span class="hljs-keyword">state</span>Foo(t) = foo <span class="hljs-keyword">state</span> <span class="hljs-keyword">in</span> t</code></pre>
 
 <p>So, what I&#39;m doing here is <em>thinking of both interactions and application state as functions of time</em>. Let&#39;s detail more <code>stateFoo</code>:</p>
-<pre><code class="hljs">stateFoo(<span class="hljs-name">t</span>) = f(<span class="hljs-name">userFoo</span>(<span class="hljs-name">t</span>))</code></pre>
+<pre><code class="hljs">stateFoo<span class="hljs-list">(<span class="hljs-keyword">t</span>)</span> = f<span class="hljs-list">(<span class="hljs-keyword">userFoo</span><span class="hljs-list">(<span class="hljs-keyword">t</span>)</span>)</span></code></pre>
 
 <p>In this case, the application state will depend only on the current user interaction. To keep it really simple, let&#39;s define:</p>
 <pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = <span class="hljs-keyword">user</span>Foo(t)</code></pre>
@@ -106,20 +106,20 @@ I want the state to be a string that&#39;s the concatenation of every past user 
 <p>Back to our spreadsheet, let&#39;s implement the user interactions streams again:</p>
 <p><img src="../assets/stateBar.png" alt="userBar(t)"></p>
 <p>The interaction between Foos and Bars will be done with the <code>hasRequiredFoo</code> stream:</p>
-<pre><code class="hljs">hasRequiredFoo(t) =
-  <span class="hljs-keyword">state</span>Foo(t) contains <span class="hljs-string">"requiredFoo"</span></code></pre>
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> contains <span class="hljs-string">"requiredFoo"</span></code></pre>
 
 <p>For simplicity, let&#39;s assume <code>contains</code> means &quot;has substring <code>&quot;requiredFoo&quot;</code>&quot;:</p>
 <p><img src="../assets/stateBar2.png" alt="hasRequiredFoo(t)"></p>
 <p>And <code>stateBar</code> logic would be:</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) =
-  if (<span class="hljs-keyword">user</span>Bar(t) is blank or
-      not hasRequiredFoo(t))
-    return <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>)
-  else
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span> is blank or
+      not <span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span>)
+    return <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
+  <span class="hljs-keyword">else</span>
     return concat(
-      <span class="hljs-keyword">user</span>Bar(t),
-      <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>))</code></pre>
+      <span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span>,
+      <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)</code></pre>
 
 <p><img src="../assets/stateBar3.png" alt="stateBar(t)">
 <em>(in the above image, the &quot;C&quot; column refers to userBar)</em></p>
