@@ -70,37 +70,37 @@
 <p>Let&#39;s start by coding the layout. We will use a &quot;standard&quot; library called <code>elm-html</code>. It uses a virtual-dom technique to render the view, and we declare it as code:</p>
 <pre><code class="hljs">module Main exposing (..)
 
-import Html exposing (<span class="hljs-selector-tag">div</span>, <span class="hljs-selector-tag">input</span>, <span class="hljs-selector-tag">p</span>, text)
+import Html exposing (<span class="hljs-tag">div</span>, <span class="hljs-tag">input</span>, <span class="hljs-tag">p</span>, text)
 
 
 main =
-    <span class="hljs-selector-tag">div</span>
+    <span class="hljs-tag">div</span>
         []
-        [ <span class="hljs-selector-tag">input</span> [] []
-        , <span class="hljs-selector-tag">p</span> [] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        [ <span class="hljs-tag">input</span> [] []
+        , <span class="hljs-tag">p</span> [] [ text <span class="hljs-string">"Seven of Club"</span> ]
         ]</code></pre>
 
 <p>Every Html node is a function of two parameters: attributes and the children nodes. So, the above code produces the following html:</p>
-<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">input</span> /&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Seven of Club<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></code></pre>
+<pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">input</span> /&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span>Seven of Club<span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span></code></pre>
 
 <p>It takes a little time to get used to it, but it&#39;s actually very simple. We could style it with CSS, but for the sake of learning, let&#39;s do it inside Elm:</p>
 <pre><code class="hljs">module Main exposing (..)
 
-import Html exposing (<span class="hljs-selector-tag">div</span>, <span class="hljs-selector-tag">input</span>, <span class="hljs-selector-tag">p</span>, text)
-import Html<span class="hljs-selector-class">.Attributes</span> exposing (style, placeholder)
+import Html exposing (<span class="hljs-tag">div</span>, <span class="hljs-tag">input</span>, <span class="hljs-tag">p</span>, text)
+import Html<span class="hljs-class">.Attributes</span> exposing (style, placeholder)
 
 
 main =
-    <span class="hljs-selector-tag">div</span> [ mainStyle ]
-        [ <span class="hljs-selector-tag">input</span>
+    <span class="hljs-tag">div</span> [ mainStyle ]
+        [ <span class="hljs-tag">input</span>
             [ inputStyle
             , placeholder <span class="hljs-string">"Type your card..."</span>
             ]
             []
-        , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        , <span class="hljs-tag">p</span> [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
         ]
 
 
@@ -143,17 +143,17 @@ cardStyle =
 <p>The view is then a function of the model. It takes the data and renders it.</p>
 <p>After rendering, the application &quot;waits&quot; for user interaction or any other event. When that happens, it triggers the update function. The update function is a function that receives the old model and data of the event, and returns a new model. This model is then rendered, and the loop continues.</p>
 <p>Elm gives us a function that does all the &quot;plumbing&quot; for us, and it&#39;s called <code>Html.App.program</code>. We&#39;ll use a simpler version of it, because that&#39;s everything we need for our small app, and it&#39;s called <code>beginnerProgram</code>. With it, you only need to define your model, update and view and the program does the heavy work for you:</p>
-<pre><code class="hljs"><span class="hljs-attr">main</span> =
+<pre><code class="hljs">main =
     Html.beginnerProgram
-        { <span class="hljs-attr">model</span> = init <span class="hljs-string">""</span>
-        , <span class="hljs-attr">view</span> = view
-        , <span class="hljs-attr">update</span> = update
+        { model = init <span class="hljs-string">""</span>
+        , <span class="hljs-built_in">view</span> = <span class="hljs-built_in">view</span>
+        , <span class="hljs-keyword">update</span> = <span class="hljs-keyword">update</span>
         }</code></pre>
 
 <p>Now let&#39;s define <code>init</code>,  <code>view</code> and <code>update</code>.</p>
 <h2 id="the-model">The Model</h2>
 <p>The user interacts through an input. That means we need a String in our model to hold it. We do not need anything else, since the other changing part of our view is simply a function of that String.</p>
-<pre><code class="hljs"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">alias</span></span> Model =
+<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-title">alias</span> <span class="hljs-title">Model</span> =
     <span class="hljs-built_in">String</span>
 
 
@@ -164,14 +164,14 @@ init <span class="hljs-keyword">str</span> =
 <p>That&#39;s all the model we need for our spec, and a function to initialize it.</p>
 <h2 id="the-view">The View</h2>
 <p>The view will be a function of our model. Let&#39;s use our layout as a starting point:</p>
-<pre><code class="hljs">view model =
-    div [ mainStyle ]
-        [ input
-            [ inputStyle
-            , placeholder <span class="hljs-string">"Type your card..."</span>
+<pre><code class="hljs"><span class="hljs-atom">view</span> <span class="hljs-atom">model</span> =
+    <span class="hljs-atom">div</span> [ <span class="hljs-atom">mainStyle</span> ]
+        [ <span class="hljs-atom">input</span>
+            [ <span class="hljs-atom">inputStyle</span>
+            , <span class="hljs-atom">placeholder</span> <span class="hljs-string">"Type your card..."</span>
             ]
             []
-        , p [ cardStyle ] [ text <span class="hljs-string">"Seven of Club"</span> ]
+        , <span class="hljs-atom">p</span> [ <span class="hljs-atom">cardStyle</span> ] [ <span class="hljs-atom">text</span> <span class="hljs-string">"Seven of Club"</span> ]
         ]</code></pre>
 
 <p>So, our view still does not use the model. Remember that we need to render the model string after parsing it, so let&#39;s do it:</p>
@@ -182,27 +182,27 @@ init <span class="hljs-keyword">str</span> =
 view model =
   let
     card =
-      CardParser<span class="hljs-selector-class">.spellCard</span> model
+      CardParser<span class="hljs-class">.spellCard</span> model
   <span class="hljs-keyword">in</span>
-    <span class="hljs-selector-tag">div</span>
+    <span class="hljs-tag">div</span>
       [ mainStyle ]
-      [ <span class="hljs-selector-tag">input</span>
+      [ <span class="hljs-tag">input</span>
           [ inputStyle
           , placeholder <span class="hljs-string">"Type your card..."</span>
           ]
           []
-      , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text card ]
+      , <span class="hljs-tag">p</span> [ cardStyle ] [ text card ]
       ]</code></pre>
 
 <p>Add a generic update function to the code to see the page rendered:</p>
-<pre><code class="hljs"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
-    <span class="hljs-keyword">model</span></code></pre>
+<pre><code class="hljs"><span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
+    <span class="hljs-keyword">model</span></span></code></pre>
 
 <p>And we can see our app working! Change the initial value of the model in the beginnerProgram function and see the difference in the parsed string. Good work! Now let&#39;s make the app respond to some user interaction.</p>
 <h2 id="the-update">The Update</h2>
 <p>The update function is also simple: as the user types something in the input field, it changes the model. Html.App will make sure our new model is then rendered through the view function.</p>
 <p>The update mechanism works through message passing. The view sends messages that are processed by the update function, and then it produces a new model:</p>
-<pre><code class="hljs"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span>
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Msg</span></span>
     = <span class="hljs-type">ChangeText</span> <span class="hljs-type">String</span>
 
 
@@ -213,23 +213,23 @@ view model =
             newText</code></pre>
 
 <p>Now we need to send those messages on user input:</p>
-<pre><code class="hljs">import Html<span class="hljs-selector-class">.Events</span> exposing (onInput)
+<pre><code class="hljs">import Html<span class="hljs-class">.Events</span> exposing (onInput)
 
 (...)
 
 view model =
     let
         card =
-            CardParser<span class="hljs-selector-class">.spellCard</span> model
+            CardParser<span class="hljs-class">.spellCard</span> model
     <span class="hljs-keyword">in</span>
-        <span class="hljs-selector-tag">div</span> [ mainStyle ]
-            [ <span class="hljs-selector-tag">input</span>
+        <span class="hljs-tag">div</span> [ mainStyle ]
+            [ <span class="hljs-tag">input</span>
                 [ inputStyle
                 , placeholder <span class="hljs-string">"Type your card..."</span>
                 , onInput ChangeText -- HERE!!!
                 ]
                 []
-            , <span class="hljs-selector-tag">p</span> [ cardStyle ] [ text card ]
+            , <span class="hljs-tag">p</span> [ cardStyle ] [ text card ]
             ]</code></pre>
 
 <p>Refresh your Elm Reactor page and play with the input now. That&#39;s it, our work is done!</p>
@@ -237,21 +237,21 @@ view model =
 <p>Don&#39;t they always? :)</p>
 <p>Our app now needs <em>two inputs</em> that work the same way. The first thing that pops into our head is making a component of our current app, and then showing two of them. Let&#39;s do it.</p>
 <p>Let&#39;s first create a new file called <code>ParserComponent.elm</code>, and move all the model, view and update code there. Our Main module will look like:</p>
-<pre><code class="hljs"><span class="hljs-keyword">module</span> Main <span class="hljs-keyword">exposing</span> (..)
+<pre><code class="hljs">module Main exposing (..)
 
-<span class="hljs-keyword">import</span> Html <span class="hljs-keyword">exposing</span> (beginnerProgram)
-<span class="hljs-keyword">import</span> ParserComponent <span class="hljs-keyword">exposing</span> (<span class="hljs-type">Model</span>, <span class="hljs-type">Msg</span>, init, view, update)
+import Html exposing (beginnerProgram)
+import ParserComponent exposing (Model, Msg, init, view, <span class="hljs-operator"><span class="hljs-keyword">update</span>)
 
 
-<span class="hljs-title">main</span> =
-    <span class="hljs-type">Html</span>.beginnerProgram
-        { model = <span class="hljs-type">ParserComponent</span>.init <span class="hljs-string">""</span>
-        , view = <span class="hljs-type">ParserComponent</span>.view
-        , update = <span class="hljs-type">ParserComponent</span>.update
-        }</code></pre>
+<span class="hljs-keyword">main</span> =
+    Html.beginnerProgram
+        { <span class="hljs-keyword">model</span> = ParserComponent.init <span class="hljs-string">""</span>
+        , <span class="hljs-keyword">view</span> = ParserComponent.<span class="hljs-keyword">view</span>
+        , <span class="hljs-keyword">update</span> = ParserComponent.<span class="hljs-keyword">update</span>
+        }</span></code></pre>
 
 <p>And our app will work the same way. Now, to have two of the same components, let&#39;s define a new model, view and update for our app:</p>
-<pre><code class="hljs">type <span class="hljs-built_in">alias</span> Model =
+<pre><code class="hljs">type <span class="hljs-type">alias</span> Model =
     { firstParser : ParserComponent.Model
     , secondParser : ParserComponent.Model
     }
@@ -265,22 +265,22 @@ init <span class="hljs-keyword">first</span> <span class="hljs-keyword">second</
     = First ParserComponent.Msg
     | Second ParserComponent.Msg
 
-<span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
+<span class="hljs-operator"><span class="hljs-keyword">update</span> msg <span class="hljs-keyword">model</span> =
  <span class="hljs-keyword">case</span> msg <span class="hljs-keyword">of</span>
-   <span class="hljs-keyword">First</span> m -&gt;
-     { <span class="hljs-keyword">model</span> | firstParser = ParserComponent.update m model.firstParser}
+   <span class="hljs-keyword">First</span> <span class="hljs-keyword">m</span> -&gt;
+     { <span class="hljs-keyword">model</span> | firstParser = ParserComponent.<span class="hljs-keyword">update</span> <span class="hljs-keyword">m</span> <span class="hljs-keyword">model</span>.firstParser}
 
-   <span class="hljs-keyword">Second</span> m -&gt;
-     { <span class="hljs-keyword">model</span> | secondParser = ParserComponent.update m model.secondParser}</code></pre>
+   <span class="hljs-keyword">Second</span> <span class="hljs-keyword">m</span> -&gt;
+     { <span class="hljs-keyword">model</span> | secondParser = ParserComponent.<span class="hljs-keyword">update</span> <span class="hljs-keyword">m</span> <span class="hljs-keyword">model</span>.secondParser}</span></code></pre>
 
 <p>So, now our messages can be sent by the first or second component, and we&#39;ll tag each with <code>First</code> and <code>Second</code>. Then, a <code>First</code> message will update the <code>firstParser</code> portion of our model, and a <code>Second</code> message will update the <code>secondParser</code> portion of our model.</p>
 <p>Now let&#39;s see how to actually tag those messages in the new view:</p>
 <pre><code class="hljs">view model =
-    <span class="hljs-selector-tag">div</span> []
-        [ Html<span class="hljs-selector-class">.map</span> First
-            (ParserComponent<span class="hljs-selector-class">.view</span> model.firstParser)
-        , Html<span class="hljs-selector-class">.map</span> Second
-            (ParserComponent<span class="hljs-selector-class">.view</span> model.secondParser)
+    <span class="hljs-tag">div</span> []
+        [ Html<span class="hljs-class">.map</span> First
+            (ParserComponent<span class="hljs-class">.view</span> model.firstParser)
+        , Html<span class="hljs-class">.map</span> Second
+            (ParserComponent<span class="hljs-class">.view</span> model.secondParser)
         ]</code></pre>
 
 <p>By using the <code>Html.map</code> we tag, with the first parameter, every message that is sent by the view rendered in the second parameter.</p>
@@ -289,17 +289,17 @@ init <span class="hljs-keyword">first</span> <span class="hljs-keyword">second</
 <h2 id="but-the-specs-can-change-again-">But The Specs Can Change Again...</h2>
 <p>To test even more how easy and safe it is to change our Elm code, let&#39;s change our spec once more. Let&#39;s say each component has now to parse a <em>list of cards</em>, separated by comma.</p>
 <p>We can achieve that by <em>only changing the view function of the component</em>:</p>
-<pre><code class="hljs">sentence <span class="hljs-attr">card</span> =
-    p [ cardStyle ] [ text card ]
+<pre><code class="hljs">sentence card =
+    p [ cardStyle ] [ <span class="hljs-built_in">text</span> card ]
 
-view <span class="hljs-attr">model</span> =
-    <span class="hljs-keyword">let</span>
-        <span class="hljs-attr">cards</span> =
+view model =
+    let
+        cards =
             model
-                |&gt; String.split <span class="hljs-string">","</span>
-                |&gt; List.<span class="hljs-built_in">map</span> String.trim
+                |&gt; <span class="hljs-keyword">String</span>.<span class="hljs-built_in">split</span> <span class="hljs-string">","</span>
+                |&gt; List.<span class="hljs-built_in">map</span> <span class="hljs-keyword">String</span>.<span class="hljs-built_in">trim</span>
                 |&gt; List.<span class="hljs-built_in">map</span> CardParser.spellCard
-    <span class="hljs-keyword">in</span>
+    in
         div [ mainStyle ]
             [ input
                 [ inputStyle

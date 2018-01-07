@@ -97,8 +97,8 @@
 
 <span class="hljs-keyword">let</span> lineTotal quantity product =
     <span class="hljs-keyword">match</span> product.promotion with
-    <span class="hljs-params">| None -&gt; quantity * product.price
-    |</span> <span class="hljs-literal">Some</span> promotion -&gt; <span class="hljs-number">0</span> <span class="hljs-comment">// implement it!</span></code></pre>
+    | <span class="hljs-built_in">None</span> -&gt; quantity * product.price
+    | <span class="hljs-built_in">Some</span> promotion -&gt; <span class="hljs-number">0</span> <span class="hljs-comment">// implement it!</span></code></pre>
 
 <p>Much cleaner. Now, the difficult part: actually calculating the total of a line, when the product is promoted. Let&#39;s do some TDD-ish programming, since it&#39;s easy to make some mistakes in calculations like these. First, a stub of the function itself:</p>
 <pre><code class="hljs fsharp"><span class="hljs-comment">// Domain.fs</span>

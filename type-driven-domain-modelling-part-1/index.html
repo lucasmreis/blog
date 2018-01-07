@@ -82,19 +82,19 @@
 
 <p>After the project is created, we need to create a new file. I created a <code>Domain.fs</code> file inside the project folder, together with the <code>Main.fs</code> and <code>Tests.fs</code> that were there. Now - and this is particular to F# - the file needs to be <em>added to the project</em>. In every F# project, we need to specify not only the files to be compiled, but the <em>order in which they should be compiled</em>. That may sound weird and too old-school, but today I agree that <a href="https://fsharpforfunandprofit.com/posts/cyclic-dependencies/">its a good thing</a>, since it helps to avoid circular dependencies among other problems.</p>
 <p>So, to add it, open the <code>.fsproj</code> file in the project folder. It&#39;s a big messy XML, I know :) The file ordering is easy to do, though. Just search for the <code>Main.fs</code> file, and you&#39;ll find this XML node:</p>
-<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-name">ItemGroup</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Tests.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Main.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">None</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"App.config"</span> /&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">ItemGroup</span>&gt;</span></code></pre>
+<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-title">ItemGroup</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Tests.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Main.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">None</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"App.config"</span> /&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">ItemGroup</span>&gt;</span></code></pre>
 
 <p>The <code>Domain.fs</code> file needs to be compiled before the other files, so we only need to change the config to:</p>
-<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-name">ItemGroup</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Domain.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Tests.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">Compile</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"Main.fs"</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">None</span> <span class="hljs-attr">Include</span>=<span class="hljs-string">"App.config"</span> /&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">ItemGroup</span>&gt;</span></code></pre>
+<pre><code class="hljs XML"><span class="hljs-tag">&lt;<span class="hljs-title">ItemGroup</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Domain.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Tests.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">Compile</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"Main.fs"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">None</span> <span class="hljs-attribute">Include</span>=<span class="hljs-value">"App.config"</span> /&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">ItemGroup</span>&gt;</span></code></pre>
 
 <p>This way our file is going to be compiled first, and we can use it in the tests and in the main function.</p>
 <h2 id="starting-with-the-domain">Starting With The Domain</h2>
@@ -177,7 +177,7 @@
 <p>Now, in the <code>Tests.fs</code> file, let&#39;s write the following test:</p>
 <pre><code class="hljs fsharp"><span class="hljs-keyword">open</span> Domain
 
-<span class="hljs-meta">[&lt;Tests&gt;]</span>
+<span class="hljs-annotation">[&lt;Tests&gt;]</span>
 <span class="hljs-keyword">let</span> tests =
     testList <span class="hljs-string">"basket promotions"</span> [
         testProperty <span class="hljs-string">"total of single line"</span> &lt;| <span class="hljs-keyword">fun</span> (quantity : Qty ) (price : Price) -&gt;
@@ -192,15 +192,15 @@
     ]</code></pre>
 
 <p>That&#39;s the first property to our model that we&#39;re going to test. Another property is <em>whenever a new product is added, if it&#39;s already in the basket, the number of lines stays the same</em>:</p>
-<pre><code class="hljs">testProperty <span class="hljs-string">"adding product multiple times downto the basket"</span> &lt;| <span class="hljs-function"><span class="hljs-title">fun</span> <span class="hljs-params">(N : <span class="hljs-type">uint16</span> )</span></span> -&gt;
+<pre><code class="hljs">testProperty <span class="hljs-string">"adding product multiple times downto the basket"</span> &lt;| <span class="hljs-function"><span class="hljs-keyword">fun</span> (<span class="hljs-title">N</span></span> : uint16 ) -&gt;
     let prod = { sku = <span class="hljs-string">"sku"</span> ; price = <span class="hljs-number">10</span> }
-    let event = AddToBasket(prod, <span class="hljs-number">1</span>)
+    let event = <span class="hljs-constant">AddToBasket</span>(prod, <span class="hljs-number">1</span>)
     let basket =
-        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
-        |&gt; List.map (<span class="hljs-function"><span class="hljs-keyword">fun</span> _ -&gt; event)</span>
-        |&gt; List.fold update empty
+        [<span class="hljs-number">1</span>..(int <span class="hljs-constant">N</span> + <span class="hljs-number">1</span>)]
+        |&gt; <span class="hljs-constant">List</span>.map (<span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">_</span></span> -&gt; event)
+        |&gt; <span class="hljs-constant">List</span>.fold update empty
 
-    Expect.equal basket.lines.Length <span class="hljs-number">1</span> <span class="hljs-string">"must have one line"</span></code></pre>
+    <span class="hljs-constant">Expect</span>.equal basket.lines.<span class="hljs-constant">Length</span> <span class="hljs-number">1</span> <span class="hljs-string">"must have one line"</span></code></pre>
 
 <p>Note the use of <code>N : uint16</code> in the parameter. I chose it because of the range: it goes from 0 to 65535, so it&#39;s never negative, and it has a reasonable range for this application. Calling <code>(int N + 1)</code> converts it to the desired type and range.</p>
 <p>And, of course, the property <em>if we add N different products, our basket will have N lines</em>:</p>

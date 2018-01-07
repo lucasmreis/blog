@@ -60,17 +60,17 @@
 <h2 id="starting-a-new-fable-project">Starting A New Fable Project</h2>
 <p>Elm is very &quot;beginner friendly&quot; - <em>it has always been one of its main goals</em>. This makes it very easy to start out playing with the language, be it with <a href="http://elm-lang.org/try">Try Elm online</a> or using <a href="https://github.com/elm-lang/elm-reactor">Elm Reactor</a> locally. Fable works more like a regular Javascript transpiler; so we need to do the initial pumbling, and then run our project through a local server.</p>
 <p>Fortunately, it&#39;s simple. This is what I did: first, I wrote an index.html file that imports a <code>build/bundle.js</code> script:</p>
-<pre><code class="hljs html"><span class="hljs-meta">&lt;!doctype html&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">http-equiv</span>=<span class="hljs-string">'Content-Type'</span> <span class="hljs-attr">content</span>=<span class="hljs-string">'text/html; charset=utf-8'</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>Star Wars - Fable<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"app"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"build/bundle.js"</span>&gt;</span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></code></pre>
+<pre><code class="hljs html"><span class="hljs-doctype">&lt;!doctype html&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">meta</span> <span class="hljs-attribute">http-equiv</span>=<span class="hljs-value">'Content-Type'</span> <span class="hljs-attribute">content</span>=<span class="hljs-value">'text/html; charset=utf-8'</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">title</span>&gt;</span>Star Wars - Fable<span class="hljs-tag">&lt;/<span class="hljs-title">title</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">id</span>=<span class="hljs-value">"app"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">script</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">"build/bundle.js"</span>&gt;</span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-title">script</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">html</span>&gt;</span></code></pre>
 
 <p>Then I globally installed the Fable compiler, and locally installed the <code>fable-core</code> and <code>fable-compiler</code> packages in the project:</p>
 <pre><code class="hljs bash">$ npm install -g fable-compiler
@@ -257,11 +257,11 @@ createApp initialModel view update Virtualdom.createRender
 
 <p>Everything is looking good, right? But try compiling it. It doesn&#39;t, and outputs the following error:</p>
 <pre><code class="hljs bash">▶ fable src/Main.fsx --outDir build --rollup
-fable-compiler 0.7.17: Start compilation...
-Compiled fable-arch/Fable.Arch.Html.js at 11:35:51 PM
-Compiled fable-arch/Fable.Arch.App.js at 11:35:51 PM
-Compiled fable-arch/Fable.Arch.Virtualdom.js at 11:35:51 PM
-Compiled src/Main.js at 11:35:51 PM
+fable-compiler <span class="hljs-number">0.7</span>.<span class="hljs-number">17</span>: Start compilation...
+Compiled fable-arch/Fable.Arch.Html.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled fable-arch/Fable.Arch.App.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled fable-arch/Fable.Arch.Virtualdom.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled src/Main.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
 Bundling...
 [BUNDLE ERROR] <span class="hljs-string">'h'</span> is not exported by node_modules/virtual-dom/index.js (imported by build/fable-arch/Fable.Arch.Virtualdom.js). For <span class="hljs-built_in">help</span> fixing this error see https://github.com/rollup/rollup/wiki/Troubleshooting<span class="hljs-comment">#name-is-not-exported-by-module</span>
 (...)</code></pre>
@@ -270,27 +270,27 @@ Bundling...
 <p>We need to configure Rollup to see the <code>virtual-dom</code> module and it&#39;s exported functions, so let me introduce you to the <code>fableconfig.json</code> file.</p>
 <p>Instead of calling <code>fable src/Main.fsx --outDir ./build --rollup</code> every time, we can put the compiling configuration inside <code>fableconfig.json</code>. For example, if we have this config:</p>
 <pre><code class="hljs json">{
- <span class="hljs-attr">"outDir"</span>: <span class="hljs-string">"build"</span>,
- <span class="hljs-attr">"projFile"</span>: <span class="hljs-string">"./src/Main.fsx"</span>,
- <span class="hljs-attr">"sourceMaps"</span>: <span class="hljs-literal">true</span>
-}</code></pre>
+ "<span class="hljs-attribute">outDir</span>": <span class="hljs-value"><span class="hljs-string">"build"</span></span>,
+ "<span class="hljs-attribute">projFile</span>": <span class="hljs-value"><span class="hljs-string">"./src/Main.fsx"</span></span>,
+ "<span class="hljs-attribute">sourceMaps</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
+</span>}</code></pre>
 
 <p>We can just run <code>fable</code> or <code>fable --watch</code> in the terminal and get the same output plus a sourcemap.</p>
 <p>Now we can add the Rollup CommonJS configuration:</p>
 <pre><code class="hljs json">{
-  <span class="hljs-attr">"outDir"</span>: <span class="hljs-string">"build"</span>,
-  <span class="hljs-attr">"projFile"</span>: <span class="hljs-string">"./src/Main.fsx"</span>,
-  <span class="hljs-attr">"sourceMaps"</span>: <span class="hljs-literal">true</span>,
-  <span class="hljs-attr">"rollup"</span>: {
-    <span class="hljs-attr">"plugins"</span>: [
+  "<span class="hljs-attribute">outDir</span>": <span class="hljs-value"><span class="hljs-string">"build"</span></span>,
+  "<span class="hljs-attribute">projFile</span>": <span class="hljs-value"><span class="hljs-string">"./src/Main.fsx"</span></span>,
+  "<span class="hljs-attribute">sourceMaps</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+  "<span class="hljs-attribute">rollup</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">plugins</span>": <span class="hljs-value">[
       [<span class="hljs-string">"commonjs"</span>, {
-        <span class="hljs-attr">"namedExports"</span>: {
-          <span class="hljs-attr">"virtual-dom"</span>: [ <span class="hljs-string">"h"</span>, <span class="hljs-string">"create"</span>, <span class="hljs-string">"diff"</span>, <span class="hljs-string">"patch"</span> ]
-        }
-      }]
+        "<span class="hljs-attribute">namedExports</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">virtual-dom</span>": <span class="hljs-value">[ <span class="hljs-string">"h"</span>, <span class="hljs-string">"create"</span>, <span class="hljs-string">"diff"</span>, <span class="hljs-string">"patch"</span> ]
+        </span>}
+      </span>}]
     ]
-  }
-}</code></pre>
+  </span>}
+</span>}</code></pre>
 
 <p>This step is a small complication in our build system. It&#39;s definitely more complex than anything related to an Elm project build, but, on the other hand, it&#39;s the effect of using a very good and used <em>Javascript</em> tool. Efficient bundles are a central and important issue in frontend projects, and since we cannot escape it, I actually like that we are using a good tool for that.</p>
 <h2 id="messages-and-the-rest-of-the-views">Messages And The Rest Of The Views</h2>
@@ -575,9 +575,9 @@ createApp InitialScreen view update Virtualdom.createRender
       episode_id : int
       characters : string list }
 
-<span class="hljs-keyword">let</span> <span class="hljs-meta">[&lt;PassGenericsAttribute&gt;]</span> betterOfJson&lt;<span class="hljs-symbol">'a</span>&gt; text =
+<span class="hljs-keyword">let</span> <span class="hljs-annotation">[&lt;PassGenericsAttribute&gt;]</span> betterOfJson&lt;<span class="hljs-attribute">'a</span>&gt; text =
     <span class="hljs-keyword">try</span>
-        <span class="hljs-keyword">let</span> json = ofJson&lt;<span class="hljs-symbol">'a</span>&gt; text
+        <span class="hljs-keyword">let</span> json = ofJson&lt;<span class="hljs-attribute">'a</span>&gt; text
         Some json
     <span class="hljs-keyword">with</span> _ -&gt;
         None
