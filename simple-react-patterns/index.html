@@ -356,18 +356,13 @@ export default withDagobah({
     renderPlanet={planet =&gt; &lt;PlanetView {...planet} /&gt;}
   /&gt;
 );</code></pre>
-And that's it.
 
-## What if the side effects are costly?
-
-In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?
-
-## The Provider Pattern
-
-This is one of the most powerful patterns in React. It's relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don't know what the context object is in React, please [head to the official docs](https://reactjs.org/docs/context.html).
-
-Let's implement it for our Dagobah example. First, we need to implement the `DagobahProvider`:
-
+<p>And that&#39;s it.</p>
+<h2 id="what-if-the-side-effects-are-costly-">What if the side effects are costly?</h2>
+<p>In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?</p>
+<h2 id="the-provider-pattern">The Provider Pattern</h2>
+<p>This is one of the most powerful patterns in React. It&#39;s relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don&#39;t know what the context object is in React, please <a href="https://reactjs.org/docs/context.html">head to the official docs</a>.</p>
+<p>Let&#39;s implement it for our Dagobah example. First, we need to implement the <code>DagobahProvider</code>:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
 <span class="hljs-keyword">import</span> PropTypes <span class="hljs-keyword">from</span> <span class="hljs-string">"prop-types"</span>;
 

@@ -4,11 +4,561 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Fri, 20 Oct 2017 12:20:44 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 07 Jan 2018 21:39:36 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[Learning ReasonML, part 1]]></title>
+            <description><![CDATA[<p>Throughout my professional life, I&#39;ve worked on a lot of large applications that were in production for years. There was one thing in common with all of them: a lot of the code was overly complex, and it was difficult to fix bugs and add new features.</p>
+<p>While searching for solutions to these problems, I found out that different programming languages&#39; patterns and practices are terrific sources of inspiration. Learning Clojure helped me understand the benefits of immutability. Learning Elm helped me understand the benefits of strong typing. Not only that, a lot of the javascript ecosystem itself is <a href="https://redux.js.org/docs/introduction/PriorArt.html">based on other languages&#39; patterns and practices</a>. All of that knowledge made my javascript code better and helped me to be a better developer.</p>
+<p>And that brings me to ReasonML. My path to ReasonML was paved this way:</p>
+<p>First, I turned to ClojureScript because of the immutability / pragmatic philosophy / simplicity it has as it&#39;s core. But, some problems related to reliability and safety were still present, and I thought that strong typing could help.</p>
+<p>Second, came Elm. Yes, strong typing does help and working with such a powerful compiler feels great, but I missed the pragmatic nature of Clojure.</p>
+<p>Thirdly, I turned to F# / Fable, which feels like a sweet spot. A pragmatic Elm for the front end, and a complete ecosystem with a mature runtime for everything else. But, Fable is a tool seems to be made for people with a F# / .Net background, not a javascript background.</p>
+<p>And that&#39;s how I got to ReasonML. It&#39;s a new syntax for Ocaml, which F# is heavily based on. They are from a family of languages called &quot;ML&quot;, which provide a nice developing experience resulting from its type system and compiler features. Also, the language creators are heavily targeting javascript developers, so they are working hard to make the language easily adoptable by current javascript teams.</p>
+<p><em>Note:</em> I&#39;m a curious person and an avid learner. I&#39;m always looking for a new way to look at the problems I face in my day to day life, so I don&#39;t mean to imply that I did not find the languages listed above useful! Clojure is great, Elm is great, F# is great, and - why not - javascript is great! :)</p>
+<p>I like to start learning a language with a very simple and well-defined spec, usually a function. Trying to implement a UI, or anything involving a lot of side effects is often counterproductive for me. And by writing a simple function, we already can learn a lot about the development workflow, the tooling, and the ecosystem, which are very important and deserve special attention.</p>
+<h2 id="the-spec">The Spec</h2>
+<p>I&#39;ll implement the same algorithm I implemented in <a href="https://lucasmreis.github.io/blog/learning-elm-part-1/">Learning Elm, part 1</a>. Recapping:</p>
+<pre><code class="hljs"><span class="hljs-string">"3S"</span> -&gt; <span class="hljs-string">"Three of Spades"</span>
+<span class="hljs-string">"10H"</span> -&gt; <span class="hljs-string">"Ten of Hearts"</span>
+<span class="hljs-string">"QC"</span> -&gt; <span class="hljs-string">"Queen of Clubs"</span>
+<span class="hljs-string">"AD"</span> -&gt; <span class="hljs-string">"Ace of Diamonds"</span>
+<span class="hljs-string">"3T"</span> -&gt; <span class="hljs-string">"-- unknown card --"</span></code></pre>
+
+<h2 id="the-strategy">The Strategy</h2>
+<p>When learning Elm, I immediately jumped to a &quot;type-driven&quot; solution. Even though I think type driven development leads to more reliable / elegant code, I believe starting with a more JS-style approach is more compatible with the Reason philosophy.</p>
+<p>Let&#39;s start by installing ReasonML&#39;s CLI <code>bsb</code> and create a new project (as described <a href="https://reasonml.github.io/">on the official website</a>):</p>
+<pre><code class="hljs">$ npm <span class="hljs-keyword">install </span>-g <span class="hljs-keyword">bs-platform
+</span>$ <span class="hljs-keyword">bsb </span>-init my-first-app -theme <span class="hljs-keyword">basic-reason</span></code></pre>
+
+<p>I&#39;m using VS Code with the ReasonML extension installed (<a href="https://reasonml.github.io/docs/en/global-installation.html">the instructions can be found here</a>). It&#39;s a great dev environment, with auto-complete, auto-formatting, and other niceties. A note on auto-formatting: we want to focus on actually solving a problem, so it&#39;s a good thing that problems like indentation are not getting in our way. This is something ReasonML has in common with Elm, and projects like Prettier are trying to do with javascript. I strongly recommend auto-formatting all the things!</p>
+<p>In a real-world application when performance is a key requirement, we always need to be aware of bundle size and be careful with the amount and complexity of the code generated. So I always keep an eye on the compilation result: if we are writing a <code>demo.re</code> file, Bucklescript will generate a <code>demo.bs.js</code> file in the same folder. Also, for small functions, I recommend copy and pasting to the <a href="https://reasonml.github.io/try/">Try Reason</a> website, and see both the generated JS and equivalent Ocaml code in real time!</p>
+<p><strong>A tip</strong>: when googling for help, we can usually find some Ocaml code that can help us. Use the Try ReasonML to convert it to ReasonML syntax!</p>
+<h2 id="first-approach">First Approach</h2>
+<p>Let&#39;s start by editing the <code>demo.re</code> and keep <code>npm start</code> running in the terminal:</p>
+<pre><code class="hljs js"><span class="hljs-comment">/* it still does not do anything! */</span>
+<span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; cardStr;</code></pre>
+
+<p>If we open the generated js file:</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseAndRenderCard</span>(<span class="hljs-params">cardStr</span>) </span>{
+  <span class="hljs-keyword">return</span> cardStr;
+}
+
+exports.parseAndRenderCard = parseAndRenderCard;
+<span class="hljs-comment">/* No side effect */</span></code></pre>
+
+<p>It is treating the file as a module! And every variable and function we define in the file will be exported. If we change the value of <code>package-specs.module</code> in the <code>bs-config.json</code> file from <code>commonjs</code> to <code>es6</code>, we&#39;ll have:</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseAndRenderCard</span>(<span class="hljs-params">cardStr</span>) </span>{
+  <span class="hljs-keyword">return</span> cardStr;
+}
+
+<span class="hljs-keyword">export</span> { parseAndRenderCard };
+<span class="hljs-comment">/* No side effect */</span></code></pre>
+
+<p>This is great to integrate your generated files into a webpack bundled project.</p>
+<p>Have you noticed the &quot;No side effect&quot; comment? Bucklescript knows if your code is pure or not! I love this feature, and it helps with the practice of having as much of your code as pure as possible. If we add a log <code>Js.log(parseAndRenderCard(&quot;3C&quot;));</code>, we can see that the comment changes:</p>
+<pre><code class="hljs js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseAndRenderCard</span>(<span class="hljs-params">cardStr</span>) </span>{
+  <span class="hljs-keyword">return</span> cardStr;
+}
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"3C"</span>);
+
+<span class="hljs-keyword">export</span> { parseAndRenderCard };
+<span class="hljs-comment">/*  Not a pure module */</span></code></pre>
+
+<p>&quot;Not a pure module&quot;, great. But now that the side effect has been added, we can see an unexpected (at least for me!) behavior: the compiler understood that <code>parseAndRenderCard</code> is the identity function, and generated <code>console.log(&quot;3C&quot;);</code>, and not <code>console.log(parseAndRenderCard(&quot;3C&quot;));</code>! Even with such a simple piece of code, we can already see some cool optimizations.</p>
+<p>But, you may ask, why does it still generate the function, if it is not being used? It&#39;s only because it&#39;s being exported. We can make sure the function is not exported if we put it in a block inside the module, like this:</p>
+<pre><code class="hljs js">{
+  <span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; cardStr;
+  Js.log(parseAndRenderCard(<span class="hljs-string">"3C"</span>));
+}</code></pre>
+
+<p>It will generate:</p>
+<pre><code class="hljs js"><span class="hljs-built_in">console</span>.log(<span class="hljs-string">"3C"</span>);
+
+<span class="hljs-keyword">export</span> {};
+<span class="hljs-comment">/*  Not a pure module */</span></code></pre>
+
+<p>Which is amazing: less code to parse, quicker page load :)</p>
+<p>I want to talk about one more cool feature also present in Elm and F# before going to our function: the pipe operator <code>|&gt;</code>. It makes the code much cleaner most of the time, and gets rid of the ugly parentheses. As an example, these two lines of code are equivalent:</p>
+<pre><code class="hljs js">Js.log(parseAndRenderCard(<span class="hljs-string">"3C"</span>));</code></pre>
+
+<pre><code class="hljs js"><span class="hljs-string">"3C"</span> |&gt; parseAndRenderCard |&gt; Js.log;</code></pre>
+
+<p>Ok! Enough talk, let&#39;s implement our function by breaking the problem into smaller ones, and start with a parser for a suit:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderSuit = suitStr =&gt;
+  <span class="hljs-keyword">switch</span> suitStr {
+  | <span class="hljs-string">"H"</span> =&gt; <span class="hljs-string">"Hearts"</span>
+  | <span class="hljs-string">"D"</span> =&gt; <span class="hljs-string">"Diamonds"</span>
+  | <span class="hljs-string">"C"</span> =&gt; <span class="hljs-string">"Clubs"</span>
+  | <span class="hljs-string">"S"</span> =&gt; <span class="hljs-string">"Spades"</span>
+  };
+
+<span class="hljs-comment">/* example */</span>
+<span class="hljs-string">"C"</span> |&gt; parseAndRenderSuit |&gt; Js.log;</code></pre>
+
+<p><code>switch</code> is the syntax for pattern matching in ReasonML. It works somewhat like a switch statement in JS, but it&#39;s more powerful: among other features, the compiler will tell you if you took care of all the possible values for the input. That&#39;s one of the key features of ML languages that makes the code more reliable. For the above function, we get the following compiler warning:</p>
+<pre><code class="hljs">You forgot <span class="hljs-built_in">to</span> handle <span class="hljs-keyword">a</span> possible <span class="hljs-built_in">value</span> here, <span class="hljs-keyword">for</span> example: <span class="hljs-string">""</span></code></pre>
+
+<p>The compiler is right! And we can see that the generated JS code will raise an exception if the input is not one of the four cases. Let&#39;s try to fix this by defining a &quot;default&quot; pattern:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderSuit = suitStr =&gt;
+  <span class="hljs-keyword">switch</span> suitStr {
+  | <span class="hljs-string">"H"</span> =&gt; <span class="hljs-string">"Hearts"</span>
+  | <span class="hljs-string">"D"</span> =&gt; <span class="hljs-string">"Diamonds"</span>
+  | <span class="hljs-string">"C"</span> =&gt; <span class="hljs-string">"Clubs"</span>
+  | <span class="hljs-string">"S"</span> =&gt; <span class="hljs-string">"Spades"</span>
+  | _ =&gt; <span class="hljs-string">"-- unknown suit --"</span>
+  };
+
+<span class="hljs-comment">/* example */</span>
+<span class="hljs-string">"C"</span> |&gt; parseAndRenderSuit |&gt; Js.log;</code></pre>
+
+<pre><code class="hljs">▶ <span class="hljs-keyword">node</span> <span class="hljs-title">src</span>/demo.bs.js
+Clubs</code></pre>
+
+<p>Great! That&#39;s a good start. We have a function that correctly spells the intended suit, and will have a valid output for <em>every possible string input</em>. Let&#39;s do the same for the card value:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderValue = valueStr =&gt;
+  <span class="hljs-keyword">switch</span> valueStr {
+  | <span class="hljs-string">"2"</span> =&gt; <span class="hljs-string">"Two"</span>
+  | <span class="hljs-string">"3"</span> =&gt; <span class="hljs-string">"Three"</span>
+  | <span class="hljs-string">"4"</span> =&gt; <span class="hljs-string">"Four"</span>
+  | <span class="hljs-string">"5"</span> =&gt; <span class="hljs-string">"Five"</span>
+  | <span class="hljs-string">"6"</span> =&gt; <span class="hljs-string">"Six"</span>
+  | <span class="hljs-string">"7"</span> =&gt; <span class="hljs-string">"Seven"</span>
+  | <span class="hljs-string">"8"</span> =&gt; <span class="hljs-string">"Eight"</span>
+  | <span class="hljs-string">"9"</span> =&gt; <span class="hljs-string">"Nine"</span>
+  | <span class="hljs-string">"10"</span> =&gt; <span class="hljs-string">"Ten"</span>
+  | <span class="hljs-string">"J"</span> =&gt; <span class="hljs-string">"Jack"</span>
+  | <span class="hljs-string">"Q"</span> =&gt; <span class="hljs-string">"Queen"</span>
+  | <span class="hljs-string">"K"</span> =&gt; <span class="hljs-string">"King"</span>
+  | <span class="hljs-string">"A"</span> =&gt; <span class="hljs-string">"Ace"</span>
+  | _ =&gt; <span class="hljs-string">"-- unknown value --"</span>
+  };
+
+<span class="hljs-comment">/* example */</span>
+<span class="hljs-string">"7"</span> |&gt; parseAndRenderValue |&gt; Js.log;</code></pre>
+
+<p>Boring but effective. Now we just need to implement the function that separates the input string and calls these two functions to print the full card. The suit is represented by the last character of the string, and the rest represents the value:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; {
+  <span class="hljs-comment">/* Separating the input string: */</span>
+  <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+
+  <span class="hljs-comment">/* Parsing and rendering the strings with our functions: */</span>
+  <span class="hljs-keyword">let</span> renderedSuit = parseAndRenderSuit(suitStr);
+  <span class="hljs-keyword">let</span> renderedValue = parseAndRenderValue(valueStr);
+
+  <span class="hljs-comment">/* If inputs were valid, print the card: */</span>
+  <span class="hljs-keyword">if</span> (renderedSuit !== <span class="hljs-string">"-- unknown suit --"</span>
+      &amp;&amp; renderedValue !== <span class="hljs-string">"-- unknown value --"</span>) {
+    renderedValue ++ <span class="hljs-string">" of "</span> ++ renderedSuit;
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-string">"-- unknown card --"</span>;
+  };
+};
+
+<span class="hljs-comment">/* example */</span>
+<span class="hljs-string">"AD"</span> |&gt; parseAndRenderCard |&gt; Js.log;
+<span class="hljs-comment">/* "Ace of Diamonds" */</span></code></pre>
+
+<p>A lot is happening here; let me go step by step:</p>
+<pre><code class="hljs"><span class="hljs-built_in">let</span> <span class="hljs-built_in">length</span> = Js.String.<span class="hljs-built_in">length</span>(cardStr);</code></pre>
+
+<p><code>Js.String.length</code> is a function that transforms a string into an integer that represents that string length. That&#39;s a part of the &quot;functional&quot; way of thinking: every piece of data we need is gathered from data transformations. For instance, if we want an upper case version of a string, instead of calling <code>str.toUpperCase()</code> we would call <code>Js.String.toUpperCase(str)</code>.</p>
+<p>Next we have:</p>
+<pre><code class="hljs"><span class="hljs-keyword">let</span> <span class="hljs-attr">suitStr</span> = Js.String.sliceToEnd(~<span class="hljs-attr">from=length</span> - <span class="hljs-number">1</span>, cardStr);
+<span class="hljs-keyword">let</span> <span class="hljs-attr">valueStr</span> = Js.String.slice(~<span class="hljs-attr">from=0,</span> ~<span class="hljs-attr">to_=length</span> - <span class="hljs-number">1</span>, cardStr);</code></pre>
+
+<p>The <code>~</code> character is used to denote &quot;labeled parameters&quot;. They are simply parameters that need to be named, and it means we can call them in whatever order we prefer. Calling <code>Js.String.sliceToEnd(cardStr, ~from=length - 1);</code> would yield the same result.</p>
+<p><code>Js.String</code> is the name of the module where the functions are located. We could also open the module at the beginning of the file, and use the functions directly:</p>
+<pre><code class="hljs js">open Js.String;
+
+(...)
+
+<span class="hljs-keyword">let</span> length = length(cardStr);
+<span class="hljs-keyword">let</span> suitStr = sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
+<span class="hljs-keyword">let</span> valueStr = slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);</code></pre>
+
+<p>This could be cleaner, but keep in mind that it also &quot;pollutes&quot; the global context, making all functions inside <code>Js.String</code> available.</p>
+<p><strong>A tip</strong>: make sure to take advantage of VS Code&#39;s auto-complete to explore all the modules and functions available to us! I found those three functions without googling, and it was a really nice workflow. It&#39;s good to learn things while staying in the same environment, which is another interesting side effect of working with a typed language.</p>
+<p>Back to our function, we have:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderedSuit = parseAndRenderSuit(suitStr);
+<span class="hljs-keyword">let</span> renderedValue = parseAndRenderValue(valueStr);</code></pre>
+
+<p>Which is straightforward. And to finish:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">if</span> (renderedSuit !== <span class="hljs-string">"-- unknown suit --"</span>
+    &amp;&amp; renderedValue !== <span class="hljs-string">"-- unknown value --"</span>) {
+  renderedValue ++ <span class="hljs-string">" of "</span> ++ renderedSuit;
+} <span class="hljs-keyword">else</span> {
+  <span class="hljs-string">"-- unknown card --"</span>;
+};</code></pre>
+
+<p>Notice how we don&#39;t need a <code>return</code> keyword: the last line of a function expresses the return value. So we are simply checking if the values generated were the ones that represent unknown values. If that&#39;s not the case for both the value and the suit, we build the final string in <code>renderedValue ++ &quot; of &quot; ++ renderedSuit</code> (<code>++</code> is the operator for string concatenation).</p>
+<p>That&#39;s it, a working implementation of the spec! This function is already more reliable than the average javascript function, and we can have full confidence all string inputs are going to generate a valid output, no exceptions will be raised, and all the invalid cases are covered.</p>
+<p>But this implementation can improve.</p>
+<h2 id="a-second-approach-option">A Second Approach: Option</h2>
+<p>My main issue with the previous implementation is the two <code>&quot;-- unknown somethings --&quot;</code> possible values for the value and suit parsers. There&#39;s an interesting way of dealing with cases like this in ReasonML: the Option type. It represents values that may or may not be present, and that&#39;s exactly what the output of the function should be: we may or may not have a valid suit:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderSuit = suitStr =&gt;
+  <span class="hljs-keyword">switch</span> suitStr {
+  | <span class="hljs-string">"H"</span> =&gt; Some(<span class="hljs-string">"Hearts"</span>)
+  | <span class="hljs-string">"D"</span> =&gt; Some(<span class="hljs-string">"Diamonds"</span>)
+  | <span class="hljs-string">"C"</span> =&gt; Some(<span class="hljs-string">"Clubs"</span>)
+  | <span class="hljs-string">"S"</span> =&gt; Some(<span class="hljs-string">"Spades"</span>)
+  | _ =&gt; None
+  };</code></pre>
+
+<p>VS Code shows us that now the function is of type <code>(string) =&gt; option(string)</code>, which is much more descriptive of what it does. It makes the code more <em>expressive</em>.</p>
+<p>Option is a safe way of dealing with data that may not be present, instead of having the null and undefined checks in javascript. This is how we can work with an option in ReasonML:</p>
+<pre><code class="hljs js"><span class="hljs-comment">/* Let's say we want to log a string from a string option: */</span>
+<span class="hljs-keyword">let</span> printSuitExample = suitOption =&gt;
+  <span class="hljs-keyword">switch</span> suitOption {
+  | Some(suit) =&gt; Js.log(<span class="hljs-string">"Suit: "</span> ++ suit ++ <span class="hljs-string">"."</span>)
+  | None =&gt; Js.log(<span class="hljs-string">"Input was not a valid suit."</span>)
+  };</code></pre>
+
+<p>Alright, so let&#39;s also rewrite <code>parseAndRenderValue</code> using option:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderValue = valueStr =&gt;
+  <span class="hljs-keyword">switch</span> valueStr {
+  | <span class="hljs-string">"2"</span> =&gt; Some(<span class="hljs-string">"Two"</span>)
+  | <span class="hljs-string">"3"</span> =&gt; Some(<span class="hljs-string">"Three"</span>)
+  | <span class="hljs-string">"4"</span> =&gt; Some(<span class="hljs-string">"Four"</span>)
+  | <span class="hljs-string">"5"</span> =&gt; Some(<span class="hljs-string">"Five"</span>)
+  | <span class="hljs-string">"6"</span> =&gt; Some(<span class="hljs-string">"Six"</span>)
+  | <span class="hljs-string">"7"</span> =&gt; Some(<span class="hljs-string">"Seven"</span>)
+  | <span class="hljs-string">"8"</span> =&gt; Some(<span class="hljs-string">"Eight"</span>)
+  | <span class="hljs-string">"9"</span> =&gt; Some(<span class="hljs-string">"Nine"</span>)
+  | <span class="hljs-string">"10"</span> =&gt; Some(<span class="hljs-string">"Ten"</span>)
+  | <span class="hljs-string">"J"</span> =&gt; Some(<span class="hljs-string">"Jack"</span>)
+  | <span class="hljs-string">"Q"</span> =&gt; Some(<span class="hljs-string">"Queen"</span>)
+  | <span class="hljs-string">"K"</span> =&gt; Some(<span class="hljs-string">"King"</span>)
+  | <span class="hljs-string">"A"</span> =&gt; Some(<span class="hljs-string">"Ace"</span>)
+  | _ =&gt; None
+  };</code></pre>
+
+<p>Now that we changed those two functions to be more expressive, we can check that the compiler is not generating a new JS file. Our <code>parseAndRenderCard</code> is no longer valid, so we need to change it. In my previous experience with strongly typed languages, this is the strongest point: refactoring feels safe! The compiler tells you exactly what breaks, and you just need to go there and fix it. In our case, let&#39;s exchange the last If to a pattern match:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; {
+  <span class="hljs-comment">/* Separating the input string: */</span>
+  <span class="hljs-keyword">let</span> length = length(cardStr);
+  <span class="hljs-keyword">let</span> suitStr = sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+
+  <span class="hljs-comment">/* Parsing and rendering the strings with our functions: */</span>
+  <span class="hljs-keyword">let</span> renderedSuit = parseAndRenderSuit(suitStr);
+  <span class="hljs-keyword">let</span> renderedValue = parseAndRenderValue(valueStr);
+
+  <span class="hljs-comment">/* If inputs were valid, print the card: */</span>
+  <span class="hljs-keyword">switch</span> (renderedValue, renderedSuit) {
+  | (Some(value), Some(suit)) =&gt; value ++ <span class="hljs-string">" of "</span> ++ suit
+  | _ =&gt; <span class="hljs-string">"-- unknown card --"</span>
+  };
+};</code></pre>
+
+<p>Yes, we can pattern match on more than one value, and yes, it&#39;s awesome :)</p>
+<p>The complete file <a href="https://github.com/lucasmreis/learning-reasonml/blob/master/part-1/src/first.re">can be found here</a>.</p>
+<p>I like this implementation a lot more than the previous one, mainly for how well it expresses intention by using the option types. Now let&#39;s go further, and completely decouple the parsing and the rendering phases.</p>
+<h2 id="a-third-approach-decoupling-parsing-and-rendering">A Third Approach: Decoupling Parsing And Rendering</h2>
+<p>To achieve decoupling, we need to parse the string to a card representation, and then build a function that transforms this representation into a string. First, why would we do that? The main reason would be if we want to render in different ways, let&#39;s say we want to render to the DOM instead of logging to the console, or maybe our domain is getting so complex that the &quot;parseAndRender&quot; function is too large and complex. In our case, let&#39;s do it for fun and learning.</p>
+<p>In javascript world, all data is represented mainly by objects and arrays. A card representation would be something like:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> card = {
+  value: CardValueConstants.QUEEN,
+  suit: CardSuitConstants.HEARTS
+};</code></pre>
+
+<p>The suit is enum-like, and we usually represent it in javascript by having an object with strings or symbols as values:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> CardSuitConstants = {
+  HEARTS: <span class="hljs-string">"HEARTS"</span>,
+  DIAMONDS: <span class="hljs-string">"DIAMONDS"</span>,
+  CLUBS: <span class="hljs-string">"CLUBS"</span>,
+  SPADES: <span class="hljs-string">"SPADES"</span>
+};</code></pre>
+
+<p>Now if we want to check against a value, or check if a given string is a valid suit, we import and use this object.</p>
+<p>In ReasonML, we would represent the suits this way, which works like an enum of symbols:</p>
+<pre><code class="hljs js">type suit = Hearts | Diamonds | Clubs | Spades;</code></pre>
+
+<p>These are called <em>Discriminated Unions</em>. The best part of working with them is that when we pattern match on a variable of this type, the compiler will make sure we handle all the cases.</p>
+<p>For the card value, we need a little more information for the numbered card cases. Back in JS world, we could add a <code>number</code> property:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> card = {
+  value: CardValueConstants.NUMBER,
+  number: <span class="hljs-number">7</span>,
+  suit: CardSuitConstants.CLUBS
+};</code></pre>
+
+<p>The weakness of a representation like that is that &quot;impossible&quot; cards are easy to be represented. So we need to make sure we are always testing not only for <code>value</code> being equal <code>CardValueConstants.NUMBER</code>, but also to see if there&#39;s a <code>number</code> property present and that it&#39;s a valid number.</p>
+<p>In ReasonML, we would represent the values as:</p>
+<pre><code class="hljs js">type value =
+  | Ace
+  | King
+  | Queen
+  | Jack
+  | Num(int);</code></pre>
+
+<p>The most interesting characteristic of this way of representing the value is that there&#39;s simply <em>no way</em> of having a card of value Queen that also has a number, or to have a numbered card without a defined number. This is huge, and, combined with pattern matching, this will make our code very reliable without the need to test the existence of properties everywhere.</p>
+<p><em>Note:</em> there&#39;s still impossible states that can be represented this way, for instance <code>Num(333)</code>. There are only numbered cards from 2 to 10. We could list all cases explicitly, and our function would be even more reliable, but let&#39;s continue with this representation since it&#39;ll lead to more interesting code and more opportunities to learn.</p>
+<p>Our final card representation can now be:</p>
+<pre><code class="hljs js">type card =
+ | Card(value, suit);</code></pre>
+
+<p>Which is a single case discriminated union. There&#39;s no reason to use one, we could use a simple tuple of type <code>(value, suit)</code>, but I find this expresses the intent better.</p>
+<h3 id="renderer">Renderer</h3>
+<p>Now let&#39;s write the renderer. It will be simple, since it&#39;s only a matter of matching all the available cases:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> suitToString = suit =&gt;
+  <span class="hljs-keyword">switch</span> suit {
+  | Hearts =&gt; <span class="hljs-string">"Hearts"</span>
+  | Diamonds =&gt; <span class="hljs-string">"Diamonds"</span>
+  | Clubs =&gt; <span class="hljs-string">"Clubs"</span>
+  | Spades =&gt; <span class="hljs-string">"Spades"</span>
+  };
+
+<span class="hljs-keyword">let</span> numToString = num =&gt;
+  <span class="hljs-keyword">switch</span> num {
+  | <span class="hljs-number">2</span> =&gt; <span class="hljs-string">"Two"</span>
+  | <span class="hljs-number">3</span> =&gt; <span class="hljs-string">"Three"</span>
+  | <span class="hljs-number">4</span> =&gt; <span class="hljs-string">"Four"</span>
+  | <span class="hljs-number">5</span> =&gt; <span class="hljs-string">"Five"</span>
+  | <span class="hljs-number">6</span> =&gt; <span class="hljs-string">"Six"</span>
+  | <span class="hljs-number">7</span> =&gt; <span class="hljs-string">"Seven"</span>
+  | <span class="hljs-number">8</span> =&gt; <span class="hljs-string">"Eight"</span>
+  | <span class="hljs-number">9</span> =&gt; <span class="hljs-string">"Nine"</span>
+  | <span class="hljs-number">10</span> =&gt; <span class="hljs-string">"Ten"</span>
+  | _ =&gt; failwith(<span class="hljs-string">"this is an exception from numToString"</span>)
+  };
+
+<span class="hljs-keyword">let</span> valueToString = value =&gt;
+  <span class="hljs-keyword">switch</span> value {
+  | Ace =&gt; <span class="hljs-string">"Ace"</span>
+  | King =&gt; <span class="hljs-string">"King"</span>
+  | Queen =&gt; <span class="hljs-string">"Queen"</span>
+  | Jack =&gt; <span class="hljs-string">"Jack"</span>
+  | Num(n) =&gt; numToString(n)
+  };
+
+<span class="hljs-keyword">let</span> renderCard = card =&gt;
+  <span class="hljs-keyword">switch</span> card {
+  | Card(value, suit) =&gt;
+    valueToString(value) ++ <span class="hljs-string">" of "</span> ++ suitToString(suit)
+  };
+
+<span class="hljs-comment">/* example */</span>
+Card(Num(<span class="hljs-number">8</span>), Hearts) |&gt; renderCard |&gt; Js.log;</code></pre>
+
+<p>The only different code here is the <code>failwith</code> case in <code>numToString</code>. It&#39;s there because we need to handle all the integers when pattern matching, but we&#39;ll make sure never to have an invalid number. Again, we could deal with it by being explicit with all the cases, but sometimes it&#39;s not possible - imagine if we had an imaginary deck with numbered cards from two to a thousand. The best way to handle a situation like this would be to make sure the functions that output cards never return invalid cards, and it&#39;s a good place for unit and generative tests. Once more: strongly typed languages are much more reliable than dynamic languages, but it does not mean they are 100% reliable - we still have to be careful. But it&#39;s much, much easier to write correct code :)</p>
+<p><em>Note:</em> there are attempts at expressing some of those constraints in the types themselves, like saying a variable is a number between 2 and 10. Some languages already have this ability, such as <a href="https://en.wikipedia.org/wiki/Ada_(programming_language">Ada</a>&gt;). Other more recent languages are trying to deal with this more generically through dependent types, such as <a href="https://en.wikipedia.org/wiki/Idris_(programming_language">Idris</a>&gt;) and <a href="https://en.wikipedia.org/wiki/F*_(programming_language">F*</a>&gt;).</p>
+<h3 id="parser">Parser</h3>
+<p>The parser will be a function that takes a string and returns a card option. Let&#39;s start with the simple suit parser:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseSuit = suitStr =&gt;
+ <span class="hljs-keyword">switch</span> suitStr {
+ | <span class="hljs-string">"H"</span> =&gt; Some(Hearts)
+ | <span class="hljs-string">"D"</span> =&gt; Some(Diamonds)
+ | <span class="hljs-string">"C"</span> =&gt; Some(Clubs)
+ | <span class="hljs-string">"S"</span> =&gt; Some(Spades)
+ | _ =&gt; None
+ };</code></pre>
+
+<p>The function type is inferred as <code>(string) =&gt; option(suit)</code> which is exactly our intention.</p>
+<p>For the value, I&#39;ll separate the number parsing to the other card values. Supposing we have a <code>parseNumValue</code> function implemented, we could use it like this:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseValue = valueStr =&gt;
+ <span class="hljs-keyword">switch</span> valueStr {
+ | <span class="hljs-string">"A"</span> =&gt; Some(Ace)
+ | <span class="hljs-string">"K"</span> =&gt; Some(King)
+ | <span class="hljs-string">"Q"</span> =&gt; Some(Queen)
+ | <span class="hljs-string">"J"</span> =&gt; Some(Jack)
+ | n =&gt; parseNumValue(n)
+ };</code></pre>
+
+<p>We are defining outputs for the &quot;A&quot;, &quot;K&quot;, &quot;Q&quot; and &quot;J&quot; inputs, and calling the <code>parseNumValue</code> function with the value if it did not match any of the previous. The compiler will not let us continue if our <code>parseNumValue</code> does not return a suit option! Let&#39;s implement it, and learn some new ReasonML concepts:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseNumValue = numStr =&gt; {
+  <span class="hljs-keyword">let</span> parsed =
+    <span class="hljs-keyword">try</span> (Some(int_of_string(numStr))) {
+    | Failure(_) =&gt; None
+    };
+
+  <span class="hljs-keyword">switch</span> parsed {
+  | Some(n) when n &gt;= <span class="hljs-number">2</span> &amp;&amp; n &lt;= <span class="hljs-number">10</span> =&gt; Some(Num(n))
+  | _ =&gt; None
+  };
+};</code></pre>
+
+<p>Starting with the <code>parsed</code> variable: we want to transform a string that may be a number into an integer variable. There&#39;s a standard function for that, <code>int_of_string</code>. But it raises an exception if the string input is not a valid integer. That&#39;s not the behavior we want here. We want a function that returns a value option, in this case, a <code>Num(int)</code> option, so we need a try expression.</p>
+<p>It works similarly to javascript&#39;s try / catch, with the difference being that it returns the value of the provided expression if it does not raise, and pattern match on the exceptions if it does raise. Looking at <code>int_of_string</code> <a href="https://reasonml.github.io/api/Pervasives.html#6_Stringconversionfunctions">documentation</a> we can see that the exception is of type <code>Failure(string)</code> so we catch it and return <code>None</code> in that case.</p>
+<p><em>Note:</em> be really careful when working with exceptions. They are not defined in the function types, so the compiler can&#39;t help you make sure you&#39;re handling all cases. Also, you need to look at documentation to understand what to match for. As a rule of thumb, never use or rely on exceptions. Only use them if it&#39;s needed for integrating with existing code (our case here), or if somehow it makes the code simpler.</p>
+<p><em>Another note:</em> The Js.Option module provides a <code>some</code> function that returns a <code>Some</code> option variable. It&#39;s useful if we want to use the pipe operator to get rid of parenthesis:</p>
+<pre><code class="hljs js">open Js.Option;
+
+(...)
+
+<span class="hljs-keyword">let</span> parsed =
+  <span class="hljs-keyword">try</span> (numStr |&gt; int_of_string |&gt; some) {
+  | Failure(_) =&gt; None
+  };</code></pre>
+
+<p>It&#39;s a matter of taste, and I think the pipe operator can make the code more elegant. I&#39;m excited that it&#39;s being <a href="https://github.com/tc39/proposal-pipeline-operator">considered for javascript too!</a></p>
+<p>Continuing with our function, there&#39;s something different in the pattern match:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">switch</span> parsed {
+| Some(n) when n &gt;= <span class="hljs-number">2</span> &amp;&amp; n &lt;= <span class="hljs-number">10</span> =&gt; Some(Num(n))
+| _ =&gt; None
+};</code></pre>
+
+<p>We can put constraints on the patterns we want to match with the <code>when</code> keyword. And since this is the <em>only</em> function that generates a <code>Num(int)</code>, we are guaranteeing that there no invalid cards! Of course, as I said before, in real life we should write some tests, and I&#39;ll cover them later in this series.</p>
+<p>And, to finish the parser:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseCard = cardStr =&gt; {
+  <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+
+  <span class="hljs-keyword">switch</span> (parseValue(valueStr), parseSuit(suitStr)) {
+  | (Some(value), Some(suit)) =&gt; Card(value, suit) |&gt; some
+  | _ =&gt; None
+  };</code></pre>
+
+<h3 id="gluing-the-pieces-together">Gluing The Pieces Together</h3>
+<p>It would be amazing if we could simply use our functions like this:</p>
+<pre><code class="hljs js"><span class="hljs-string">"8H"</span> |&gt; parseCard |&gt; renderCard |&gt; Js.log;</code></pre>
+
+<p>But we get the (very good btw) compiler error message:</p>
+<pre><code class="hljs">We<span class="hljs-comment">'ve found a bug for you!</span>
+
+<span class="hljs-number">102</span> │
+<span class="hljs-number">103</span> │ /* example */
+<span class="hljs-number">104</span> │ <span class="hljs-string">"8H"</span> |&gt; parseCard |&gt; renderCard |&gt; Js.log;
+
+This has type:
+ (card) =&gt; <span class="hljs-built_in">string</span>
+But somewhere wanted:
+ (<span class="hljs-keyword">option</span>(card)) =&gt; <span class="hljs-comment">'a</span>
+
+The incompatible parts:
+ card
+ vs
+ <span class="hljs-keyword">option</span>(card)</code></pre>
+
+<p><em>Note:</em> Elm is known for having amazing error messages - and it really does have them. It&#39;s nice that they were vocal about it, and now this practice is &quot;leaking&quot; to other languages! Congratulations to the ReasonML / Bucklescript team for borrowing the right features from different projects.</p>
+<p>Alright, so we can&#39;t pipe our functions because <code>parseCard</code> returns an option(card), and <code>renderCard</code>&#39;s input is a card. Let&#39;s use this opportunity to build a couple of helper functions!</p>
+<p>First, wouldn&#39;t it be useful to have a function that receives an option of something and a function of something, and applies the function to the value if it&#39;s a Some, and does not do anything if it&#39;s a None? This function is called <code>map</code>, and it will help our pipeline:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> optionMap = fn =&gt; opt =&gt;
+  <span class="hljs-keyword">switch</span> opt {
+  | Some(x) =&gt; fn(x) |&gt; some
+  | None =&gt; None
+  };</code></pre>
+
+<p>This is a higher order function, so now we can use:</p>
+<pre><code class="hljs js"><span class="hljs-string">"8H"</span> |&gt; parseCard |&gt; optionMap(renderCard) |&gt; Js.log;</code></pre>
+
+<p>And <code>renderCard</code> will only be called if <code>parseCard</code> returns a Some. But, after saving the file, we can see that the declaration of the function is changed by the code formatter to <code>let optionMap = (fn, opt) =&gt; (...)</code>! Does this mean that ReasonML doesn&#39;t like higher order functions? No, it&#39;s the opposite: in ReasonML and most other ML languages, <em>all the functions are curried by default</em>. That means that, differently from usual JS functions, if you call a function with fewer input parameters than the function was expecting, you will have another function as a result that will expect the other parameters. A simple, classic example:</p>
+<pre><code class="hljs js"><span class="hljs-comment">/* (int, int) =&gt; (int) */</span>
+<span class="hljs-keyword">let</span> sum = (x, y) =&gt; x + y;
+
+<span class="hljs-comment">/* (int) =&gt; (int) */</span>
+<span class="hljs-keyword">let</span> sum5 = sum(<span class="hljs-number">5</span>);
+
+<span class="hljs-comment">/* int */</span>
+<span class="hljs-keyword">let</span> eight = sum5(<span class="hljs-number">3</span>);</code></pre>
+
+<p>Ok, back to our code, now our file compiles, but the logged output is an <em>array</em> of string instead of a string. That&#39;s because <code>optionMap(renderCard)</code> returns a string <em>option</em>, not a string! If we feed the pipeline with an invalid card, say &quot;1X&quot;, We&#39;ll see that the logged output will be &quot;0&quot;, which is how Bucklescript translates None to javascript.</p>
+<p>So let&#39;s implement a function to transform a string option into a string. We can do it by returning the string itself if it&#39;s inside a Some, or returning a default value if it&#39;s a None:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> optionWithDefault = (defaultValue, opt) =&gt;
+  <span class="hljs-keyword">switch</span> opt {
+  | Some(x) =&gt; x
+  | None =&gt; defaultValue
+  };
+
+<span class="hljs-comment">/* example */</span>
+<span class="hljs-string">"2D"</span>
+|&gt; parseCard
+|&gt; optionMap(renderCard)
+|&gt; optionWithDefault(<span class="hljs-string">"-- unknown card --"</span>)
+|&gt; Js.log;</code></pre>
+
+<p>And now we have everything we need! Working functions, confidence that they&#39;ll do what we want them to do, and elegant implementations.</p>
+<p><em>Note:</em> have you noticed the inferred type for <code>optionWithDefault</code>? It&#39;s <code>(&#39;a, option(&#39;a)) =&gt; &#39;a</code>, which does not mention strings. <code>&#39;a</code> is a generic type, so that means this function will work with options of <em>anything</em>. The only thing we have to be careful with is that the default value passed must be of the same type inside the option :) That means that <code>optionWithDefault(0, Some(5))</code> or <code>optionWithDefault(Card(Ace, Diamonds), None)</code> are both valid! (and the same thing happens to <code>optionMap</code>, check it out).</p>
+<p>We can also divide our functions into modules. In ReasonML, every file is a module, but we can also define modules inside a file, so let&#39;s do it to better organize our functions:</p>
+<pre><code class="hljs js">type suit = (...)
+type value = (...)
+type card = (...)
+
+<span class="hljs-built_in">module</span> Parser = {
+  <span class="hljs-keyword">let</span> parseNumValue = (...)
+  <span class="hljs-keyword">let</span> parseValue = (...)
+  <span class="hljs-keyword">let</span> parseSuit = (...)
+  <span class="hljs-keyword">let</span> parseCard = (...)
+};
+
+<span class="hljs-built_in">module</span> RenderToString = {
+  <span class="hljs-keyword">let</span> numToString = (...)
+  <span class="hljs-keyword">let</span> valueToString = (...)
+  <span class="hljs-keyword">let</span> suitToString = (...)
+  <span class="hljs-keyword">let</span> renderCard = (...)
+  <span class="hljs-comment">/* let's store this value here */</span>
+  <span class="hljs-keyword">let</span> defaultErrorCard = <span class="hljs-string">"-- unknown card --"</span>;
+};
+
+<span class="hljs-built_in">module</span> Option = {
+  <span class="hljs-keyword">let</span> map = (...)
+  <span class="hljs-keyword">let</span> withDefault = (...)
+};
+
+<span class="hljs-comment">/* We can call functions inside modules easily: */</span>
+<span class="hljs-string">"JH"</span>
+|&gt; Parser.parseCard
+|&gt; Option.map(RenderToString.renderCard)
+|&gt; Option.withDefault(RenderToString.defaultErrorCard)
+|&gt; Js.log;</code></pre>
+
+<p>Good, and we can extract the modules as single files if they get too large. I like the fact that we can have exactly the same abstraction as code and as a file. That makes the extraction of files mostly just an organizational issue.</p>
+<h2 id="spec-change-">Spec Change!</h2>
+<p>As I&#39;ve done in the <a href="https://lucasmreis.github.io/blog/learning-elm-part-1/">Learning Elm series</a>, let&#39;s change the specs. Let&#39;s suppose we also want to parse &quot;J&quot; into a joker card and render it as &quot;Joker&quot;. How would we represent a joker card? It does not have a value or a suit. So probably the best place to represent it is by changing the card type itself:</p>
+<pre><code class="hljs js">type card =
+  | OrdinaryCard(value, suit)
+  | Joker;</code></pre>
+
+<p>We can already see the compiler complaining, and that&#39;s another benefit of having this card representation defined. The compiler uses this information and helps us by pointing to the places that need to be changed, so our application works as intended.</p>
+<p>The function that we need to change is, according to the compiler, <code>renderCard</code>. So let&#39;s change it to deal with the new card type:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderCard = card =&gt;
+  <span class="hljs-keyword">switch</span> card {
+  | OrdinaryCard(value, suit) =&gt;
+    valueToString(value) ++ <span class="hljs-string">" of "</span> ++ suitToString(suit)
+  | Joker =&gt; <span class="hljs-string">"Joker"</span>
+  };</code></pre>
+
+<p>Simple and easy! The compiler also says <code>parseCard</code> needs some work, so use the opportunity to think about how to parse &quot;J&quot; into the Joker representation. The &quot;J&quot; string is structured differently since it does not have a defined suit. So it may be better not to change <code>parseValue</code> or <code>parseSuit</code>. Let&#39;s try to pattern match &quot;J&quot; first, and then call our parse function to parse the string if we didn&#39;t already identify it as a Joker.</p>
+<p>Let&#39;s first rename <code>parseCard</code> to <code>parseOrdinaryCard</code>, and then make sure we handle &quot;J&quot; in a new <code>parseCard</code> function:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> parseOrdinaryCard = cardStr =&gt; {
+  <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">switch</span> (parseValue(valueStr), parseSuit(suitStr)) {
+  | (Some(value), Some(suit)) =&gt; OrdinaryCard(value, suit) |&gt; some
+  | _ =&gt; None
+  };
+};
+
+<span class="hljs-keyword">let</span> parseCard = cardStr =&gt;
+  <span class="hljs-keyword">switch</span> cardStr {
+  | <span class="hljs-string">"J"</span> =&gt; Some(Joker)
+  | str =&gt; parseOrdinaryCard(str)
+  };
+
+<span class="hljs-comment">/* example */</span>
+<span class="hljs-string">"J"</span>
+|&gt; Parser.parseCard
+|&gt; Option.map(RenderToString.renderCard)
+|&gt; Option.withDefault(RenderToString.defaultErrorCard)
+|&gt; Js.log;</code></pre>
+
+<p>And we&#39;re done. Amazingly, ReasonML&#39;s changes to the syntax did not affect the super refactoring powers of Ocaml :)</p>
+<p>The final code for the function <a href="https://github.com/lucasmreis/learning-reasonml/blob/master/part-1/src/second.re">can be found here</a>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>First of all, all the benefits present in Fable are present in ReasonML - and that&#39;s great. Just like Fable, it&#39;s a nice pragmatic Elm, and out of all the languages, it was the easiest to just start a project - I did not have to install any different tools, and the main packages are in npm. So that&#39;s a win for ReasonML :)</p>
+<p>In the next part of this series, I&#39;ll start writing an actual web app, and I&#39;ll use the React integration library called <a href="https://reasonml.github.io/reason-react/">ReasonReact</a>. I think this is where all the mentioned languages will differ the most. In the javascript world, I&#39;m finding myself using a &quot;pure React&quot; model more and more, and it seems ReasonReact will work well with it. Let&#39;s find it out together!</p>
+<p>A last comment: ReasonML&#39;s <a href="https://discordapp.com/invite/reasonml">Discord channel</a> is a great place, and the language maintainers are very active and helpful. Thank you for helping and answering questions so quickly!</p>
+]]></description>
+            <guid isPermaLink="false">Learning ReasonML, part 1</guid>
+            <pubDate>Sun, 31 Dec 2017 00:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Simple React Patterns]]></title>
             <description><![CDATA[<p>I&#39;ve been writing React applications for a few years now, and I&#39;ve noticed that some patterns tend to repeat themselves. In this post, I&#39;ll review these patterns which will summarize about 99% of the React code I write every day.</p>
@@ -323,18 +873,13 @@ export default withDagobah({
     renderPlanet={planet =&gt; &lt;PlanetView {...planet} /&gt;}
   /&gt;
 );</code></pre>
-And that's it.
 
-## What if the side effects are costly?
-
-In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?
-
-## The Provider Pattern
-
-This is one of the most powerful patterns in React. It's relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don't know what the context object is in React, please [head to the official docs](https://reactjs.org/docs/context.html).
-
-Let's implement it for our Dagobah example. First, we need to implement the `DagobahProvider`:
-
+<p>And that&#39;s it.</p>
+<h2 id="what-if-the-side-effects-are-costly-">What if the side effects are costly?</h2>
+<p>In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?</p>
+<h2 id="the-provider-pattern">The Provider Pattern</h2>
+<p>This is one of the most powerful patterns in React. It&#39;s relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don&#39;t know what the context object is in React, please <a href="https://reactjs.org/docs/context.html">head to the official docs</a>.</p>
+<p>Let&#39;s implement it for our Dagobah example. First, we need to implement the <code>DagobahProvider</code>:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
 <span class="hljs-keyword">import</span> PropTypes <span class="hljs-keyword">from</span> <span class="hljs-string">"prop-types"</span>;
 
@@ -4167,100 +4712,6 @@ addFooElement.onclick = () =&gt;
 ]]></description>
             <guid isPermaLink="false">Solve All Bugs Or Implement New Features?</guid>
             <pubDate>Wed, 27 May 2015 00:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[Spreadsheets Are An Awesome Functional Programming Tool]]></title>
-            <description><![CDATA[<p>I worked for three years as a Risk Management Consultant.   That, as you can imagine, meant I spent a lot of time working with spreadsheets.
-For the most part, Excel was the main spreadsheet platform that was used by the businesses that I interacted with.</p>
-<p>I remember reading somewhere &quot;spreadsheets are functional programming!&quot;, but for some reason I was never very interested in going further until I watched <a href="https://www.youtube.com/watch?v=0CKru5d4GPk">Felienne Hermans&#39; talk on Strange Loop 2004</a>, where she implements selection sort with a spreadsheet and, believe it or not, even showed an implementation of a Turing machine with spreadsheets!</p>
-<p>In general, every cell of a spreadsheet is either a <em>value</em> or a <em>pure function that takes other cells as inputs</em>. If we restrict it to only that, we can say that a spreadsheet is a platform for functional programming. In this post, I&#39;ll describe my experimentation with a Google Spreadsheet to model user interactions and state handling.</p>
-<h2 id="state-handling-when-there-are-no-mutable-variables">State handling when there are no mutable variables</h2>
-<p>If we only use pure functions to build our programs, we can benefit from a lot of cool things like modularity, lazy evaluation, and so on. It is relatively easy if we are implementing a mathematical model, or a compiler, for instance. They have well defined inputs and outputs, but things start getting more complex if we have a program that runs for a period of time, and reacts to user interaction. Is it possible to maintain purity in such a scenario?</p>
-<p>The standard way of dealing with it is by mutating objects according to user interactions. It can be done in a lot of ways, and in my main project we are <a href="../a-more-functional-approach-to-angular/">keeping all state in a single object, and reacting to changes in it</a>. We find it much more manageable than the standard object oriented way, which deals with a lot of &quot;models&quot; that keep hidden internal local state.</p>
-<p>This time I&#39;m gonna try to handle state by using <em>streams</em>. That means that I&#39;ll model user interactions <em>and</em> application state as streams of information.</p>
-<h2 id="state-and-interaction-as-functions-of-time">State and interaction as functions of time</h2>
-<p>So, let&#39;s start with a basic spec: the user inserts a string, and we have an application state that reacts to it by replicating this input. Let&#39;s call it Foo:</p>
-<pre><code class="hljs">t = given moment <span class="hljs-keyword">in</span> time
-
-<span class="hljs-keyword">user</span>Foo(t) = <span class="hljs-keyword">user</span> string input <span class="hljs-keyword">in</span> t
-
-<span class="hljs-keyword">state</span>Foo(t) = foo <span class="hljs-keyword">state</span> <span class="hljs-keyword">in</span> t</code></pre>
-
-<p>So, what I&#39;m doing here is <em>thinking of both interactions and application state as functions of time</em>. Let&#39;s detail more <code>stateFoo</code>:</p>
-<pre><code class="hljs">stateFoo(<span class="hljs-name">t</span>) = f(<span class="hljs-name">userFoo</span>(<span class="hljs-name">t</span>))</code></pre>
-
-<p>In this case, the application state will depend only on the current user interaction. To keep it really simple, let&#39;s define:</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = <span class="hljs-keyword">user</span>Foo(t)</code></pre>
-
-<p>And now let&#39;s implement it in a spreadsheet!</p>
-<h2 id="modelling-time-in-a-spreadsheet">Modelling time in a spreadsheet</h2>
-<p>Back in my consultant days, I was dealing with a lot of <a href="http://en.wikipedia.org/wiki/Time_series">time series analyses</a>, and the way we were dealing with time was simple: one line for every event. Let&#39;s start with sixteen &quot;time samples&quot; and some user interactions:</p>
-<p><img src="../assets/userFoo.png" alt="Time and UserFoo(t)"></p>
-<p>That means that on time <code>t = 2</code> the user submitted the input &quot;aaa&quot;, when <code>t = 4</code> the user submitted the input &quot;bbb&quot; and so on.</p>
-<p><code>stateFoo</code> can be implemented then as a new column:</p>
-<p><img src="../assets/stateFoo.png" alt="Simple stateFoo(t)"></p>
-<p>That function (&quot;formula&quot; in spreadsheet) is repeated for every line, so every cell in the <code>stateFoo</code> column equals the corresponding cell from the same line in the <code>userFoo</code> column.</p>
-<p>That was really simple and easy! Now let&#39;s implement a more interesting spec. Let the application state be the <em>last</em> Foo that was input by the user. Now, <code>stateFoo</code> does not only depend on <code>userFoo</code>, but it also depends on the past value of <code>stateFoo</code> itself!</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = f(
-  <span class="hljs-keyword">user</span>Foo(t),
-  <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>))
-
-<span class="hljs-keyword">state</span>Foo(t) =
-  if (<span class="hljs-keyword">user</span>Foo(t) is blank)
-    return <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>)
-  else
-    return <span class="hljs-keyword">user</span>Foo(t)</code></pre>
-
-<p>So, if the user inputs something, <code>stateFoo</code> changes. If the user does not input anything, <code>stateFoo</code> repeats its last value. We can see it in the spreadsheet:</p>
-<p><img src="../assets/stateFoo2.png" alt="stateFoo(t) with memory"></p>
-<p>Now state looks more like the state we usually have in applications. Let&#39;s bring one more complexity: let the state carry <em>all previous values</em>.
-I want the state to be a string that&#39;s the concatenation of every past user input, joined by <code>&quot;;&quot;</code>. A good start would be:</p>
-<p><img src="../assets/stateFoo3.png" alt="Naive complex stateFoo(t)"></p>
-<p>We can see the problem: as soon as the user inputs the first string, the state becomes <code>; aaa</code>. That error propagates to all future states. There are a lot of ways to solve this issue, but I&#39;ll use the one that I think is the simplest: I&#39;ll implement a new column that concatenates <code>&quot;;&quot;</code> to every past state, unless it is empty. So, if we have to concatenate a new input, we concatenate to this value:</p>
-<p><img src="../assets/stateFoo4.png" alt="Temp column for complex stateFoo(t)"></p>
-<p><img src="../assets/stateFoo5.png" alt="Final column for complex stateFoo(t)"></p>
-<p>And there we have it; a state that reflects the whole application history.</p>
-<h2 id="interaction-between-streams">Interaction between streams</h2>
-<p>Let&#39;s recap: a stream is a function of time; given time = <code>t</code>, a stream would have the value <code>f(t)</code>. We are modelling user input as streams. Application state would then be transformations of user input streams.</p>
-<p>One nice property of streams is that they can also be transformations of other streams, and past values of themselves. Let&#39;s illustrate this with another application state: the Bars.</p>
-<p>The Bars work the same way as the Foos, but with one additional spec: the user can only add a new Bar after the Foo <code>requiredFoo</code> is input:</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Bar(t) = f(
-  <span class="hljs-keyword">user</span>Bar(t),
-  <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>),
-  <span class="hljs-keyword">state</span>Foo(t));</code></pre>
-
-<p>Back to our spreadsheet, let&#39;s implement the user interactions streams again:</p>
-<p><img src="../assets/stateBar.png" alt="userBar(t)"></p>
-<p>The interaction between Foos and Bars will be done with the <code>hasRequiredFoo</code> stream:</p>
-<pre><code class="hljs">hasRequiredFoo(t) =
-  <span class="hljs-keyword">state</span>Foo(t) contains <span class="hljs-string">"requiredFoo"</span></code></pre>
-
-<p>For simplicity, let&#39;s assume <code>contains</code> means &quot;has substring <code>&quot;requiredFoo&quot;</code>&quot;:</p>
-<p><img src="../assets/stateBar2.png" alt="hasRequiredFoo(t)"></p>
-<p>And <code>stateBar</code> logic would be:</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) =
-  if (<span class="hljs-keyword">user</span>Bar(t) is blank or
-      not hasRequiredFoo(t))
-    return <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>)
-  else
-    return concat(
-      <span class="hljs-keyword">user</span>Bar(t),
-      <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>))</code></pre>
-
-<p><img src="../assets/stateBar3.png" alt="stateBar(t)">
-<em>(in the above image, the &quot;C&quot; column refers to userBar)</em></p>
-<p>And it&#39;s ready! :)</p>
-<p>Now just the inputs and application state streams:</p>
-<p><img src="../assets/finalStates.png" alt="Final inputs and states"></p>
-<h2 id="conclusions">Conclusions</h2>
-<p>I found this experiment very helpful and even entertaining! Now I understand what &quot;spreadsheets are functional programming!&quot; means, and I agree with it. Actually, I think spreadsheets could be a nice learning environment to start &quot;thinking functionally&quot;. It certainly helped me learn the &quot;state as streams&quot; concept.</p>
-<p>Everybody interested in the subject should watch <a href="https://www.youtube.com/watch?v=0CKru5d4GPk">Felienne Hermans&#39; talk on Strange Loop 2004</a>. That was her PhD research subject, and she brings spreadsheet programming to a whole new level.</p>
-<h2 id="next-steps">Next Steps</h2>
-<p>The next obvious step for me is implement the &quot;state as streams&quot; concept using javascript. There are libraries that claim to help with this, like <a href="http://reactivex.io/">RxJS</a>, <a href="https://baconjs.github.io/">BaconJS</a> and the more recent <a href="https://github.com/paldepind/flyd">Flyd</a>. I&#39;ve also been reading about a beta framework based on RxJS and <a href="https://github.com/Matt-Esch/virtual-dom">virtual-dom</a> called <a href="https://github.com/staltz/cycle">CycleJS</a>, which looks promising.</p>
-<p>The link to the complete spreadsheet used in this post is <a href="http://goo.gl/i1g3uP">here</a>.</p>
-]]></description>
-            <guid isPermaLink="false">Spreadsheets Are An Awesome Functional Programming Tool</guid>
-            <pubDate>Sat, 02 May 2015 00:00:00 GMT</pubDate>
         </item>
     </channel>
 </rss>
