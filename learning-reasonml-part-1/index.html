@@ -64,8 +64,8 @@
 <h2 id="the-strategy">The Strategy</h2>
 <p>When learning Elm, I immediately jumped to a &quot;type-driven&quot; solution. Even though I think type driven development leads to more reliable / elegant code, I believe starting with a more JS-style approach is more compatible with the Reason philosophy.</p>
 <p>Let&#39;s start by installing ReasonML&#39;s CLI <code>bsb</code> and create a new project (as described <a href="https://reasonml.github.io/">on the official website</a>):</p>
-<pre><code class="hljs">$ npm <span class="hljs-keyword">install </span>-g <span class="hljs-keyword">bs-platform
-</span>$ <span class="hljs-keyword">bsb </span>-init my-first-app -theme <span class="hljs-keyword">basic-reason</span></code></pre>
+<pre><code class="hljs">$ npm <span class="hljs-operator"><span class="hljs-keyword">install</span> -<span class="hljs-keyword">g</span> bs-platform
+$ bsb -init my-<span class="hljs-keyword">first</span>-app -theme basic-reason</span></code></pre>
 
 <p>I&#39;m using VS Code with the ReasonML extension installed (<a href="https://reasonml.github.io/docs/en/global-installation.html">the instructions can be found here</a>). It&#39;s a great dev environment, with auto-complete, auto-formatting, and other niceties. A note on auto-formatting: we want to focus on actually solving a problem, so it&#39;s a good thing that problems like indentation are not getting in our way. This is something ReasonML has in common with Elm, and projects like Prettier are trying to do with javascript. I strongly recommend auto-formatting all the things!</p>
 <p>In a real-world application when performance is a key requirement, we always need to be aware of bundle size and be careful with the amount and complexity of the code generated. So I always keep an eye on the compilation result: if we are writing a <code>demo.re</code> file, Bucklescript will generate a <code>demo.bs.js</code> file in the same folder. Also, for small functions, I recommend copy and pasting to the <a href="https://reasonml.github.io/try/">Try Reason</a> website, and see both the generated JS and equivalent Ocaml code in real time!</p>
@@ -134,7 +134,7 @@ exports.parseAndRenderCard = parseAndRenderCard;
 <span class="hljs-string">"C"</span> |&gt; parseAndRenderSuit |&gt; Js.log;</code></pre>
 
 <p><code>switch</code> is the syntax for pattern matching in ReasonML. It works somewhat like a switch statement in JS, but it&#39;s more powerful: among other features, the compiler will tell you if you took care of all the possible values for the input. That&#39;s one of the key features of ML languages that makes the code more reliable. For the above function, we get the following compiler warning:</p>
-<pre><code class="hljs">You forgot <span class="hljs-built_in">to</span> handle <span class="hljs-keyword">a</span> possible <span class="hljs-built_in">value</span> here, <span class="hljs-keyword">for</span> example: <span class="hljs-string">""</span></code></pre>
+<pre><code class="hljs">You forgot <span class="hljs-built_in">to</span> handle <span class="hljs-operator">a</span> possible <span class="hljs-built_in">value</span> here, <span class="hljs-keyword">for</span> example: <span class="hljs-string">""</span></code></pre>
 
 <p>The compiler is right! And we can see that the generated JS code will raise an exception if the input is not one of the four cases. Let&#39;s try to fix this by defining a &quot;default&quot; pattern:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderSuit = suitStr =&gt;
@@ -149,7 +149,7 @@ exports.parseAndRenderCard = parseAndRenderCard;
 <span class="hljs-comment">/* example */</span>
 <span class="hljs-string">"C"</span> |&gt; parseAndRenderSuit |&gt; Js.log;</code></pre>
 
-<pre><code class="hljs">▶ <span class="hljs-keyword">node</span> <span class="hljs-title">src</span>/demo.bs.js
+<pre><code class="hljs">▶ <span class="hljs-keyword">node</span><span class="hljs-identifier"> </span><span class="hljs-title">src</span>/demo.bs.js
 Clubs</code></pre>
 
 <p>Great! That&#39;s a good start. We have a function that correctly spells the intended suit, and will have a valid output for <em>every possible string input</em>. Let&#39;s do the same for the card value:</p>
@@ -178,8 +178,8 @@ Clubs</code></pre>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; {
   <span class="hljs-comment">/* Separating the input string: */</span>
   <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
 
   <span class="hljs-comment">/* Parsing and rendering the strings with our functions: */</span>
   <span class="hljs-keyword">let</span> renderedSuit = parseAndRenderSuit(suitStr);
@@ -199,12 +199,12 @@ Clubs</code></pre>
 <span class="hljs-comment">/* "Ace of Diamonds" */</span></code></pre>
 
 <p>A lot is happening here; let me go step by step:</p>
-<pre><code class="hljs"><span class="hljs-built_in">let</span> <span class="hljs-built_in">length</span> = Js.String.<span class="hljs-built_in">length</span>(cardStr);</code></pre>
+<pre><code class="hljs">let <span class="hljs-property">length</span> = Js.String.<span class="hljs-property">length</span>(cardStr);</code></pre>
 
 <p><code>Js.String.length</code> is a function that transforms a string into an integer that represents that string length. That&#39;s a part of the &quot;functional&quot; way of thinking: every piece of data we need is gathered from data transformations. For instance, if we want an upper case version of a string, instead of calling <code>str.toUpperCase()</code> we would call <code>Js.String.toUpperCase(str)</code>.</p>
 <p>Next we have:</p>
-<pre><code class="hljs"><span class="hljs-keyword">let</span> <span class="hljs-attr">suitStr</span> = Js.String.sliceToEnd(~<span class="hljs-attr">from=length</span> - <span class="hljs-number">1</span>, cardStr);
-<span class="hljs-keyword">let</span> <span class="hljs-attr">valueStr</span> = Js.String.slice(~<span class="hljs-attr">from=0,</span> ~<span class="hljs-attr">to_=length</span> - <span class="hljs-number">1</span>, cardStr);</code></pre>
+<pre><code class="hljs"><span class="hljs-keyword">let</span> suitStr = Js.<span class="hljs-built_in">String</span>.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
+<span class="hljs-keyword">let</span> valueStr = Js.<span class="hljs-built_in">String</span>.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);</code></pre>
 
 <p>The <code>~</code> character is used to denote &quot;labeled parameters&quot;. They are simply parameters that need to be named, and it means we can call them in whatever order we prefer. Calling <code>Js.String.sliceToEnd(cardStr, ~from=length - 1);</code> would yield the same result.</p>
 <p><code>Js.String</code> is the name of the module where the functions are located. We could also open the module at the beginning of the file, and use the functions directly:</p>
@@ -213,8 +213,8 @@ Clubs</code></pre>
 (...)
 
 <span class="hljs-keyword">let</span> length = length(cardStr);
-<span class="hljs-keyword">let</span> suitStr = sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-<span class="hljs-keyword">let</span> valueStr = slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);</code></pre>
+<span class="hljs-keyword">let</span> suitStr = sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+<span class="hljs-keyword">let</span> valueStr = slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);</code></pre>
 
 <p>This could be cleaner, but keep in mind that it also &quot;pollutes&quot; the global context, making all functions inside <code>Js.String</code> available.</p>
 <p><strong>A tip</strong>: make sure to take advantage of VS Code&#39;s auto-complete to explore all the modules and functions available to us! I found those three functions without googling, and it was a really nice workflow. It&#39;s good to learn things while staying in the same environment, which is another interesting side effect of working with a typed language.</p>
@@ -276,8 +276,8 @@ Clubs</code></pre>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; {
   <span class="hljs-comment">/* Separating the input string: */</span>
   <span class="hljs-keyword">let</span> length = length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
 
   <span class="hljs-comment">/* Parsing and rendering the strings with our functions: */</span>
   <span class="hljs-keyword">let</span> renderedSuit = parseAndRenderSuit(suitStr);
@@ -440,8 +440,8 @@ Card(Num(<span class="hljs-number">8</span>), Hearts) |&gt; renderCard |&gt; Js.
 <p>And, to finish the parser:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseCard = cardStr =&gt; {
   <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
 
   <span class="hljs-keyword">switch</span> (parseValue(valueStr), parseSuit(suitStr)) {
   | (Some(value), Some(suit)) =&gt; Card(value, suit) |&gt; some
@@ -561,8 +561,8 @@ type card = (...)
 <p>Let&#39;s first rename <code>parseCard</code> to <code>parseOrdinaryCard</code>, and then make sure we handle &quot;J&quot; in a new <code>parseCard</code> function:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseOrdinaryCard = cardStr =&gt; {
   <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
   <span class="hljs-keyword">switch</span> (parseValue(valueStr), parseSuit(suitStr)) {
   | (Some(value), Some(suit)) =&gt; OrdinaryCard(value, suit) |&gt; some
   | _ =&gt; None

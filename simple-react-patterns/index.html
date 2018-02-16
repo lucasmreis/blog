@@ -1,65 +1,55 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <title>Simple React Patterns | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
 
-<head>
-  <title>Simple React Patterns | Lucas Reis' Blog</title>
-  <link rel="stylesheet" href="../styles/reset.css" type="text/css">
-  <link rel="stylesheet" href="../styles/style.css" type="text/css">
-  <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
-  <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
-  <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
-  <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
 
-  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
-  <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
-  <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
-  <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
-  <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
-  <meta name="application-name" content="Lucas Reis' Blog" />
-  <meta name="msapplication-TileColor" content="#FFFFFF" />
-  <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
-  <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
-  <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
-  <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
-  <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
-
-</head>
-
-<body>
-  <div id="container">
-    <header>
-      <ul>
-        <li class="active">
-          <a href="../contents/">Blog</a>
-        </li>
-        <li>
-          <a href="../">About</a>
-        </li>
-      </ul>
-    </header>
-    <div id="main-text">
-      <h1>Simple React Patterns</h1>
-      <div class="lead">Dealing With Side-Effects In React</div>
-      <p>I&#39;ve been writing React applications for a few years now, and I&#39;ve noticed that some patterns tend to repeat
-        themselves. In this post, I&#39;ll review these patterns which will summarize about 99% of the React code I write
-        every day.</p>
-      <p>As a sample spec, let&#39;s build an app that fetches information about the Dagobah planet from Star Wars API and shows
-        it to the user.</p>
-      <h2 id="simple-everyday-patterns">Simple everyday patterns</h2>
-      <p>About 95% of the code written every day will be either simple view components or components with some logic. This is
-        the first pattern, and it&#39;s the easiest one:</p>
-      <h3 id="the-vanilla-or-mixed-pattern">The Vanilla or Mixed Pattern</h3>
-      <pre><code class="hljs js"><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dagobah</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+        <h1>Simple React Patterns</h1>
+        <div class="lead">Dealing With Side-Effects In React</div>
+        <p>I&#39;ve been writing React applications for a few years now, and I&#39;ve noticed that some patterns tend to repeat themselves. In this post, I&#39;ll review these patterns which will summarize about 99% of the React code I write every day.</p>
+<p>As a sample spec, let&#39;s build an app that fetches information about the Dagobah planet from Star Wars API and shows it to the user.</p>
+<h2 id="simple-everyday-patterns">Simple everyday patterns</h2>
+<p>About 95% of the code written every day will be either simple view components or components with some logic.  This is the first pattern, and it&#39;s the easiest one:</p>
+<h3 id="the-vanilla-or-mixed-pattern">The Vanilla or Mixed Pattern</h3>
+<pre><code class="hljs js"><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dagobah</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
   <span class="hljs-comment">// State:</span>
   <span class="hljs-comment">// { loading: true }</span>
   <span class="hljs-comment">// { loading: false, planet: { name, climate, terrain } }</span>
@@ -105,28 +95,12 @@
   }
 }</code></pre>
 
-      <p>This is a
-        <em>vanilla</em> React component, something you will write after reading the docs. Writing a component like this one
-        has its benefits: the main one is that it&#39;s easy, and it&#39;s self-contained. Plug a
-        <code>&lt;Dagobah /&gt;</code> anywhere in your application, and it will fetch and render the data.</p>
-      <p>
-        <strong>Side note</strong>: whenever we deal with fetching data from somewhere in a way that may take time or fail,
-        <em>we need to define views for those states</em>. We always need to define a view for the loading state and a view for
-        the error state. No network is perfect, and we need to prepare our app for problems! You can even define more intricate
-        logic, such as waiting milliseconds before showing the loading view to avoid blinking screens, and so on. This is
-        a great subject, but I won&#39;t go further in this blog post. I&#39;ll stick to the simple Loading / Error / Success
-        pattern in all the examples.</p>
-      <p>So, what problems could this component have? Let&#39;s say we want to use a style guide tool like
-        <a href="https://storybook.js.org/">Storybook</a> to render the component in all three states to be able to polish each version well or even showcase
-        it to other teams. Is it possible? What if I want to unit test the view without fetching the data every time, or
-        without mocking the requests? It&#39;s not going to happen.</p>
-      <p>Both the logic and the view are intertwined in one indivisible component, and that&#39;s why I also call this pattern
-        the
-        <em>Mixed Component</em> pattern. For a better workflow and simpler, more testable and more maintainable code, we need
-        to separate the logic and the view. And that&#39;s why this second pattern is probably the most useful, and the one
-        I try to use as much as possible:</p>
-      <h3 id="the-container-view-pattern">The Container / View Pattern</h3>
-      <pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PlanetView</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+<p>This is a <em>vanilla</em> React component, something you will write after reading the docs. Writing a component like this one has its benefits: the main one is that it&#39;s easy, and it&#39;s self-contained. Plug a <code>&lt;Dagobah /&gt;</code> anywhere in your application, and it will fetch and render the data.</p>
+<p><strong>Side note</strong>: whenever we deal with fetching data from somewhere in a way that may take time or fail, <em>we need to define views for those states</em>. We always need to define a view for the loading state and a view for the error state. No network is perfect, and we need to prepare our app for problems! You can even define more intricate logic, such as waiting milliseconds before showing the loading view to avoid blinking screens, and so on. This is a great subject, but I won&#39;t go further in this blog post. I&#39;ll stick to the simple Loading / Error / Success pattern in all the examples.</p>
+<p>So, what problems could this component have? Let&#39;s say we want to use a style guide tool like <a href="https://storybook.js.org/">Storybook</a> to render the component in all three states to be able to polish each version well or even showcase it to other teams. Is it possible? What if I want to unit test the view without fetching the data every time, or without mocking the requests? It&#39;s not going to happen.</p>
+<p>Both the logic and the view are intertwined in one indivisible component, and that&#39;s why I also call this pattern the <em>Mixed Component</em> pattern. For a better workflow and simpler, more testable and more maintainable code, we need to separate the logic and the view. And that&#39;s why this second pattern is probably the most useful, and the one I try to use as much as possible:</p>
+<h3 id="the-container-view-pattern">The Container / View Pattern</h3>
+<pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PlanetView</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
   renderLoading() {
     <span class="hljs-keyword">return</span> <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
   }
@@ -181,18 +155,12 @@
 
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> DagobahContainer;</code></pre>
 
-      <p>That&#39;s it. You&#39;ve just seen the majority of the code I write today. A simple view-only generic planet component,
-        and a logic-only component, that simply calls the view in its render function.</p>
-      <p>With the separated view component, we can very easily use it in a style guide, and fine tune each of the variants just
-        by providing different props. Also, we can easily test the view using
-        <a href="https://github.com/airbnb/enzyme">Enzyme</a> for instance.</p>
-      <p>Also, my experience shows that this pattern scales better: maybe one of the view states gets big, and it&#39;s straightforward
-        to extract it through a new component. On the logic side, it&#39;s also much easier to understand and change code
-        not polluted with view related stuff.</p>
-      <p>Notice that the view component has some &quot;if&quot; logic to define what to render. We can extract it into its own
-        component, in what could be considered a variant of the Container / View pattern:</p>
-      <h3 id="the-container-branch-view-pattern">The Container / Branch / View Pattern</h3>
-      <pre><code class="hljs js"><span class="hljs-keyword">const</span> LoadingView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
+<p>That&#39;s it. You&#39;ve just seen the majority of the code I write today. A simple view-only generic planet component, and a logic-only component, that simply calls the view in its render function.</p>
+<p>With the separated view component, we can very easily use it in a style guide, and fine tune each of the variants just by providing different props. Also, we can easily test the view using <a href="https://github.com/airbnb/enzyme">Enzyme</a> for instance.</p>
+<p>Also, my experience shows that this pattern scales better: maybe one of the view states gets big, and it&#39;s straightforward to extract it through a new component. On the logic side, it&#39;s also much easier to understand and change code not polluted with view related stuff.</p>
+<p>Notice that the view component has some &quot;if&quot; logic to define what to render. We can extract it into its own component, in what could be considered a variant of the Container / View pattern:</p>
+<h3 id="the-container-branch-view-pattern">The Container / Branch / View Pattern</h3>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> LoadingView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>Loading...<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
 
 <span class="hljs-keyword">const</span> ErrorView = () =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span>&gt;</span>I'm sorry! Please try again.<span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
 
@@ -238,17 +206,11 @@
 
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> DagobahContainer;</code></pre>
 
-      <p>Now the individual views are even more isolated, which can help the testing, showcasing and development workflow. Deciding
-        how much to break the view is best done with a case by case analysis, and the rule of thumb is to keep it simple
-        to understand. This can vary a lot, so use your best judgment!</p>
-      <p>The only situation that these initial patterns are not useful for is when we need to
-        <em>reuse the logic with different views</em>. These can be interesting cases, and there are two main ways of dealing
-        with them. Let start with the &quot;oldest&quot; one:</p>
-      <h2 id="higher-order-components">Higher Order Components</h2>
-      <p>Higher-Order Components (HOCs) are simply functions that take at least one component as a parameter and return another
-        component. Usually it adds props to the passed component after doing some work. For instance, we could have a
-        <code>withDagobah</code> HOC that fetches info about Dagobah and passes the result as a prop:</p>
-      <pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = PlanetViewComponent =&gt;
+<p>Now the individual views are even more isolated, which can help the testing, showcasing and development workflow. Deciding how much to break the view is best done with a case by case analysis, and the rule of thumb is to keep it simple to understand. This can vary a lot, so use your best judgment!</p>
+<p>The only situation that these initial patterns are not useful for is when we need to <em>reuse the logic with different views</em>. These can be interesting cases, and there are two main ways of dealing with them. Let start with the &quot;oldest&quot; one:</p>
+<h2 id="higher-order-components">Higher Order Components</h2>
+<p>Higher-Order Components (HOCs) are simply functions that take at least one component as a parameter and return another component. Usually it adds props to the passed component after doing some work. For instance, we could have a <code>withDagobah</code> HOC that fetches info about Dagobah and passes the result as a prop:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = PlanetViewComponent =&gt;
   <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
     state = { loading: <span class="hljs-literal">true</span> };
 
@@ -268,17 +230,10 @@
 
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> withDagobah(PlanetBranch);</code></pre>
 
-      <p>Now, all the planet fetching logic is inside this HOC, and is
-        <em>not dependent on any view logic</em>. It does not have any dependency on any particular React views, and it only
-        adds some props to a passed component. That way, you can, for instance, use it in all your routes, with different
-        components rendering planets differently.</p>
-      <p>
-        <strong>Note:</strong> if you use this HOC in two components being rendered on the same screen, it will fetch the data twice.
-        Fetching data is an expensive side effect, and usually, we try to do it as little as possible. I&#39;ll talk about
-        how to deal with it in the last pattern of this post, so keep on reading! :)</p>
-      <p>A HOC can also accept different parameters to define its behavior. We could have for instance a
-        <code>withPlanet</code> HOC that fetches different planets:</p>
-      <pre><code class="hljs js"><span class="hljs-keyword">const</span> hoc = withPlanet(<span class="hljs-string">'tatooine'</span>);
+<p>Now, all the planet fetching logic is inside this HOC, and is <em>not dependent on any view logic</em>. It does not have any dependency on any particular React views, and it only adds some props to a passed component. That way, you can, for instance, use it in all your routes, with different components rendering planets differently.</p>
+<p><strong>Note:</strong> if you use this HOC in two components being rendered on the same screen, it will fetch the data twice. Fetching data is an expensive side effect, and usually, we try to do it as little as possible. I&#39;ll talk about how to deal with it in the last pattern of this post, so keep on reading! :)</p>
+<p>A HOC can also accept different parameters to define its behavior. We could have for instance a <code>withPlanet</code> HOC that fetches different planets:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> hoc = withPlanet(<span class="hljs-string">'tatooine'</span>);
 <span class="hljs-keyword">const</span> Tatooine = hoc(PlanetView);
 
 <span class="hljs-comment">// somewhere else inside a component:</span>
@@ -290,23 +245,12 @@ render() {
   )</span>;
 }</code></pre>
 
-      <p>An example of a HOC with this ability is
-        <a href="https://github.com/ctrlplusb/react-sizeme">react-sizeme</a>. It receives an options object and a component and returns another component with a
-        <code>size</code> prop containing height, width, and position information.</p>
-      <p>So, what are the cons of HOCSs? The first painful one is that every view that will be used with the HOC has to understand
-        the shape of the props passed. In our example, we add
-        <code>loading</code>,
-        <code>error</code> and
-        <code>planet</code>, and our views need to be prepared for it. Sometimes we have to have a component whose only purpose is transforming
-        props into the intended ones, and that feels inefficient (interestingly, one of the most used HOCs does not have
-        this problem:
-        <a href="https://github.com/reactjs/react-redux">react-redux</a>&#39;s
-        <code>connect</code>, because the user decides the shape of the props passed to the view component).</p>
-      <p>Some HOCs will always lead to branched views, like our
-        <code>withDagobah</code> that almost always will be viewed with Loading, Error and Success views. That can give rise to a HOC variant:</p>
-      <h3 id="variation-branching-higher-order-components">Variation: Branching Higher Order Components</h3>
-      <p>We can put the branching logic inside the HOC:</p>
-      <pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = ({
+<p>An example of a HOC with this ability is <a href="https://github.com/ctrlplusb/react-sizeme">react-sizeme</a>. It receives an options object and a component and returns another component with a <code>size</code> prop containing height, width, and position information.</p>
+<p>So, what are the cons of HOCSs? The first painful one is that every view that will be used with the HOC has to understand the shape of the props passed. In our example, we add <code>loading</code>, <code>error</code> and <code>planet</code>, and our views need to be prepared for it. Sometimes we have to have a component whose only purpose is transforming props into the intended ones, and that feels inefficient (interestingly, one of the most used HOCs does not have this problem: <a href="https://github.com/reactjs/react-redux">react-redux</a>&#39;s <code>connect</code>, because the user decides the shape of the props passed to the view component).</p>
+<p>Some HOCs will always lead to branched views, like our <code>withDagobah</code> that almost always will be viewed with Loading, Error and Success views. That can give rise to a HOC variant:</p>
+<h3 id="variation-branching-higher-order-components">Variation: Branching Higher Order Components</h3>
+<p>We can put the branching logic inside the HOC:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = ({
   LoadingViewComponent,
   ErrorViewComponent,
   PlanetViewComponent
@@ -341,17 +285,10 @@ render() {
   PlanetViewComponent: PlanetView
 });</code></pre>
 
-      <p>There&#39;s a trade-off here: even though the views are simpler, there&#39;s more logic inside the HOC. It&#39;s only
-        worth it if you know that more than one view is going to be used and that the branching logic will be the same every
-        time. An example of a branching HOC is
-        <a href="https://github.com/thejameskyle/react-loadable">react-loadable</a>, which accepts both a dynamically loaded component and a Loading component that handles both the
-        loading and the error state.</p>
-      <h2 id="render-props">Render Props</h2>
-      <p>There is another widely used pattern that separates the logic from the view, the Render Props (also known as Children
-        as Function).
-        <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce">Some people swear by it</a>,and some people
-        <a href="http://americanexpress.io/faccs-are-an-antipattern/">consider it an anti-pattern</a>. Opinions aside, this is how our Dagobah logic would be implemented as a Render Prop:</p>
-      <pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DagobahRP</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+<p>There&#39;s a trade-off here: even though the views are simpler, there&#39;s more logic inside the HOC. It&#39;s only worth it if you know that more than one view is going to be used and that the branching logic will be the same every time. An example of a branching HOC is <a href="https://github.com/thejameskyle/react-loadable">react-loadable</a>, which accepts both a dynamically loaded component and a Loading component that handles both the loading and the error state.</p>
+<h2 id="render-props">Render Props</h2>
+<p>There is another widely used pattern that separates the logic from the view, the Render Props (also known as Children as Function). <a href="https://cdb.reacttraining.com/use-a-render-prop-50de598f11ce">Some people swear by it</a>,and some people <a href="http://americanexpress.io/faccs-are-an-antipattern/">consider it an anti-pattern</a>. Opinions aside, this is how our Dagobah logic would be implemented as a Render Prop:</p>
+<pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DagobahRP</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
   state = { loading: <span class="hljs-literal">true</span> };
 
   componentDidMount() {
@@ -383,25 +320,12 @@ render() {
   /&gt;
 );</code></pre>
 
-      <p>
-        <strong>Note:</strong> in the Render Props debate, the performance issue has been raised many times. This post shows how
-        <a href="https://cdb.reacttraining.com/react-inline-functions-and-performance-bdff784f5578">it&#39;s not a straightforward issue</a>. Anytime we talk about performance, we should also be talking about measurements.
-        If you have any doubts about performance on a specific issue, load your profilers and measure it! :)</p>
-      <p>I tend to feel that the benefits of HOCs versus Render Props vary from situation to situation. At my previous job,
-        we tended to write more Render Props, and at my current job we tend to write more HOCs, and I don&#39;t feel those
-        choices made either of the teams more productive, or the code more readable in general. I feel one pattern is better
-        than the other whenever I see it in the code, but as I said, it&#39;s on a case by case basis. As always, use your
-        better judgment.</p>
-      <p>The first time I saw the Render Props pattern was in the
-        <a href="https://github.com/chenglou/react-motion">React Motion library</a>.
-        <a href="https://reacttraining.com/react-router/web/api/Route/render-func">React Router v4</a> is another large library implementing it. The two authors are probably the most influential render
-        props enthusiasts, and they have a couple of other
-        <a href="https://reacttraining.com/react-idle/">small libraries</a>
-        <a href="https://reacttraining.com/react-network/">using it</a>.</p>
-      <p>Render props can also lead to a lot of branching views code, so I feel I also should register here the Branching Render
-        Props variant:</p>
-      <h3 id="variation-branching-render-props">Variation: Branching Render Props</h3>
-      <pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DagobahRP</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+<p><strong>Note:</strong> in the Render Props debate, the performance issue has been raised many times. This post shows how <a href="https://cdb.reacttraining.com/react-inline-functions-and-performance-bdff784f5578">it&#39;s not a straightforward issue</a>. Anytime we talk about performance, we should also be talking about measurements. If you have any doubts about performance on a specific issue, load your profilers and measure it! :)</p>
+<p>I tend to feel that the benefits of HOCs versus Render Props vary from situation to situation. At my previous job, we tended to write more Render Props, and at my current job we tend to write more HOCs, and I don&#39;t feel those choices made either of the teams more productive, or the code more readable in general. I feel one pattern is better than the other whenever I see it in the code, but as I said, it&#39;s on a case by case basis. As always, use your better judgment.</p>
+<p>The first time I saw the Render Props pattern was in the <a href="https://github.com/chenglou/react-motion">React Motion library</a>. <a href="https://reacttraining.com/react-router/web/api/Route/render-func">React Router v4</a> is another large library implementing it. The two authors are probably the most influential render props enthusiasts, and they have a couple of other <a href="https://reacttraining.com/react-idle/">small libraries</a> <a href="https://reacttraining.com/react-network/">using it</a>.</p>
+<p>Render props can also lead to a lot of branching views code, so I feel I also should register here the Branching Render Props variant:</p>
+<h3 id="variation-branching-render-props">Variation: Branching Render Props</h3>
+<pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DagobahRP</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
   state = { loading: <span class="hljs-literal">true</span> };
 
   componentDidMount() {
@@ -431,22 +355,15 @@ render() {
     renderError={error =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>}
     renderPlanet={planet =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>}
   /&gt;
-);</code></pre>
+)</span>;</code></pre>
 
-      <p>And that&#39;s it.</p>
-      <h2 id="what-if-the-side-effects-are-costly-">What if the side effects are costly?</h2>
-      <p>In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if
-        possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch
-        the planet data only once, and make it available to view components through HOCs or render props. How would we achieve
-        it?</p>
-      <h2 id="the-provider-pattern">The Provider Pattern</h2>
-      <p>This is one of the most powerful patterns in React. It&#39;s relatively simple: you gather your data, put it in the
-        React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the
-        intended components. If you don&#39;t know what the context object is in React, please
-        <a href="https://reactjs.org/docs/context.html">head to the official docs</a>.</p>
-      <p>Let&#39;s implement it for our Dagobah example. First, we need to implement the
-        <code>DagobahProvider</code>:</p>
-      <pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
+<p>And that&#39;s it.</p>
+<h2 id="what-if-the-side-effects-are-costly-">What if the side effects are costly?</h2>
+<p>In a lot of situations, the logic provided by the HOC or Render Prop leads to costly code that we want to avoid if possible. The most common case is fetching data remotely. In our Dagobah case, we would like for instance to fetch the planet data only once, and make it available to view components through HOCs or render props. How would we achieve it?</p>
+<h2 id="the-provider-pattern">The Provider Pattern</h2>
+<p>This is one of the most powerful patterns in React. It&#39;s relatively simple: you gather your data, put it in the React context object, and then in a HOC (or Render Prop) you access the context object and pass it as a prop to the intended components. If you don&#39;t know what the context object is in React, please <a href="https://reactjs.org/docs/context.html">head to the official docs</a>.</p>
+<p>Let&#39;s implement it for our Dagobah example. First, we need to implement the <code>DagobahProvider</code>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
 <span class="hljs-keyword">import</span> PropTypes <span class="hljs-keyword">from</span> <span class="hljs-string">"prop-types"</span>;
 
 <span class="hljs-comment">// IMPORTANT: we need to define childContextTypes</span>
@@ -486,16 +403,9 @@ render() {
   }
 }</code></pre>
 
-      <p>The provider uses the same logic we had before, and it&#39;s handled in the
-        <code>componentDidMount</code> method. The only difference to the previous implementations is that it adds a
-        <code>dagobah</code> property to the context object, via the
-        <code>getChildContext</code> method. Then, it simply renders its children by returning the children props in the render method.</p>
-      <p>Now, any component under the provider will have access to the
-        <code>dagobah</code> object inside the context. But accessing the context object in a component is usually considered bad practice, since
-        the context is kind of an &quot;invisible&quot; input, and it makes testing and reasoning about the code a little
-        bit tougher. Let&#39;s implement a HOC to access the context and inject the
-        <code>dagobah</code> object in a component props:</p>
-      <pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = PlanetViewComponent =&gt;
+<p>The provider uses the same logic we had before, and it&#39;s handled in the <code>componentDidMount</code> method. The only difference to the previous implementations is that it adds a <code>dagobah</code> property to the context object, via the <code>getChildContext</code> method. Then, it simply renders its children by returning the children props in the render method.</p>
+<p>Now, any component under the provider will have access to the <code>dagobah</code> object inside the context. But accessing the context object in a component is usually considered bad practice, since the context is kind of an &quot;invisible&quot; input, and it makes testing and reasoning about the code a little bit tougher. Let&#39;s implement a HOC to access the context and inject the <code>dagobah</code> object in a component props:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> withDagobah = PlanetViewComponent =&gt;
   <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
     static contextTypes = contextTypes;
 
@@ -505,17 +415,14 @@ render() {
     }
   };</code></pre>
 
-      <p>Easy, right? Notice the
-        <code>contextTypes</code> property: we need it to be defined with the same schema of the provider to be able to access the context. Then,
-        we spread it to the passed component. That way, we can use as many
-        <code>withDagobah</code> in the same screen, and data will only be fetched once!</p>
-      <p>And of course, we could also access the context through a Render Props:</p>
-      <pre><code class="hljs js"><span class="hljs-keyword">const</span> DagobahRp = ({ render }, { dagobah }) =&gt; render(dagobah);
+<p>Easy, right? Notice the <code>contextTypes</code> property: we need it to be defined with the same schema of the provider to be able to access the context. Then, we spread it to the passed component. That way, we can use as many <code>withDagobah</code> in the same screen, and data will only be fetched once!</p>
+<p>And of course, we could also access the context through a Render Props:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> DagobahRp = ({ render }, { dagobah }) =&gt; render(dagobah);
 
 DagobahRp.contextTypes = contextTypes;</code></pre>
 
-      <p>Very easy too! And this is how we could use it in an application:</p>
-      <pre><code class="hljs js"><span class="hljs-keyword">const</span> DagobahPlanet = withDagobah(View);
+<p>Very easy too! And this is how we could use it in an application:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> DagobahPlanet = withDagobah(View);
 
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Component</span> </span>{
   render() {
@@ -532,65 +439,48 @@ DagobahRp.contextTypes = contextTypes;</code></pre>
   }
 }</code></pre>
 
-      <p>Dagobah is going to be rendered six times, and data will only be fetched once.</p>
-      <p>A lot of libraries use the Provider pattern, including the aforementioned
-        <a href="https://github.com/reactjs/react-redux">react-redux</a> and
-        <a href="https://reacttraining.com/react-router/web/api/Route/render-func">React Router v4</a>.
-        <a href="https://github.com/yahoo/react-intl">React-intl</a> is also a good example of the pattern.</p>
-      <p>Going back to the percentages, I would say my React code (and most I&#39;ve come across) is about 99% written using
-        those patterns. The other 1% would be weird integration code with some non-React libraries. Also, most of the main
-        React libraries will fall in one of the categories above! Learn how they work, why they exist and you&#39;ll understand
-        most of the React world :)</p>
-      <h2 id="summary">Summary</h2>
-      <p>Regular React components work well most of the time, but it&#39;s better to try separating logic from view. If you
-        need to reuse logic for different view components, use HOCs or Render Props. If the logic involves expensive side
-        effects that should only run once, use a provider.</p>
-      <p>The code used in this post can
-        <a href="https://github.com/lucasmreis/react-patterns/tree/master/src/planet">be found here</a>.</p>
+<p>Dagobah is going to be rendered six times, and data will only be fetched once.</p>
+<p>A lot of libraries use the Provider pattern, including the aforementioned <a href="https://github.com/reactjs/react-redux">react-redux</a> and <a href="https://reacttraining.com/react-router/web/api/Route/render-func">React Router v4</a>. <a href="https://github.com/yahoo/react-intl">React-intl</a> is also a good example of the pattern.</p>
+<p>Going back to the percentages, I would say my React code (and most I&#39;ve come across) is about 99% written using those patterns. The other 1% would be weird integration code with some non-React libraries. Also, most of the main React libraries will fall in one of the categories above! Learn how they work, why they exist and you&#39;ll understand most of the React world :)</p>
+<h2 id="summary">Summary</h2>
+<p>Regular React components work well most of the time, but it&#39;s better to try separating logic from view. If you need to reuse logic for different view components, use HOCs or Render Props. If the logic involves expensive side effects that should only run once, use a provider.</p>
+<p>The code used in this post can <a href="https://github.com/lucasmreis/react-patterns/tree/master/src/planet">be found here</a>.</p>
 
-      <div class="signature">October 8, 2017.</div>
+        <div class="signature">October 8, 2017.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'simple-react-patterns';
+          var disqus_title = 'Simple React Patterns';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
     </div>
 
-    <!-- DISQUS -->
-    <div id="disqus_thread"></div>
-    <script type="text/javascript">
-      /* * * CONFIGURATION VARIABLES * * */
-      var disqus_shortname = 'lucasmreis';
-      var disqus_identifier = 'simple-react-patterns';
-      var disqus_title = 'Simple React Patterns';
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-      /* * * DON'T EDIT BELOW THIS LINE * * */
-      (function () {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-      })();
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
     </script>
-    <noscript>Please enable JavaScript to view the
-      <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
-    </noscript>
 
-    <footer>
-      by Lucas Reis |
-      <a href="https://twitter.com/iamlucasmreis">Twitter</a> |
-      <a href="https://github.com/lucasmreis">GitHub</a> |
-      <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
-    </footer>
-  </div>
-
-  <!-- GOOGLE ANALYTICS -->
-  <script>
-    (function (i, s, o, g, r, a, m) {    
-i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
-      (i[r].q = i[r].q || []).push(arguments)
-    }, i[r].l = 1 * new Date(); a = s.createElement(o),
-      m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
-    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-
-    ga('create', 'UA-60280937-1', 'auto');
-    ga('send', 'pageview');
-  </script>
-
-</body>
-
+  </body>
 </html>

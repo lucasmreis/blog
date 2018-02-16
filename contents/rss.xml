@@ -4,11 +4,384 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Sun, 07 Jan 2018 21:39:36 GMT</lastBuildDate>
+        <lastBuildDate>Fri, 16 Feb 2018 04:05:06 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[Learning ReasonML, part 2]]></title>
+            <description><![CDATA[<p>When learning a new language, it&#39;s great to have the opportunity to write a small module and be able to integrate it with a real world application. Fortunately, one of the main objectives of the ReasonML team is smooth JS integration, so let&#39;s see if it delivers!</p>
+<h2 id="the-project">The Project</h2>
+<p>Let&#39;s start with an existing React application. <a href="https://github.com/lucasmreis/learning-reasonml/tree/master/part-2">Here&#39;s the code</a>, and <a href="https://simple-deck-example.netlify.com/">here&#39;s the working app</a>. The app &quot;creates&quot; a deck of cards using <a href="http://deckofcardsapi.com/">this great open API</a>, and then, the user can draw three cards at a time using a button. The cards are drawn face down, and turn face up when clicked.</p>
+<p>This project is interesting because it has some key real world features: global and local state handling, and remote data fetching both on startup and user interaction. In this post I&#39;ll integrate ReasonML code in three different ways: first with a function (the one we <a href="http://lucasmreis.github.io/blog/learning-reasonml-part-1/">wrote in the first part of this series</a>), then with a stateless React component, and finally with a stateful React component.</p>
+<h2 id="having-reasonml-files-in-a-js-project">Having ReasonML Files In A JS Project</h2>
+<p>We want our workflow to be as simple as possible. I like the idea of creating <code>.re</code> files throughout the project where I need them, and automatically compiling them to <code>.bs.js</code> files in the same location. To achieve that, let&#39;s first install <code>bs-platform</code> to <a href="https://github.com/lucasmreis/learning-reasonml/tree/master/part-2">our react application</a> with npm:</p>
+<pre><code class="hljs">$ npm install --<span class="hljs-built_in">save</span>-<span class="hljs-built_in">dev</span> bs-platform</code></pre>
+
+<p>Then we create <code>bsconfig.json</code> in the root folder:</p>
+<pre><code class="hljs json">{
+  "<span class="hljs-attribute">name</span>": <span class="hljs-value"><span class="hljs-string">"simple-deck"</span></span>,
+  "<span class="hljs-attribute">version</span>": <span class="hljs-value"><span class="hljs-string">"0.1.0"</span></span>,
+  "<span class="hljs-attribute">sources</span>": <span class="hljs-value">[
+    {
+      "<span class="hljs-attribute">dir</span>": <span class="hljs-value"><span class="hljs-string">"src"</span></span>,
+      "<span class="hljs-attribute">subdirs</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
+    </span>}
+  ]</span>,
+  "<span class="hljs-attribute">package-specs</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">module</span>": <span class="hljs-value"><span class="hljs-string">"es6"</span></span>,
+    "<span class="hljs-attribute">in-source</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
+  </span>}</span>,
+  "<span class="hljs-attribute">suffix</span>": <span class="hljs-value"><span class="hljs-string">".bs.js"</span></span>,
+  "<span class="hljs-attribute">bs-dependencies</span>": <span class="hljs-value">[]</span>,
+  "<span class="hljs-attribute">namespace</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+  "<span class="hljs-attribute">refmt</span>": <span class="hljs-value"><span class="hljs-number">3</span>
+</span>}</code></pre>
+
+<p>In this file we&#39;re saying that we should compile every file in the <code>src</code> folder and subfolders. Also, since our project is a <a href="https://github.com/facebook/create-react-app">Create React App</a> project that uses webpack for bundling, we&#39;re compiling to ES6 modules. I found that the official documentation <a href="https://bucklescript.github.io/docs/en/build-configuration.html">has a good section on the config file</a>.</p>
+<p>Now we only need to update the npm scripts to take ReasonML into account:</p>
+<pre><code class="hljs js">(...)
+
+<span class="hljs-string">"scripts"</span>: {
+    <span class="hljs-string">"start:reason"</span>: <span class="hljs-string">"bsb -make-world -w"</span>,
+    <span class="hljs-string">"build"</span>: <span class="hljs-string">"bsb -make-world &amp;&amp; react-scripts build"</span>,
+
+(...)</code></pre>
+
+<p>Open two terminals, run <code>npm start</code> in one of them and <code>npm run start:reason</code> in the other one, and we&#39;re ready to start writing ReasonML in our React project!</p>
+<h2 id="integrating-a-function">Integrating A Function</h2>
+<p>First, let&#39;s look at the structure of the application:</p>
+<ul>
+<li>The app follows CRA initial structure: all application code is inside the <code>src</code> folder, and the React setup is in the <code>index.js</code> file.</li>
+<li><code>App.js</code> is the main container; it fetches data from the deck API, stores it, and exposes a <code>draw</code> action that fetches three new cards:</li>
+</ul>
+<pre><code class="hljs js"><span class="hljs-comment">// State shape:</span>
+<span class="hljs-comment">// { status: 'CREATING_DECK' }</span>
+<span class="hljs-comment">// { status: 'WAITING_FOR_USER', deckId, cards: [{ image, code }], remaining }</span>
+<span class="hljs-comment">// { status: 'DRAWING_CARDS', deckId, cards, remaining }</span>
+<span class="hljs-comment">// { status: 'FINISHED', cards }</span>
+<span class="hljs-comment">// { status: 'ERROR' }</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Component</span> </span>{
+  state = { status: <span class="hljs-string">"CREATING_DECK"</span> };
+
+  componentDidMount() {
+    <span class="hljs-comment">// fetch a new deck of cards</span>
+    <span class="hljs-comment">// if success, set state to WAITING_FOR_USER</span>
+    <span class="hljs-comment">// else set state to ERROR</span>
+  }
+
+  draw = <span class="hljs-keyword">async</span> () =&gt; {
+    <span class="hljs-comment">// set state to DRAWING_CARDS</span>
+    <span class="hljs-comment">// fetch three new cards</span>
+    <span class="hljs-comment">// if success, set state to:</span>
+    <span class="hljs-comment">// - WAITING_FOR_USER if there are still remaining cards in the deck</span>
+    <span class="hljs-comment">// - FINISHED if there are not</span>
+    <span class="hljs-comment">// else set state to ERROR</span>
+  };
+
+  render() {
+    <span class="hljs-comment">// render action button that triggers the draw action on click</span>
+    <span class="hljs-comment">// render collection of Card components</span>
+  }
+}</code></pre>
+
+<ul>
+<li>The Card component is defined in the <code>components/Card/index.js</code> file:</li>
+</ul>
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-string">"./Card.css"</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">const</span> flippedClass = <span class="hljs-keyword">this</span>.state.flipped ? <span class="hljs-string">"Card flipped"</span> : <span class="hljs-string">"Card"</span>;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">{flippedClass}</span> <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+          <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">{code}</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">{imageSource}</span> /&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
+  }
+}
+
+<span class="hljs-keyword">export</span> { Card };</code></pre>
+
+<p>Each card has a <code>flipped</code> boolean state that is initialized as true. The card is rendered either in a flipped state or normal state using CSS classes. <code>flipped</code> changes when the user clicks the card. Simple, direct React code.</p>
+<p>An initial, super low risk place to integrate ReasonML could be the image&#39;s alt attribute. <code>code</code> is a value returned from the Deck API, that looks like &quot;6C&quot;, &quot;QH&quot; or &quot;AD&quot;. In <a href="http://lucasmreis.github.io/blog/learning-reasonml-part-1/">part 1 of our series</a> we implemented a function that transforms a string like this into a complete &quot;Six of Clubs&quot; or &quot;Queen of Hearts&quot;, so let&#39;s use it!</p>
+<p>Create a <code>ParseAndRenderCard.re</code> file in the same folder as the Card component, and copy and paste the code into it. If Bucklescript is setup correctly and running, you should already be seeing a <code>ParseAndRenderCard.bs.js</code> file in the same folder (I&#39;m a little bit scared with how fast this compiler is, hehe). I added this to the end of the file to be able to export the function:</p>
+<pre><code class="hljs js">(...)
+
+<span class="hljs-keyword">let</span> parseAndRender = cardStr =&gt;
+  cardStr
+  |&gt; Parser.parseCard
+  |&gt; Option.map(RenderToString.renderCard)
+  |&gt; Option.withDefault(RenderToString.defaultErrorCard);</code></pre>
+
+<p>And we can see that the end of the compiled file looks something like this:</p>
+<pre><code class="hljs js">(...)
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseAndRender</span>(<span class="hljs-params">cardStr</span>) </span>{
+  <span class="hljs-keyword">return</span> withDefault(defaultErrorCard, map(renderCard, parseCard(cardStr)));
+}
+
+<span class="hljs-keyword">export</span> {
+  Parser         ,
+  RenderToString ,
+  Option         ,
+  parseAndRender ,
+}</code></pre>
+
+<p><code>parseAndRender</code> was exactly what we needed. Now, on the <code>Card/index.js</code> file, import the function and use it:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> { parseAndRender } <span class="hljs-keyword">from</span> <span class="hljs-string">"./ParseAndRenderCard.bs"</span>;
+
+(...)
+
+render() {
+  (...)
+
+    &lt;img alt={parseAndRender(code)} src={imageSource} /&gt;
+
+  (...)
+}</code></pre>
+
+<p>And we&#39;re done! That&#39;s it, we added a ReasonML function to our JS app, in three simple steps:</p>
+<ol>
+<li>Install and setup the Bucklescript/ReasonML compiler</li>
+<li>Write a ReasonML function in <code>.re</code> files alongside your js files, and let the compiler generate the <code>.js</code> files</li>
+<li>Import the generated JS function into your code</li>
+</ol>
+<p>ML languages like ReasonML are great for writing intricate logic, so I think that writing functions in them and importing to your React project can already bring benefits. But let&#39;s take it a step further and write a whole stateless component in ReasonML.</p>
+<p>The final code for the project with a ReasonML function integration <a href="https://github.com/lucasmreis/learning-reasonml/tree/integrating_function/part-2">can be found here</a>.</p>
+<h2 id="integrating-a-stateless-component">Integrating A Stateless Component</h2>
+<p>Now let&#39;s create a React component using ReasonML. As always, let&#39;s start simple - I think a stateless component is a good opportunity for that. First of all, we need to refactor our Card component - let&#39;s use the Container / View pattern <a href="http://lucasmreis.github.io/blog/simple-react-patterns/">described in this blog post</a>. Remember the card component:</p>
+<pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">const</span> flippedClass = <span class="hljs-keyword">this</span>.state.flipped ? <span class="hljs-string">"Card flipped"</span> : <span class="hljs-string">"Card"</span>;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">{flippedClass}</span> <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+          <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">{parseAndRender(code)}</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">{imageSource}</span> /&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
+  }
+}</code></pre> 
+
+<p>The refactor is straightforward:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> CardView = ({ code, imageSource, flipped, onClick }) =&gt; (
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">{flipped</span> ? "<span class="hljs-attribute">Card</span> <span class="hljs-attribute">flipped</span>" <span class="hljs-attribute">:</span> "<span class="hljs-attribute">Card</span>"} <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{onClick}</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">{parseAndRender(code)}</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">{imageSource}</span> /&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+)</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+        <span class="hljs-attribute">code</span>=<span class="hljs-value">{code}</span>
+        <span class="hljs-attribute">imageSource</span>=<span class="hljs-value">{imageSource}</span>
+        <span class="hljs-attribute">flipped</span>=<span class="hljs-value">{this.state.flipped}</span>
+        <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>
+      /&gt;</span>
+    )</span>;
+  }
+}</code></pre>
+
+<p>We&#39;re going to rewrite the CardView component. We&#39;re going to use the <a href="https://reasonml.github.io/reason-react/">ReasonReact</a> wrapper from React, which is the current standard way of writing React in ReasonML. After <code>npm install --save reason-react</code>, change the <code>bsconfig.json</code> file to include these two properties:</p>
+<pre><code class="hljs js">{
+  (...) 
+
+  <span class="hljs-string">"reason"</span>: { <span class="hljs-string">"react-jsx"</span>: <span class="hljs-number">2</span> },
+  <span class="hljs-string">"bs-dependencies"</span>: [<span class="hljs-string">"reason-react"</span>],
+
+  (...)
+}</code></pre>
+
+<p>Now we&#39;re ready to start coding. Create a <code>CardView.re</code> file in the Card folder, and copy this code into it:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> component = ReasonReact.statelessComponent(<span class="hljs-string">"CardView"</span>);
+
+<span class="hljs-keyword">let</span> make = (~code, ~imageSource, ~flipped, ~onClick, _children) =&gt; {
+  ...component,
+  render: _self =&gt;
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">(flipped</span> ? "<span class="hljs-attribute">Card</span> <span class="hljs-attribute">flipped</span>" <span class="hljs-attribute">:</span> "<span class="hljs-attribute">Card</span>") <span class="hljs-attribute">onClick</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">(ParseAndRenderCard.parseAndRender(code))</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">imageSource</span> /&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+};</span></code></pre>
+
+<p>Let me explain what&#39;s going on here. Every component in ReasonReact is defined by a <code>make</code> function. This function receives props and children as input, and returns a record. In our case, we created a &quot;base&quot; stateless record with the <code>statelessComponent</code> function, and our <code>make</code> function returns it with the <code>render</code> field being overriden.</p>
+<p>It feels a little bit like a regular javascript React component, with some interesting differences:</p>
+<ul>
+<li>The components props are defined as <a href="https://reasonml.github.io/docs/en/function.html">labeled parameters</a></li>
+<li>The <code>_</code> prefix was used as a convention for unused parameters</li>
+<li>We don&#39;t need to enclose the passed props in <code>{</code> and <code>}</code>. Example: <code>src=imageSource</code></li>
+<li>We can use shorthand names for props. Example: <code>onClick</code> in the first <code>div</code></li>
+</ul>
+<p>The rest feels pretty similar to Javascript, with the benefits of Ocaml&#39;s strong type. Sweet!</p>
+<p>This is all we would need if we were using this component inside ReasonML. But since we&#39;re going to call it inside a regular javascript React component, we need to have an extra step. ReasonReact has a <code>wrapReasonForJs</code> function that serves this purpose:</p>
+<pre><code class="hljs js">let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =&gt;
+    make(
+      ~code=jsProps##code,
+      ~imageSource=jsProps##imageSource,
+      ~flipped=Js.to_bool(jsProps##flipped),
+      ~onClick=jsProps##onClick,
+      [||]
+    )
+);</code></pre> 
+
+<p>The <code>wrapReasonForJs</code> function receives a component as a parameter, and a function that maps those dynamic js props to ReasonML typed props. The component should be the base one we used in our make function. The function should call make itself, with the transformed props that were passed to the component in JS. Some comments on it:</p>
+<ul>
+<li><code>~component</code> is a shorthand for <code>~component=component</code></li>
+<li><code>##</code> is the way to get the value of a property in a regular JS object. So <code>jsProps##code</code> is compiled to <code>jsProps.code</code></li>
+<li>Boolean ReasonML types are <em>not</em> represented as <code>true</code> or <code>false</code> in Javascript! That&#39;s why we need to use <code>Js.to_bool</code> to convert <code>jsProps##flipped</code></li>
+<li>Arrays are represented by <code>[|</code> and <code>|]</code> in ReasonML. If we use <code>[</code> and <code>]</code>, we&#39;re actually creating a <em>list</em>. The <a href="https://reasonml.github.io/docs/en/list-and-array.html">docs explain the difference well</a>, and I suggest you play a little with both in <a href="https://reasonml.github.io/en/try.html">Try Reason</a> to see the differences in the compiled code!</li>
+</ul>
+<p>Now we can go to our <code>Card/index.html</code> file, erase the previous CardView component, and use our brand new ReasonML one:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-string">"./Card.css"</span>;
+<span class="hljs-keyword">import</span> CardView <span class="hljs-keyword">from</span> <span class="hljs-string">"./CardView.bs"</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+        <span class="hljs-attribute">code</span>=<span class="hljs-value">{code}</span>
+        <span class="hljs-attribute">imageSource</span>=<span class="hljs-value">{imageSource}</span>
+        <span class="hljs-attribute">flipped</span>=<span class="hljs-value">{this.state.flipped}</span>
+        <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>
+      /&gt;</span>
+    )</span>;
+  }
+}
+
+<span class="hljs-keyword">export</span> { Card };</code></pre>
+
+<p>And that&#39;s it - our application should be running flawlessly with the new code!</p>
+<h2 id="integrating-a-stateful-component">Integrating A Stateful Component</h2>
+<p>Stateful components in ReasonReact are interesting - we define the way state is updated by defining actions and a reducer. Sounds familiar, right? Yes, there&#39;s a mini-redux in every component :) It&#39;s a great pattern, and feels even better with the compiler help from the strong types.</p>
+<p>Our stateful component is simple: our cards start out face down, and if a user clicks one of them, they&#39;re flipped over. So let&#39;s start by creating a <code>CardContainer.re</code> file alongside <code>CardView.re</code>, and describe our action and our state:</p>
+<pre><code class="hljs js">type action =
+  | Flip;
+
+type state = {flipped: bool};</code></pre>
+
+<p>Our action is usually defined as a <a href="https://reasonml.github.io/docs/en/variant.html">Variant</a>. In our case, the only action the user can take is flipping a card, so we only have the one case <code>Flip</code>. Our state is going to be a record with a single boolean field, that represents a card being flipped or not. </p>
+<p>Now we can define our component. Remember, first we create a base component record, and then a make function. For stateful components we use <code>ReasonReact.reducerComponent</code> base and we need to override not only <code>render</code>, but also <code>initialState</code> and <code>reducer</code>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> component = ReasonReact.reducerComponent(<span class="hljs-string">"CardContainer"</span>);
+
+<span class="hljs-keyword">let</span> make = (~code, ~imageSource, _self) =&gt; {
+  ...component,
+  initialState: () =&gt; {flipped: <span class="hljs-literal">true</span>},
+  reducer: (_action, state) =&gt; ReasonReact.Update({flipped: ! state.flipped}),
+  render: self =&gt;
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+      <span class="hljs-attribute">code</span>
+      <span class="hljs-attribute">imageSource</span>
+      <span class="hljs-attribute">flipped</span>=<span class="hljs-value">self.state.flipped</span>
+      <span class="hljs-attribute">onClick</span>=<span class="hljs-value">(_event</span> =&gt;</span> self.send(Flip))
+    /&gt;
+};</span></code></pre>
+
+<p><code>initialState</code> is a simple function that returns a record of the type <code>state</code>. In our case, our cards start flipped. </p>
+<p><code>reducer</code> is a function that takes an action and the current state, and returns a value of the <code>ReasonReact.update</code> variant type. We&#39;re returning the <code>ReasonReact.Update(state)</code> case, which results in a simple state update without side effects, which is what we want to happen when the user flips a card. We&#39;ll talk more about the <code>ReasonReact.update</code> type in the next part of this series!</p>
+<p>The last part of this component is the callback defined for <code>onClick</code>. We&#39;re using <code>self.send</code>, which in fact &quot;sends&quot; the <code>Flip</code> action to the reducer. And our component is complete!</p>
+<p>See that our render function is making reference to <code>CardView</code>. Since we&#39;re in ReasonML land, we do not need a wrapper for the card view anymore, so we can delete it from the <code>CardView</code> file. But since the card container will be imported in JS, we need to wrap it instead:</p>
+<pre><code class="hljs js">let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =&gt;
+    make(~code=jsProps##code, ~imageSource=jsProps##imageSource, [||])
+  );</code></pre>
+
+<p>That&#39;s all we need. The whole file should look like this now:</p>
+<pre><code class="hljs js">type action =
+  | Flip;
+
+type state = {flipped: bool};
+
+<span class="hljs-keyword">let</span> component = ReasonReact.reducerComponent(<span class="hljs-string">"CardContainer"</span>);
+
+<span class="hljs-keyword">let</span> make = (~code, ~imageSource, _self) =&gt; {
+  ...component,
+  initialState: () =&gt; {flipped: <span class="hljs-literal">true</span>},
+  reducer: (_action, state) =&gt; ReasonReact.Update({flipped: ! state.flipped}),
+  render: self =&gt;
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+      <span class="hljs-attribute">code</span>
+      <span class="hljs-attribute">imageSource</span>
+      <span class="hljs-attribute">flipped</span>=<span class="hljs-value">self.state.flipped</span>
+      <span class="hljs-attribute">onClick</span>=<span class="hljs-value">(_event</span> =&gt;</span> self.send(Flip))
+    /&gt;
+};
+
+let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =&gt;
+    make(~code=jsProps##code, ~imageSource=jsProps##imageSource, [||])
+  );</span></code></pre>
+
+<p>Now we can import this component directly into our <code>Card/index.js</code> file:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// Card/index.js</span>
+<span class="hljs-keyword">import</span> <span class="hljs-string">"./Card.css"</span>;
+<span class="hljs-keyword">import</span> CardContainer <span class="hljs-keyword">from</span> <span class="hljs-string">"./CardContainer.bs"</span>;
+
+<span class="hljs-keyword">export</span> { CardContainer <span class="hljs-keyword">as</span> Card };</code></pre>
+
+<p>If you prefer, instead of importing the CSS file here, you could add a <code>[%%raw &quot;import &#39;./Card.css&#39;&quot;];</code> line at the beginning of the <code>CardView.re</code> file, with the same effect.</p>
+<p>The final code for the integration with the stateful component <a href="https://github.com/lucasmreis/learning-reasonml/tree/integrating_stateful_2/part-2">can be found here</a>.</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>That&#39;s the third strong typed language I&#39;ve used for front end programming, after Elm and F#. First of all, it confirms my feeling that <em>this is the way to go</em>. Javascript&#39;s dynamic nature gives you a lot of power, but when we&#39;re writing larger and larger applications, these types give you a much saner environment. Refactoring does not feel so scary, tooling helps you much more, things are better documented, and so on.</p>
+<p>Now, comparing ReasonML to the other two languages. Elm&#39;s architecture (shared by F# within the <a href="https://fable-elmish.github.io/elmish/">Fable-Elmish framework</a>) is really simple and powerful. It has influenced the entire front end world, and ReasonReact&#39;s reducer components were definitely inspired by it. In Elm, state and action handling is done separately from the visual components, in kind of a &quot;global&quot; way. In contrast, ReasonReact embraces the React way of doing things, which is the &quot;everything is a component&quot; mentality. The interesting part is: the reducer components feel a lot like Elm, so in practice, a ReasonReact application feels like composing small Elm applications! By doing that, it&#39;s also pretty easy to not only integrate your ReasonML code into your React application, but it&#39;s also relatively easy to get all the benefits from modern tooling, like code splitting and dynamically importing components. This and the fact that the generated JS code is really well optimized are the great benefits of ReasonML over the other two.</p>
+<p>Where do Elm and F# perform better than ReasonML? Elm is still the safer option out there, due to the stricter JS integration. It&#39;s much, much easier to avoid runtime errors with Elm. Also, it has great docs and well thought out standard libraries. F# has the benefit that it can be used both on the frontend and backend of your application, and you can have access to a lot of the .Net features with it. And, as a personal note, I understand the decision to make ReasonML&#39;s syntax more &quot;javascript-like&quot;, but I feel both Elm&#39;s and F#&#39;s syntax are way better and more pleasurable to work with.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>In the third part of this series I&#39;ll try to <a href="https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js">rewrite <code>App.js</code> with ReasonReact</a>! Let&#39;s see how the language feels when we need to perform side effects, work with JSON data, and do some async work. See you there!</p>
+]]></description>
+            <guid isPermaLink="false">Learning ReasonML, part 2</guid>
+            <pubDate>Thu, 18 Jan 2018 00:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Learning ReasonML, part 1]]></title>
             <description><![CDATA[<p>Throughout my professional life, I&#39;ve worked on a lot of large applications that were in production for years. There was one thing in common with all of them: a lot of the code was overly complex, and it was difficult to fix bugs and add new features.</p>
@@ -31,8 +404,8 @@
 <h2 id="the-strategy">The Strategy</h2>
 <p>When learning Elm, I immediately jumped to a &quot;type-driven&quot; solution. Even though I think type driven development leads to more reliable / elegant code, I believe starting with a more JS-style approach is more compatible with the Reason philosophy.</p>
 <p>Let&#39;s start by installing ReasonML&#39;s CLI <code>bsb</code> and create a new project (as described <a href="https://reasonml.github.io/">on the official website</a>):</p>
-<pre><code class="hljs">$ npm <span class="hljs-keyword">install </span>-g <span class="hljs-keyword">bs-platform
-</span>$ <span class="hljs-keyword">bsb </span>-init my-first-app -theme <span class="hljs-keyword">basic-reason</span></code></pre>
+<pre><code class="hljs">$ npm <span class="hljs-operator"><span class="hljs-keyword">install</span> -<span class="hljs-keyword">g</span> bs-platform
+$ bsb -init my-<span class="hljs-keyword">first</span>-app -theme basic-reason</span></code></pre>
 
 <p>I&#39;m using VS Code with the ReasonML extension installed (<a href="https://reasonml.github.io/docs/en/global-installation.html">the instructions can be found here</a>). It&#39;s a great dev environment, with auto-complete, auto-formatting, and other niceties. A note on auto-formatting: we want to focus on actually solving a problem, so it&#39;s a good thing that problems like indentation are not getting in our way. This is something ReasonML has in common with Elm, and projects like Prettier are trying to do with javascript. I strongly recommend auto-formatting all the things!</p>
 <p>In a real-world application when performance is a key requirement, we always need to be aware of bundle size and be careful with the amount and complexity of the code generated. So I always keep an eye on the compilation result: if we are writing a <code>demo.re</code> file, Bucklescript will generate a <code>demo.bs.js</code> file in the same folder. Also, for small functions, I recommend copy and pasting to the <a href="https://reasonml.github.io/try/">Try Reason</a> website, and see both the generated JS and equivalent Ocaml code in real time!</p>
@@ -101,7 +474,7 @@ exports.parseAndRenderCard = parseAndRenderCard;
 <span class="hljs-string">"C"</span> |&gt; parseAndRenderSuit |&gt; Js.log;</code></pre>
 
 <p><code>switch</code> is the syntax for pattern matching in ReasonML. It works somewhat like a switch statement in JS, but it&#39;s more powerful: among other features, the compiler will tell you if you took care of all the possible values for the input. That&#39;s one of the key features of ML languages that makes the code more reliable. For the above function, we get the following compiler warning:</p>
-<pre><code class="hljs">You forgot <span class="hljs-built_in">to</span> handle <span class="hljs-keyword">a</span> possible <span class="hljs-built_in">value</span> here, <span class="hljs-keyword">for</span> example: <span class="hljs-string">""</span></code></pre>
+<pre><code class="hljs">You forgot <span class="hljs-built_in">to</span> handle <span class="hljs-operator">a</span> possible <span class="hljs-built_in">value</span> here, <span class="hljs-keyword">for</span> example: <span class="hljs-string">""</span></code></pre>
 
 <p>The compiler is right! And we can see that the generated JS code will raise an exception if the input is not one of the four cases. Let&#39;s try to fix this by defining a &quot;default&quot; pattern:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderSuit = suitStr =&gt;
@@ -116,7 +489,7 @@ exports.parseAndRenderCard = parseAndRenderCard;
 <span class="hljs-comment">/* example */</span>
 <span class="hljs-string">"C"</span> |&gt; parseAndRenderSuit |&gt; Js.log;</code></pre>
 
-<pre><code class="hljs">▶ <span class="hljs-keyword">node</span> <span class="hljs-title">src</span>/demo.bs.js
+<pre><code class="hljs">▶ <span class="hljs-keyword">node</span><span class="hljs-identifier"> </span><span class="hljs-title">src</span>/demo.bs.js
 Clubs</code></pre>
 
 <p>Great! That&#39;s a good start. We have a function that correctly spells the intended suit, and will have a valid output for <em>every possible string input</em>. Let&#39;s do the same for the card value:</p>
@@ -145,8 +518,8 @@ Clubs</code></pre>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; {
   <span class="hljs-comment">/* Separating the input string: */</span>
   <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
 
   <span class="hljs-comment">/* Parsing and rendering the strings with our functions: */</span>
   <span class="hljs-keyword">let</span> renderedSuit = parseAndRenderSuit(suitStr);
@@ -166,12 +539,12 @@ Clubs</code></pre>
 <span class="hljs-comment">/* "Ace of Diamonds" */</span></code></pre>
 
 <p>A lot is happening here; let me go step by step:</p>
-<pre><code class="hljs"><span class="hljs-built_in">let</span> <span class="hljs-built_in">length</span> = Js.String.<span class="hljs-built_in">length</span>(cardStr);</code></pre>
+<pre><code class="hljs">let <span class="hljs-property">length</span> = Js.String.<span class="hljs-property">length</span>(cardStr);</code></pre>
 
 <p><code>Js.String.length</code> is a function that transforms a string into an integer that represents that string length. That&#39;s a part of the &quot;functional&quot; way of thinking: every piece of data we need is gathered from data transformations. For instance, if we want an upper case version of a string, instead of calling <code>str.toUpperCase()</code> we would call <code>Js.String.toUpperCase(str)</code>.</p>
 <p>Next we have:</p>
-<pre><code class="hljs"><span class="hljs-keyword">let</span> <span class="hljs-attr">suitStr</span> = Js.String.sliceToEnd(~<span class="hljs-attr">from=length</span> - <span class="hljs-number">1</span>, cardStr);
-<span class="hljs-keyword">let</span> <span class="hljs-attr">valueStr</span> = Js.String.slice(~<span class="hljs-attr">from=0,</span> ~<span class="hljs-attr">to_=length</span> - <span class="hljs-number">1</span>, cardStr);</code></pre>
+<pre><code class="hljs"><span class="hljs-keyword">let</span> suitStr = Js.<span class="hljs-built_in">String</span>.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
+<span class="hljs-keyword">let</span> valueStr = Js.<span class="hljs-built_in">String</span>.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);</code></pre>
 
 <p>The <code>~</code> character is used to denote &quot;labeled parameters&quot;. They are simply parameters that need to be named, and it means we can call them in whatever order we prefer. Calling <code>Js.String.sliceToEnd(cardStr, ~from=length - 1);</code> would yield the same result.</p>
 <p><code>Js.String</code> is the name of the module where the functions are located. We could also open the module at the beginning of the file, and use the functions directly:</p>
@@ -180,8 +553,8 @@ Clubs</code></pre>
 (...)
 
 <span class="hljs-keyword">let</span> length = length(cardStr);
-<span class="hljs-keyword">let</span> suitStr = sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-<span class="hljs-keyword">let</span> valueStr = slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);</code></pre>
+<span class="hljs-keyword">let</span> suitStr = sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+<span class="hljs-keyword">let</span> valueStr = slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);</code></pre>
 
 <p>This could be cleaner, but keep in mind that it also &quot;pollutes&quot; the global context, making all functions inside <code>Js.String</code> available.</p>
 <p><strong>A tip</strong>: make sure to take advantage of VS Code&#39;s auto-complete to explore all the modules and functions available to us! I found those three functions without googling, and it was a really nice workflow. It&#39;s good to learn things while staying in the same environment, which is another interesting side effect of working with a typed language.</p>
@@ -243,8 +616,8 @@ Clubs</code></pre>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseAndRenderCard = cardStr =&gt; {
   <span class="hljs-comment">/* Separating the input string: */</span>
   <span class="hljs-keyword">let</span> length = length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
 
   <span class="hljs-comment">/* Parsing and rendering the strings with our functions: */</span>
   <span class="hljs-keyword">let</span> renderedSuit = parseAndRenderSuit(suitStr);
@@ -407,8 +780,8 @@ Card(Num(<span class="hljs-number">8</span>), Hearts) |&gt; renderCard |&gt; Js.
 <p>And, to finish the parser:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseCard = cardStr =&gt; {
   <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
 
   <span class="hljs-keyword">switch</span> (parseValue(valueStr), parseSuit(suitStr)) {
   | (Some(value), Some(suit)) =&gt; Card(value, suit) |&gt; some
@@ -528,8 +901,8 @@ type card = (...)
 <p>Let&#39;s first rename <code>parseCard</code> to <code>parseOrdinaryCard</code>, and then make sure we handle &quot;J&quot; in a new <code>parseCard</code> function:</p>
 <pre><code class="hljs js"><span class="hljs-keyword">let</span> parseOrdinaryCard = cardStr =&gt; {
   <span class="hljs-keyword">let</span> length = Js.String.length(cardStr);
-  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~<span class="hljs-keyword">from</span>=length - <span class="hljs-number">1</span>, cardStr);
-  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~<span class="hljs-keyword">from</span>=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> suitStr = Js.String.sliceToEnd(~from=length - <span class="hljs-number">1</span>, cardStr);
+  <span class="hljs-keyword">let</span> valueStr = Js.String.slice(~from=<span class="hljs-number">0</span>, ~to_=length - <span class="hljs-number">1</span>, cardStr);
   <span class="hljs-keyword">switch</span> (parseValue(valueStr), parseSuit(suitStr)) {
   | (Some(value), Some(suit)) =&gt; OrdinaryCard(value, suit) |&gt; some
   | _ =&gt; None
@@ -872,11 +1245,7 @@ render() {
     renderError={error =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">ErrorView</span> /&gt;</span>}
     renderPlanet={planet =&gt; <span class="hljs-tag">&lt;<span class="hljs-title">PlanetView</span> {<span class="hljs-attribute">...planet</span>} /&gt;</span>}
   /&gt;
-<<<<<<< HEAD
-);</code></pre>
-=======
 )</span>;</code></pre>
->>>>>>> 207b2f20a7c05c2a6df128c53ed62a5375ce7c26
 
 <p>And that&#39;s it.</p>
 <h2 id="what-if-the-side-effects-are-costly-">What if the side effects are costly?</h2>
@@ -1708,7 +2077,7 @@ $ http-server</code></pre>
     | InitialScreen -&gt;
         messageView <span class="hljs-string">"Loading amazing characters and films..."</span>
 
-    | _ -&gt;
+    | _ -&gt; 
         div [] []</code></pre>
 
 <p>To render the view, we need to call the run <code>createApp</code>. That&#39;s a little different from Elm&#39;s <code>Program</code>:</p>
@@ -1808,9 +2177,9 @@ Bundling...
 <pre><code class="hljs bash">$ fable
 [ERROR] F<span class="hljs-comment"># project contains errors:</span>
 Type mismatch. Expecting a
-    <span class="hljs-string">'DomNode&lt;Character.Model&gt; list'</span>
+    <span class="hljs-string">'DomNode&lt;Character.Model&gt; list'</span>    
 but given a
-    <span class="hljs-string">'DomNode&lt;Film.Model&gt; list'</span>
+    <span class="hljs-string">'DomNode&lt;Film.Model&gt; list'</span>    
 The <span class="hljs-built_in">type</span> <span class="hljs-string">'Character.Model'</span> does not match the <span class="hljs-built_in">type</span> <span class="hljs-string">'Film.Model'</span></code></pre>
 
 <p>So, <code>Film.view</code> sends messages of type <code>Film.Model</code>. These are not compatible with <code>Character.Model</code>, which was the message being sent by the function before we wrote the case. This is a great example of the power of F#&#39;s type inference; I don&#39;t know if you noticed, but we haven&#39;t written any type signature so far :) It&#39;s rarely needed in F#, and I still feel the same type power and safety that I felt in Elm. </p>
@@ -4164,7 +4533,7 @@ app.state = updateFn(app.state, value);
 };</code></pre>
 
 <p>Go to the console and write the following command to add a thousand new words, and see how efficiently it&#39;s rendered:</p>
-<pre><code class="hljs js">&gt; <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">1000</span>; i++)
+<pre><code class="hljs js">&gt; <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">1000</span>; i++) 
   { csp.putAsync(app.updates.channels.add, <span class="hljs-string">'word'</span> + i); }</code></pre>
 
 <h2 id="the-finished-application">The Finished Application</h2>
@@ -4665,154 +5034,5 @@ addFooElement.onclick = () =&gt;
             <guid isPermaLink="false">Immutable Data Structures and Javascript</guid>
             <pubDate>Sat, 04 Jul 2015 00:00:00 GMT</pubDate>
         </item>
-        <item>
-            <title><![CDATA[Solve All Bugs Or Implement New Features?]]></title>
-            <description><![CDATA[<p>Most projects have moments in which they have new features to implement and, at the same time, bugs to solve. A choice has to be made on whether to focus more time on solving those bugs and making sure they don&#39;t appear again - let&#39;s call this option <em>quality</em> - or implementing new features - <em>scope</em>.</p>
-<p>A lot of arguments have been made in favor of quality. One of my favorites is an argument presented by <a href="http://www.joelonsoftware.com/articles/fog0000000043.html">Joel Spolsky in this already classic text</a>.</p>
-<p>In this post I&#39;ll make the argument that, <em>even from business and financial</em> points of view, <em>focus on raising quality should always come a before focus on implementing new features</em>.</p>
-<h2 id="the-concepts">The concepts</h2>
-<p>First of all, let me explain better what I mean when I talk about quality and scope. Let&#39;s say there&#39;s a demand for X new features to be implemented in a given period and we know there are currently Y open bugs. One could say:</p>
-<p><em>&quot;We are going to implement all X features and solve as many bugs as we can.&quot;</em></p>
-<p>Or you could say:</p>
-<p><em>&quot;We are going to solve all Y bugs in their root causes, and we&#39;ll implement as many features as we can.&quot;</em></p>
-<p>See the difference? It&#39;s a matter of explicitly stating what your priorities are. In the first example, we&#39;ll make sure everything we implement is well tested and well designed, but some bugs will not be considered due to time constraints.  In most cases, bugs will be listed in a spreadsheet or on a board with a &quot;priority&quot; property, and the business will choose which bugs should be solved  per sprint, based on a &quot;financial&quot; analysis (which I&#39;ll talk about in the next section).</p>
-<p>In the second case, a team will focus all of its energy on, at least, investigating every bug that appears. Whenever there&#39;s a decision not to solve a bug right away, it&#39;s because the developers diagnosed that the bug is not a manifestation of something that would stop the business, or incur a big loss.</p>
-<p>Those are what I&#39;m calling in this post &quot;a focus on scope&quot; and &quot;a focus on quality&quot;, respectively.</p>
-<h2 id="losses-due-to-lack-of-quality-and-scope">Losses due to lack of quality and scope</h2>
-<p>One of the main criteria needed in order to choose between focusing on solving a bug or implementing a new feature is an analysis of the financial loss that the business will incur by <em>not</em> doing these things.</p>
-<p>It&#39;s impossible to know for sure the loss a business could have in the future, so we&#39;ll need to estimate it. And to do the estimation we&#39;ll need to deal with uncertainty. My point is that the uncertainty of a loss due to not solving a bug is <em>qualitatively different</em> from the uncertainty of a loss due to not implementing a new feature.</p>
-<p>To explain this difference, I&#39;ll briefly present two concepts introduced by author Nassim Taleb in his book <a href="http://www.amazon.com/Black-Swan-Improbable-Robustness-Fragility/dp/081297381X/">Black Swan</a>. I suggest this book to anyone interested in having their mind turned inside out. :)</p>
-<h2 id="mediocristan-and-extremistan">Mediocristan and Extremistan</h2>
-<p>Taleb argues that uncertainties can &quot;come from two places&quot;. The first place is Mediocristan: observations do not vary very much, or vary in a somewhat predictable way. An example of an Mediocristan uncertainty is &quot;the average height of a random group of a hundred people&quot;. After you measure five or six groups, you would have a very nice idea of what other averages will be. Even if one person in the group is the tallest man on Earth!</p>
-<p>Then there is Extremistan, a place where one observation can be very, very different from the others, which makes predictions very difficult, sometimes even impossible. An example is &quot;the average net worth of a random group of a hundred people&quot;. Every group will have a very different average.  We could have a run of thirty, or even fifty groups with a very similar average, and then suddenly Bill Gates is in a group and &quot;BAM&quot;.</p>
-<p>So, here&#39;s my first claim:</p>
-<p><em>Losses due to not implementing a new feature belong in Mediocristan.</em></p>
-<p>A new feature is something that in the past did not exist in your business (duh). That means that not having a new feature, in the majority of cases, will not cause a big loss. Or at least it will not make the losses you already have any bigger.</p>
-<p>Let&#39;s consider for example an e-commerce business that wants their users to be able to pay with a new payment option, let&#39;s say Bitcoins. It could be difficult to estimate how much the company would <em>make</em>, but it&#39;s relatively easy to see that there won&#39;t be a big loss if the Bitcoin feature is not implemented. Current users are buying with current payment options and will continue doing so even without a Bitcoin option.</p>
-<p>And that leads to my second claim:</p>
-<p><em>Losses due to not solving a bug belong in Extremistan.</em></p>
-<p>Every bug, no matter how small, can be the tip of the iceberg to a much deeper problem. That&#39;s why it&#39;s so difficult to estimate the effort needed to solve a bug. And deep problems can <em>stop a business in it&#39;s tracks</em>.</p>
-<p>A bug in the error feedback of a credit card form could explain the drop in conversion rates. Also, that bug could be a manifestation of a much deeper problem with server side validation, which, in turn, could start to appear in other forms.</p>
-<p>Some errors can be solved quickly by &quot;patching&quot; them. But that means that errors could reoccur if someone touches the code, or uses those same modules elsewhere. A lot of times, a more complex refactoring has to be done carefully, and must be fully backed by unit, integration and end to end tests. With these tests, we can diminish the chance of a bug creeping back up on you.</p>
-<h2 id="but-is-the-whole-team-always-going-to-be-working-on-bugs-">But is the whole team always going to be working on bugs?</h2>
-<p>What about all the new features that we need to implement??? When will that happen?</p>
-<p>By solving every bug at its root cause, we diminish the chances of new bugs appearing. That means that in the not-so-long-term, almost everybody in the team will be focusing on implementing new features. The project gains traction, and will deliver a <em>larger scope</em> with a <em>higher quality</em>. And that&#39;s what everyone wants, isn&#39;t it?</p>
-<p>I&#39;m not saying that all bugs have to be solved right away. I&#39;m saying that all bugs should be <em>investigated</em>, and the developers should diagnose whether or not the root cause could give rise to other new, more dangerous problems.</p>
-<h2 id="a-script-for-dealing-with-a-bug">A script for dealing with a bug</h2>
-<p>Every time a new bug is reported, and comes to the developers to be solved, ideally we should follow the following steps:</p>
-<ol>
-<li><p>Investigate the root cause of the problem. Ideally this should be done in pairs, with at least one of the developers having already worked on that part of the code. That would make things quicker.</p>
-</li>
-<li><p>Choose whether or not to solve the bug right away. The answer to this question should be &quot;yes&quot; in most cases.</p>
-</li>
-<li><p>Write tests to reproduce the bug. Unit tests preferably, but don&#39;t be afraid to write new integration and/or end to end tests, if needed. By creating new tests, we try to guarantee that if anything brings the bug back, it will be caught by tests before going to production.</p>
-</li>
-<li><p>Solve the root cause as well as you can.</p>
-</li>
-</ol>
-<p>This approach is not new. It&#39;s actually one of the main components of Toyota&#39;s &quot;Lean Manufacturing&quot; revolution, called <a href="https://en.wikipedia.org/wiki/Autonomation">Jidoka</a>.</p>
-<h2 id="summing-up">Summing up</h2>
-<p>Losses due to not implementing a new feature are much more predictable than losses due to bugs not being solved. Every bug is a potential business-stopper. And that&#39;s why we should always give quality a higher priority than scope: to keep our businesses alive.</p>
-]]></description>
-            <guid isPermaLink="false">Solve All Bugs Or Implement New Features?</guid>
-            <pubDate>Wed, 27 May 2015 00:00:00 GMT</pubDate>
-        </item>
-<<<<<<< HEAD
-=======
-        <item>
-            <title><![CDATA[Spreadsheets Are An Awesome Functional Programming Tool]]></title>
-            <description><![CDATA[<p>I worked for three years as a Risk Management Consultant.   That, as you can imagine, meant I spent a lot of time working with spreadsheets.
-For the most part, Excel was the main spreadsheet platform that was used by the businesses that I interacted with.</p>
-<p>I remember reading somewhere &quot;spreadsheets are functional programming!&quot;, but for some reason I was never very interested in going further until I watched <a href="https://www.youtube.com/watch?v=0CKru5d4GPk">Felienne Hermans&#39; talk on Strange Loop 2004</a>, where she implements selection sort with a spreadsheet and, believe it or not, even showed an implementation of a Turing machine with spreadsheets!</p>
-<p>In general, every cell of a spreadsheet is either a <em>value</em> or a <em>pure function that takes other cells as inputs</em>. If we restrict it to only that, we can say that a spreadsheet is a platform for functional programming. In this post, I&#39;ll describe my experimentation with a Google Spreadsheet to model user interactions and state handling.</p>
-<h2 id="state-handling-when-there-are-no-mutable-variables">State handling when there are no mutable variables</h2>
-<p>If we only use pure functions to build our programs, we can benefit from a lot of cool things like modularity, lazy evaluation, and so on. It is relatively easy if we are implementing a mathematical model, or a compiler, for instance. They have well defined inputs and outputs, but things start getting more complex if we have a program that runs for a period of time, and reacts to user interaction. Is it possible to maintain purity in such a scenario?</p>
-<p>The standard way of dealing with it is by mutating objects according to user interactions. It can be done in a lot of ways, and in my main project we are <a href="../a-more-functional-approach-to-angular/">keeping all state in a single object, and reacting to changes in it</a>. We find it much more manageable than the standard object oriented way, which deals with a lot of &quot;models&quot; that keep hidden internal local state.</p>
-<p>This time I&#39;m gonna try to handle state by using <em>streams</em>. That means that I&#39;ll model user interactions <em>and</em> application state as streams of information.</p>
-<h2 id="state-and-interaction-as-functions-of-time">State and interaction as functions of time</h2>
-<p>So, let&#39;s start with a basic spec: the user inserts a string, and we have an application state that reacts to it by replicating this input. Let&#39;s call it Foo:</p>
-<pre><code class="hljs">t = given moment <span class="hljs-keyword">in</span> time
-
-<span class="hljs-keyword">user</span>Foo(t) = <span class="hljs-keyword">user</span> string input <span class="hljs-keyword">in</span> t
-
-<span class="hljs-keyword">state</span>Foo(t) = foo <span class="hljs-keyword">state</span> <span class="hljs-keyword">in</span> t</code></pre>
-
-<p>So, what I&#39;m doing here is <em>thinking of both interactions and application state as functions of time</em>. Let&#39;s detail more <code>stateFoo</code>:</p>
-<pre><code class="hljs">stateFoo<span class="hljs-list">(<span class="hljs-keyword">t</span>)</span> = f<span class="hljs-list">(<span class="hljs-keyword">userFoo</span><span class="hljs-list">(<span class="hljs-keyword">t</span>)</span>)</span></code></pre>
-
-<p>In this case, the application state will depend only on the current user interaction. To keep it really simple, let&#39;s define:</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = <span class="hljs-keyword">user</span>Foo(t)</code></pre>
-
-<p>And now let&#39;s implement it in a spreadsheet!</p>
-<h2 id="modelling-time-in-a-spreadsheet">Modelling time in a spreadsheet</h2>
-<p>Back in my consultant days, I was dealing with a lot of <a href="http://en.wikipedia.org/wiki/Time_series">time series analyses</a>, and the way we were dealing with time was simple: one line for every event. Let&#39;s start with sixteen &quot;time samples&quot; and some user interactions:</p>
-<p><img src="../assets/userFoo.png" alt="Time and UserFoo(t)"></p>
-<p>That means that on time <code>t = 2</code> the user submitted the input &quot;aaa&quot;, when <code>t = 4</code> the user submitted the input &quot;bbb&quot; and so on.</p>
-<p><code>stateFoo</code> can be implemented then as a new column:</p>
-<p><img src="../assets/stateFoo.png" alt="Simple stateFoo(t)"></p>
-<p>That function (&quot;formula&quot; in spreadsheet) is repeated for every line, so every cell in the <code>stateFoo</code> column equals the corresponding cell from the same line in the <code>userFoo</code> column.</p>
-<p>That was really simple and easy! Now let&#39;s implement a more interesting spec. Let the application state be the <em>last</em> Foo that was input by the user. Now, <code>stateFoo</code> does not only depend on <code>userFoo</code>, but it also depends on the past value of <code>stateFoo</code> itself!</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = f(
-  <span class="hljs-keyword">user</span>Foo(t),
-  <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>))
-
-<span class="hljs-keyword">state</span>Foo(t) =
-  if (<span class="hljs-keyword">user</span>Foo(t) is blank)
-    return <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>)
-  else
-    return <span class="hljs-keyword">user</span>Foo(t)</code></pre>
-
-<p>So, if the user inputs something, <code>stateFoo</code> changes. If the user does not input anything, <code>stateFoo</code> repeats its last value. We can see it in the spreadsheet:</p>
-<p><img src="../assets/stateFoo2.png" alt="stateFoo(t) with memory"></p>
-<p>Now state looks more like the state we usually have in applications. Let&#39;s bring one more complexity: let the state carry <em>all previous values</em>.
-I want the state to be a string that&#39;s the concatenation of every past user input, joined by <code>&quot;;&quot;</code>. A good start would be:</p>
-<p><img src="../assets/stateFoo3.png" alt="Naive complex stateFoo(t)"></p>
-<p>We can see the problem: as soon as the user inputs the first string, the state becomes <code>; aaa</code>. That error propagates to all future states. There are a lot of ways to solve this issue, but I&#39;ll use the one that I think is the simplest: I&#39;ll implement a new column that concatenates <code>&quot;;&quot;</code> to every past state, unless it is empty. So, if we have to concatenate a new input, we concatenate to this value:</p>
-<p><img src="../assets/stateFoo4.png" alt="Temp column for complex stateFoo(t)"></p>
-<p><img src="../assets/stateFoo5.png" alt="Final column for complex stateFoo(t)"></p>
-<p>And there we have it; a state that reflects the whole application history.</p>
-<h2 id="interaction-between-streams">Interaction between streams</h2>
-<p>Let&#39;s recap: a stream is a function of time; given time = <code>t</code>, a stream would have the value <code>f(t)</code>. We are modelling user input as streams. Application state would then be transformations of user input streams.</p>
-<p>One nice property of streams is that they can also be transformations of other streams, and past values of themselves. Let&#39;s illustrate this with another application state: the Bars.</p>
-<p>The Bars work the same way as the Foos, but with one additional spec: the user can only add a new Bar after the Foo <code>requiredFoo</code> is input:</p>
-<pre><code class="hljs"><span class="hljs-keyword">state</span>Bar(t) = f(
-  <span class="hljs-keyword">user</span>Bar(t),
-  <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>),
-  <span class="hljs-keyword">state</span>Foo(t));</code></pre>
-
-<p>Back to our spreadsheet, let&#39;s implement the user interactions streams again:</p>
-<p><img src="../assets/stateBar.png" alt="userBar(t)"></p>
-<p>The interaction between Foos and Bars will be done with the <code>hasRequiredFoo</code> stream:</p>
-<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span> =
-  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> contains <span class="hljs-string">"requiredFoo"</span></code></pre>
-
-<p>For simplicity, let&#39;s assume <code>contains</code> means &quot;has substring <code>&quot;requiredFoo&quot;</code>&quot;:</p>
-<p><img src="../assets/stateBar2.png" alt="hasRequiredFoo(t)"></p>
-<p>And <code>stateBar</code> logic would be:</p>
-<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
-  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span> is blank or
-      not <span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span>)
-    return <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
-  <span class="hljs-keyword">else</span>
-    return concat(
-      <span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span>,
-      <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)</code></pre>
-
-<p><img src="../assets/stateBar3.png" alt="stateBar(t)">
-<em>(in the above image, the &quot;C&quot; column refers to userBar)</em></p>
-<p>And it&#39;s ready! :)</p>
-<p>Now just the inputs and application state streams:</p>
-<p><img src="../assets/finalStates.png" alt="Final inputs and states"></p>
-<h2 id="conclusions">Conclusions</h2>
-<p>I found this experiment very helpful and even entertaining! Now I understand what &quot;spreadsheets are functional programming!&quot; means, and I agree with it. Actually, I think spreadsheets could be a nice learning environment to start &quot;thinking functionally&quot;. It certainly helped me learn the &quot;state as streams&quot; concept.</p>
-<p>Everybody interested in the subject should watch <a href="https://www.youtube.com/watch?v=0CKru5d4GPk">Felienne Hermans&#39; talk on Strange Loop 2004</a>. That was her PhD research subject, and she brings spreadsheet programming to a whole new level.</p>
-<h2 id="next-steps">Next Steps</h2>
-<p>The next obvious step for me is implement the &quot;state as streams&quot; concept using javascript. There are libraries that claim to help with this, like <a href="http://reactivex.io/">RxJS</a>, <a href="https://baconjs.github.io/">BaconJS</a> and the more recent <a href="https://github.com/paldepind/flyd">Flyd</a>. I&#39;ve also been reading about a beta framework based on RxJS and <a href="https://github.com/Matt-Esch/virtual-dom">virtual-dom</a> called <a href="https://github.com/staltz/cycle">CycleJS</a>, which looks promising.</p>
-<p>The link to the complete spreadsheet used in this post is <a href="http://goo.gl/i1g3uP">here</a>.</p>
-]]></description>
-            <guid isPermaLink="false">Spreadsheets Are An Awesome Functional Programming Tool</guid>
-            <pubDate>Sat, 02 May 2015 00:00:00 GMT</pubDate>
-        </item>
->>>>>>> 207b2f20a7c05c2a6df128c53ed62a5375ce7c26
     </channel>
 </rss>
