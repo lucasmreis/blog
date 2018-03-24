@@ -4,11 +4,330 @@
         <description><![CDATA[In this blog, I'll write about some of the things that I have found useful and helpful to my programming.]]></description>
         <link>http://lucasmreis.github.io/blog/</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Fri, 16 Feb 2018 04:26:04 GMT</lastBuildDate>
+        <lastBuildDate>Sat, 24 Mar 2018 01:53:00 GMT</lastBuildDate>
         <atom:link href="http://lucasmreis.github.io/blog/rss.xml" rel="self" type="application/rss+xml"/>
         <language><![CDATA[English]]></language>
         <managingEditor><![CDATA[Lucas Reis]]></managingEditor>
         <webMaster><![CDATA[Lucas Reis]]></webMaster>
+        <item>
+            <title><![CDATA[Learning ReasonML, part 3]]></title>
+            <description><![CDATA[<p>In the <a href="http://lucasmreis.github.io/blog/learning-reasonml-part-2/">last part of this series,</a> we wrote some simple React components with ReasonML. In this third part, we&#39;re going to write a component that not only has state, but also <em>generates side effects</em> through fetching an external API.</p>
+<h2 id="modelling-user-actions">Modelling User Actions</h2>
+<p>This is the <a href="https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js">application&#39;s main module</a>, which contains the side effects:</p>
+<pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Component</span> </span>{
+  componentDidMount() {
+    <span class="hljs-comment">// fetch API to create deck</span>
+  }
+
+  render() {
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App"</span>&gt;</span>
+        {this.renderMainAction()}
+        {this.renderCards()}
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
+  }
+
+  renderMainAction() {
+    <span class="hljs-comment">// render button</span>
+    <span class="hljs-comment">// disable it depending on current state</span>
+  }
+
+  renderCards() {
+    <span class="hljs-comment">// render list of cards</span>
+  }
+
+  draw = <span class="hljs-keyword">async</span> () =&gt; {
+    <span class="hljs-comment">// fetch API do draw cards</span>
+    <span class="hljs-comment">// pass as a callback to the main action button</span>
+}</code></pre>
+
+<p>We can see that there are two main actions that trigger side effects: creating a deck on mounting, and drawing new cards on button click. Remember that side effects of this nature - fetching something from a network - have to take into account that things can get <em>slow</em> and they can <em>fail</em>. Having said that, we usually model actions with side effects as <em>three different</em> actions:</p>
+<pre><code class="hljs js">type action =
+  <span class="hljs-comment">/* Create Deck */</span>
+  | CreateDeck
+  | DeckCreated(deck)
+  | CreateDeckFailed
+  <span class="hljs-comment">/* Draw Cards */</span>
+  | DrawCards(deck)
+  | CardsDrawn(deck)
+  | DrawCardsFailed
+  | DeckFinished(list(card));</code></pre>
+
+<p>I added a <code>DeckFinished</code> action so our application can transition to a finished state that only shows the cards, and do not show the action button anymore.</p>
+<p>Some actions have data related to them: <code>deck</code> and <code>list(cards)</code>. These types are related to the action state, and are inspired by the API response:</p>
+<pre><code class="hljs js">type card = {
+  image: string,
+  code: string
+};
+
+type deck = {
+  deckId: string,
+  remaining: int,
+  cards: list(card)
+};</code></pre>
+
+<p>The <code>deckId</code> info is used to draw cards from the same deck that was created in the beginning of the application lifecycle. <code>remaining</code> is the information we use to decide if we already drew all the cards. For instance, we check <code>remaining</code> to decide if we issue a <code>CardsDrawn</code> action or <code>DeckFinished</code>.</p>
+<p><strong>Note:</strong> I like to follow this <code>CQRS</code> convention of <a href="http://cqrs.nu/Faq">writing events in the past tense, and commands in the imperative</a>. In summary, it means that an action that&#39;s written in the imperative will <em>trigger</em> a side effect, and its results are unknown. And actions that are written in the past tense are actions that will trigger a deterministic state change when they happen - there are no unknowns regarding events.</p>
+<p><strong>Note 2:</strong> The <code>*Failed</code> actions are not carrying any data with them - that&#39;s because this simple app is just showing a generic message when an error occurs. This isn&#39;t what we would do in a large scale app!</p>
+<h2 id="modelling-the-application-state">Modelling The Application State</h2>
+<p>Depending on the actions issued, our application will be in a different state:</p>
+<p><img src="../assets/learning-reasonml-state-chart.png" alt="State Chart"></p>
+<p>The states can then be represented by:</p>
+<pre><code class="hljs js">type state =
+  | CreatingDeck
+  | WaitingForUser(deck)
+  | DrawingCards(deck)
+  | NoMoreCardsToDraw(list(card))
+  | <span class="hljs-built_in">Error</span>;</code></pre>
+
+<p>Now let&#39;s write the function that, given an action and the previous state, returns a data structure of the type <code>ReasonReact.update</code>. You can think of the update type as either a &quot;new state&quot; or &quot;new state + function that perform side effects&quot;. This function will be used as the <code>reducer</code> field in our component:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> reducer = (action, _state) =&gt;
+  <span class="hljs-keyword">switch</span> action {
+  | CreateDeck =&gt;
+    ReasonReact.UpdateWithSideEffects(CreatingDeck, createDeckSideEffects)
+  | DeckCreated(deck) =&gt; ReasonReact.Update(WaitingForUser(deck))
+  | CreateDeckFailed =&gt; ReasonReact.Update(<span class="hljs-built_in">Error</span>)
+  | DrawCards(stateDeck) =&gt;
+    ReasonReact.UpdateWithSideEffects(
+      DrawingCards(stateDeck),
+      drawCardsSideEffects(stateDeck)
+    )
+  | CardsDrawn(deck) =&gt; ReasonReact.Update(WaitingForUser(deck))
+  | DrawCardsFailed =&gt; ReasonReact.Update(<span class="hljs-built_in">Error</span>)
+  | DeckFinished(cards) =&gt; ReasonReact.Update(NoMoreCardsToDraw(cards))
+  };</code></pre>
+
+<p>This function is simple. You can see that every event returned a <code>ReasonReact.Update</code> with a new state, and every command returned a <code>ReasonReact.UpdateWithSideEffects</code> with a new state and another function that will trigger side effects. Let&#39;s have a look at those functions now.</p>
+<h2 id="side-effects">Side Effects</h2>
+<p>Let&#39;s start writing the <code>createDeckSideEffects</code> function. ReasonReact&#39;s side-effect functions receive the components <code>self</code> as the parameter, and need to return <code>unit</code>. This is what the function should do:</p>
+<ul>
+<li>Fetch the API to create a deck</li>
+<li>Decode the API response to a <code>deck</code> type</li>
+<li>Dispatch a <code>DeckCreated(deck)</code> action with the decoded deck</li>
+<li>If there is an error, dispatch a <code>CreateDeckFailed</code> action</li>
+</ul>
+<p>We&#39;re going to use the <code>bs-fetch</code> <a href="https://github.com/reasonml-community/bs-fetch">package</a>. After installing it, let&#39;s use it to fetch the API:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>);</code></pre>
+
+<p>The <code>fetch</code> function returns a Promise. We can use the native <code>Js.Promise</code> module to deal with the response:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+  |&gt; Js.Promise.then_(Fetch.Response.json);</code></pre>
+
+<p>Ok, now the function has the signature <code>unit =&gt; Js.Promise.t(Js.Json.t)</code>. We&#39;re almost there - we just need to decode the json object to a <code>deck</code> record. Let&#39;s use the <code>@glennsl/bs-json</code> <a href="https://github.com/glennsl/bs-json">package</a>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCreatedDeck = json =&gt; {
+  deckId: json |&gt; Json.Decode.field(<span class="hljs-string">"deck_id"</span>, Json.Decode.string),
+  remaining: json |&gt; Json.Decode.field(<span class="hljs-string">"remaining"</span>, Json.Decode.int),
+  cards: []
+};
+
+<span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+  |&gt; Js.Promise.then_(Fetch.Response.json)
+  |&gt; Js.Promise.then_(json =&gt; decodeCreatedDeck(json) |&gt; Js.Promise.resolve);</code></pre>
+
+<p>The <code>Json.Decode</code> functions are straightforward: they try to find the property in the json input object, and then try to convert it to the given type. If they fail, they raise an exception. We&#39;re hard coding cards as <code>[]</code> because we know that no cards are drawn when the deck is created.</p>
+<p><strong>Note:</strong> If you&#39;re used to Elm, that sounds weird - we would use <a href="https://reasonml.github.io/docs/en/variant.html#option">option types</a> everywhere, and take care of the errors explicitly, near the functions calls. That is probably the safest, most explicit choice. If we&#39;re dealing with exceptions, be careful, since they are implicit, and it&#39;s easy to forget to deal with them properly. In a React application, that usually means you should at least have an <a href="https://reactjs.org/docs/error-boundaries.html">error boundary component</a> catching them.</p>
+<p>Back to our functions, they are too verbose. Let&#39;s solve this. We can actually say &quot;I&#39;m going to use functions from this module in this piece of code&quot; in ReasonML, in a couple of ways, and this makes our code less verbose. One good technique is using the <code>open</code> keyword, and letting the formatter do its work. For example, rewrite the <code>decodeCreateDeck</code> as:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCreatedDeck = json =&gt; {
+  open Json.Decode;
+  {
+    deckId: json |&gt; field(<span class="hljs-string">"deck_id"</span>, string),
+    remaining: json |&gt; field(<span class="hljs-string">"remaining"</span>, int),
+    cards: []
+  };
+};</code></pre>
+
+<p>We&#39;re telling the compiler that, in the scope, we&#39;re going to call functions inside the <code>Json.Decode</code> module. We can now call <code>field</code>, <code>string</code>, and <code>int</code> directly. That&#39;s the <a href="https://en.wikibooks.org/wiki/F_Sharp_Programming/Modules_and_Namespaces">standard way to use a module in F#</a>. After saving the file, the formatter changes it to:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCreatedDeck = json =&gt;
+  Json.Decode.{
+    deckId: json |&gt; field(<span class="hljs-string">"deck_id"</span>, string),
+    remaining: json |&gt; field(<span class="hljs-string">"remaining"</span>, int),
+    cards: []
+  };</code></pre>
+
+<p>This means &quot;you can use functions from this module when defining this record&quot;. I don&#39;t believe this syntax is better all the time, but fortunately there&#39;s a <a href="https://github.com/facebook/reason/pull/1826">PR open to not reformat &quot;open&quot; statements</a>.</p>
+<p>We can also open the Js.Promise module in <code>createDeckSideEffects</code>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Js.Promise.(
+    Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+    |&gt; then_(Fetch.Response.json)
+    |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+  );</code></pre>
+
+<p>We&#39;re doing good now. Our function is almost there, now we need to wrap <code>deck</code> into a <code>DeckCreated</code> action, and <code>self.send</code> it:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = self =&gt;
+  Js.Promise.(
+    Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+    |&gt; then_(Fetch.Response.json)
+    |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+    |&gt; then_(deck =&gt; DeckCreated(deck) |&gt; self.send |&gt; resolve)
+  );</code></pre>
+
+<p>There&#39;s a problem here - the compiler is complaining that there&#39;s no <code>send</code> field defined in <code>self</code>. We need to open the ReasonReact module here too, so the compiler understands this function is going to be used in a React component:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = self =&gt;
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+      |&gt; then_(Fetch.Response.json)
+      |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+      |&gt; then_(deck =&gt; DeckCreated(deck) |&gt; self.send |&gt; resolve)
+    )
+  );</code></pre>
+
+<p>Now our code is compiling (as an observation: this is a situation where I think the &quot;open&quot; keyword would lead to better code). One interesting observation is that the functions inside <code>then_</code> need to return a Promise, so that&#39;s why there&#39;s a <code>|&gt; resolve</code> in every callback. Javascript&#39;s <code>.then</code> does some extra work, so you don&#39;t need to do that, but I believe that in a strongly typed situation it&#39;s best to stick to simpler constraints.</p>
+<p>We&#39;re fetching the API, decoding the response, and sending an action as a result. We only need to deal with a possible error, and make sure our function returns <code>unit</code> so it&#39;s accepted in the <code>reducer</code> function we wrote before:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = self =&gt;
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+      |&gt; then_(Fetch.Response.json)
+      |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+      |&gt; then_(deck =&gt; DeckCreated(deck) |&gt; self.send |&gt; resolve)
+      |&gt; <span class="hljs-keyword">catch</span>(_error =&gt; self.send(CreateDeckFailed) |&gt; resolve)
+      |&gt; ignore
+    )
+  );</code></pre>
+
+<p>And we&#39;re done! The next side-effects function is more complicated, but we have the knowledge to understand it now:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCard = json =&gt;
+  Json.Decode.{
+    code: json |&gt; field(<span class="hljs-string">"code"</span>, string),
+    image: json |&gt; field(<span class="hljs-string">"image"</span>, string)
+  };
+
+<span class="hljs-comment">/* the decodeCard decoder can be used in another
+   decoder to deal with nested objects: */</span>
+<span class="hljs-keyword">let</span> decodeDeck = json =&gt;
+  Json.Decode.{
+    deckId: json |&gt; field(<span class="hljs-string">"deck_id"</span>, string),
+    remaining: json |&gt; field(<span class="hljs-string">"remaining"</span>, int),
+    cards: json |&gt; field(<span class="hljs-string">"cards"</span>, list(decodeCard))
+  };
+
+<span class="hljs-comment">/* helper function to decide whether we should dispatch
+   a CardsDrawn or a DeckFinished action: */</span>
+<span class="hljs-keyword">let</span> drawnOrFinished = (current, received) =&gt;
+  <span class="hljs-keyword">if</span> (received.remaining &gt; <span class="hljs-number">0</span>) {
+    CardsDrawn({...received, cards: current.cards @ received.cards});
+  } <span class="hljs-keyword">else</span> {
+    DeckFinished(current.cards);
+  };
+
+<span class="hljs-comment">/* the Pervasives module contains the min function. If we
+   have less than 3 remaining cards, only draw the
+   remaining quantity from the API:   */</span>
+<span class="hljs-keyword">let</span> number_of_cards_per_draw = <span class="hljs-number">3</span>;
+
+<span class="hljs-keyword">let</span> drawQuantity = deck =&gt;
+  Pervasives.min(deck.remaining, number_of_cards_per_draw) |&gt; Js.Int.toString;
+
+<span class="hljs-keyword">let</span> drawCardsSideEffects = (currentDeck, self) =&gt;
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch(
+        <span class="hljs-string">"https://deckofcardsapi.com/api/deck/"</span>
+        ++ currentDeck.deckId
+        ++ <span class="hljs-string">"/draw/?count="</span>
+        ++ drawQuantity(currentDeck)
+      )
+      |&gt; then_(Fetch.Response.json)
+      |&gt; then_(json =&gt; decodeDeck(json) |&gt; resolve)
+      |&gt; then_(receivedDeck =&gt;
+           drawnOrFinished(currentDeck, receivedDeck) |&gt; self.send |&gt; resolve
+         )
+      |&gt; ignore
+    )
+  );</code></pre>
+
+<p>That&#39;s it, now our <code>reducer</code> function compiles! All our side effects are there, now let&#39;s implement the rendering of our main component.</p>
+<h2 id="rendering-the-different-states">Rendering The Different States</h2>
+<p>Let&#39;s start by defining the render functions for the different states. For example, the loading state:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderParagraph = () =&gt; (
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span> (ReasonReact.stringToElement("Loading...")) <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+)</span>;</code></pre>
+
+<p>As we saw before, we need the <code>stringToElement</code> function to render strings in the DOM. Since our error state is also a simple paragraph, we can reuse some logic:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderParagraph = text =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span> (ReasonReact.stringToElement(text)) <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>;</span>
+
+<span class="hljs-keyword">let</span> renderLoading = () =&gt; renderParagraph(<span class="hljs-string">"Loading..."</span>);
+
+<span class="hljs-keyword">let</span> renderError = () =&gt;
+  renderParagraph(<span class="hljs-string">"There was an error. Please refresh and try again!"</span>);</code></pre>
+
+<p>In the <code>NoMoreCardsToDraw(cards)</code> state, we only want to render a given list of cards:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderCards = cards =&gt; {
+  <span class="hljs-keyword">let</span> cardElements =
+    List.map(c =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardContainer</span> <span class="hljs-attribute">code</span>=<span class="hljs-value">c.code</span> <span class="hljs-attribute">imageSource</span>=<span class="hljs-value">c.image</span> /&gt;</span>, cards)
+    |&gt; Array.of_list
+    |&gt; ReasonReact.arrayToElement;
+  <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App card-list"</span>&gt;</span> cardElements <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
+};</code></pre>
+
+<p>There&#39;s no &quot;listToElement&quot; function in ReasonReact, so we have to manually convert the list to array with the <code>Array.of_list</code> function.</p>
+<p>Up until now we&#39;re good: all the rendering functions only receive a piece of data and render it. The next views are a little bit more complicated: in both <code>WaitingForUser(deck)</code> and <code>DrawingCards(deck)</code> we want to show the cards and the main action button, either in a disabled or enabled state. So let&#39;s build a function that takes a <code>deck</code> record, a <code>send</code> function and a <code>disabledButton</code> boolean as parameters:</p>
+<pre><code class="hljs js"><span class="hljs-comment">/* the disableButton parameter is labelled for no
+   particular reason, just style */</span>
+<span class="hljs-keyword">let</span> renderButtonAndCards = (deck, send, ~disabledButton) =&gt;
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">button</span>
+      <span class="hljs-attribute">className</span>=<span class="hljs-value">"App main-action"</span>
+      <span class="hljs-attribute">disabled</span>=<span class="hljs-value">(Js.Boolean.to_js_boolean(disabledButton))</span>
+      <span class="hljs-attribute">onClick</span>=<span class="hljs-value">(_ev</span> =&gt;</span> send(DrawCards(deck)))&gt;
+      (ReasonReact.stringToElement("Draw " ++ drawQuantity(deck)))
+    <span class="hljs-tag">&lt;/<span class="hljs-title">button</span>&gt;</span>
+    (renderCards(deck.cards))
+  <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span></code></pre>
+
+<p>Let&#39;s see what&#39;s happening here. First, we need to call <code>Js.Boolean.to_js_boolean</code> for the disabled attribute. Remember, ReasonML represents booleans as numbers, and whenever we interop with JS or the DOM, we need to convert them to proper JS booleans. We&#39;re calling the <code>send</code> function on the button click, with the <code>DrawCards(deck)</code> action, and also reusing our <code>renderCards</code> function we just defined.</p>
+<p>Now we can write our main render function:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> render = self =&gt;
+  ReasonReact.(
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App"</span>&gt;</span>
+      (
+        switch self.state {
+        | CreatingDeck =&gt; renderLoading()
+        | WaitingForUser(deck) =&gt;
+          renderButtonAndCards(deck, self.send, ~disabledButton=false)
+        | DrawingCards(deck) =&gt;
+          renderButtonAndCards(deck, self.send, ~disabledButton=true)
+        | NoMoreCardsToDraw(cards) =&gt; renderCards(cards)
+        | Error =&gt; renderError()
+        }
+      )
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  )</span>;</code></pre>
+
+<p>Simple, right? We open the ReasonReact module, so the compiler understands both <code>self.state</code> and <code>self.send</code>. We render a container div, and then we pattern match on the state and call the desired render function.</p>
+<h2 id="glueing-the-pieces-together">Glueing The Pieces Together</h2>
+<p>It&#39;s simple to construct our component now:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> component = ReasonReact.reducerComponent(<span class="hljs-string">"App"</span>);
+
+<span class="hljs-keyword">let</span> make = _self =&gt; {
+  ...component,
+  reducer,
+  render,
+  initialState: () =&gt; CreatingDeck,
+  didMount: self =&gt; {
+    self.send(CreateDeck);
+    ReasonReact.NoUpdate;
+  }
+};
+
+<span class="hljs-comment">/* wrap it so we don't need to change index.js: */</span>
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">default</span> = ReasonReact.wrapReasonForJs(~component, _jsProps =&gt; make([||]));</code></pre>
+
+<p>And we&#39;re done! The application is compiling and running. You can see the <a href="https://github.com/lucasmreis/learning-reasonml/blob/integrating_side_effects/part-2/src/App.re">final file here</a>.</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>Rewriting a React application in ReasonML is an interesting experience. The types and the compiler make you think harder about both the application state and the user actions. <em>You are forced to think better about your design</em>. And this is definitely a good thing; most of the problems we find in software today can be traced to issues not raised properly in <em>design time</em>.</p>
+<p>Another interesting (<a href="http://lucasmreis.github.io/blog/learning-elm-part-1/#first-impressions-of-elm">and predictable</a>) effect is how much more <em>reliable</em> the applications seem to be. Even though it still doesn&#39;t have tests, I feel I need <em>fewer</em> tests than if it was only the JS version! A lot of the unit tests in every JS project are actually trying to protect the application from type errors, since <a href="https://rollbar.com/blog/top-10-javascript-errors/">they seem to be the main source of error</a>. So, by using a strong typed language, that&#39;s a whole category of errors that we can be much more confident about.</p>
+<p>I&#39;ll definitely continue to look into ReasonML. It gives me the benefits of Elm and F#, and seems closer to the React world that I use in my in my day to day work. Not only do I think it&#39;s easier to integrate with the current mainstream front-end ecossystem, I also believe it presents a greater chance to convince your company to use a different language than JS :)</p>
+]]></description>
+            <guid isPermaLink="false">Learning ReasonML, part 3</guid>
+            <pubDate>Sat, 17 Mar 2018 00:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Learning ReasonML, part 2]]></title>
             <description><![CDATA[<p>When learning a new language, it&#39;s great to have the opportunity to write a small module and be able to integrate it with a real world application. Fortunately, one of the main objectives of the ReasonML team is smooth JS integration, so let&#39;s see if it delivers!</p>
@@ -4830,209 +5149,6 @@ go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<spa
 ]]></description>
             <guid isPermaLink="false">NPM is an amazing build tool</guid>
             <pubDate>Sat, 22 Aug 2015 00:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[Immutable Data Structures and Javascript]]></title>
-            <description><![CDATA[<p>One of the most difficult - perhaps <em>the</em> most difficult - issue in a complex front end application is state handling. I&#39;ve written before about storing <a href="http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular/">all application state</a> in a <a href="http://lucasmreis.github.io/blog/a-more-functional-approach-to-angular-with-baobab/">single, centralized object</a>, and now I&#39;ll write about using <em>immutable data structures</em>.</p>
-<p>I found that working with immutable data structures has actually made implementation <em>much simpler</em>! How can a limitation make something more powerful, you may be asking yourself? Follow me and I&#39;ll explain.</p>
-<p>##Why did I try this immutable thing</p>
-<p>I&#39;ve been watching a lot of Rich Hickey videos lately, and everything this guy says makes a lot of sense. According to Hickey, an immutable collection is not only an &quot;array that cannot be modified&quot;, but it is an <em>array that can be treated as a value</em>.</p>
-<p>When we have two Numbers or two Strings, and we want to know if they are equal, we simply ask &quot;are they equal?&quot; by using the <code>===</code> operator. That&#39;s it - <code>2</code> always equals <code>2</code>, and if <code>a = 2</code> and <code>b = 2</code> we can say for sure that <code>a === b</code>. The same would be true for other values like <code>&#39;this string&#39; === &#39;this string&#39;</code>.</p>
-<p>But, if we have two arrays or objects, <code>===</code> does not work the same way. It works by comparing references, so <code>[1, 2, 3] === [1, 2, 3]</code> is false, because they are actually <em>two different collections that happen to have the same values</em>.</p>
-<p>When working with immutable collections and objects, they are compared just like values. If they have the same elements, they are the same collection. Simple, isn&#39;t it? :)</p>
-<p>This is possible due to smart algorithms and data structure implementation made by libraries like <a href="http://swannodette.github.io/mori/">Mori</a> and <a href="https://facebook.github.io/immutable-js/">Immutable.js</a>. I will not go into detail here, but here&#39;s what we need to know regarding these data structures:</p>
-<pre><code class="hljs js"><span class="hljs-keyword">import</span> Mori <span class="hljs-keyword">from</span> <span class="hljs-string">'mori'</span>;
-
-<span class="hljs-comment">// a vector is an example of</span>
-<span class="hljs-comment">// immutable data structure</span>
-<span class="hljs-keyword">const</span> a = mori.vector(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>);
-
-<span class="hljs-comment">// conj appends a value to the</span>
-<span class="hljs-comment">// end of a vector, and returns</span>
-<span class="hljs-comment">// a new vector</span>
-<span class="hljs-keyword">const</span> b = mori.conj(a, <span class="hljs-number">4</span>);
-
-mori.equals(b, mori.vector(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>))
-<span class="hljs-comment">// =&gt; true</span>
-
-<span class="hljs-comment">// cool feature: the original vector is preserved</span>
-<span class="hljs-comment">//   (that's why they are also called</span>
-<span class="hljs-comment">//   persistent data structures)</span>
-mori.equals(a, mori.vector(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>))
-<span class="hljs-comment">// =&gt; true</span></code></pre>
-
-<p><strong>Question 1.</strong> Are the objects cloned every time I apply a transformation? <strong>No.</strong> And that&#39;s a key part of the reason why the  immutable data structures&#39; performance is almost the same as their mutable counterparts. These libraries are implemented so that a transformed object <em>shares as much memory as possible</em> with the original object. (<a href="http://hypirion.com/musings/understanding-persistent-vector-pt-1">more details here</a>)</p>
-<p><strong>Question 2.</strong> Does that mean that storing transformed versions of objects use less memory? <strong>Yes!</strong> If we have an one million elements conventional array that occupies 1GB of memory, clone it, append an element, and save both versions, we&#39;ll use 2GB of memory. If we use an immutable vector and <code>conj</code>, storing both versions will not occupy much more space than storing only one vectors.</p>
-<p>Pause a little bit to think about this last property of immutable objects, and think of how much awesomeness this &quot;limitation&quot; could bring to your code. :)</p>
-<p>##Back to application state</p>
-<p>The application will only consist of two lists, Foos and Bars. The user can add a new Foo or a new Bar using the app inputs. Foos and Bars are unique.</p>
-<p>Let&#39;s do it step by step:</p>
-<ul>
-<li>The application state will be represented by a vector of hashmaps. The last hasmap will be the current state:</li>
-</ul>
-<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
-<span class="hljs-keyword">const</span> initialValue = hashMap(
-  <span class="hljs-string">'foos'</span>, set([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]),
-  <span class="hljs-string">'bars'</span>, set([<span class="hljs-string">'a'</span>, <span class="hljs-string">'b'</span>, <span class="hljs-string">'c'</span>]));
-
-<span class="hljs-comment">// sets are unordered lists that have</span>
-<span class="hljs-comment">// unique elements</span>
-
-<span class="hljs-keyword">let</span> history = vector(initialValue);
-
-<span class="hljs-comment">// get current state</span>
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> currentState = () =&gt; peek(history);</code></pre>
-
-<ul>
-<li>To react to changes in the state, we register listeners. They consist of two functions: <code>listenTo</code>, which specifies a part/transformation of the state that will be listened to, and a <code>callback</code> to run if the state changes:</li>
-</ul>
-<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
-<span class="hljs-keyword">let</span> listeners = vector();
-
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> listen = (listenTo, callback) =&gt; {
-  listeners = conj(listeners, hashMap(
-    <span class="hljs-string">'listenTo'</span>, listenTo,
-    <span class="hljs-string">'callback'</span>, callback
-  ));
-};</code></pre>
-
-<p>Example of a <code>listen</code> call:</p>
-<pre><code class="hljs js"><span class="hljs-keyword">const</span> prop = key =&gt; o =&gt; Mori.get(o, key);
-listen(prop(<span class="hljs-string">'bars'</span>), renderSomething);</code></pre>
-
-<p>This means that every time the property <code>bars</code> change, the function <code>renderSomething</code> will be run with <code>bars</code> as argument.</p>
-<ul>
-<li>To change state, one calls the update function. It changes the state and calls all listeners if their new <code>listenTo</code> result are different from the previous state:</li>
-</ul>
-<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
-
-<span class="hljs-comment">// callListener is called by the update</span>
-<span class="hljs-comment">// function for each listener registered, with</span>
-<span class="hljs-comment">// the previous and the new state value:</span>
-<span class="hljs-keyword">const</span> callListener =
-  (previousState, newState) =&gt; listener =&gt; {
-
-    <span class="hljs-keyword">const</span> listenTo =
-    get(listener, <span class="hljs-string">'listenTo'</span>);
-
-  <span class="hljs-keyword">const</span> previousListenTo =
-    listenTo(previousState);
-
-  <span class="hljs-keyword">const</span> newListenTo =
-    listenTo(newState);
-
-    <span class="hljs-comment">// if state does not change for</span>
-    <span class="hljs-comment">// listener, nothing happens.</span>
-    <span class="hljs-comment">// Remember 'equals' is super cheap! :)</span>
-  <span class="hljs-keyword">if</span> (!equals(
-    previousListenTo, newListenTo)) {
-        get(listener, <span class="hljs-string">'callback'</span>)(newListenTo);
-  }
-  };
-
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> update = fn =&gt; {
-  <span class="hljs-keyword">const</span> previousState = peek(history);
-
-  <span class="hljs-comment">// calculate new state</span>
-  <span class="hljs-keyword">const</span> newState = fn(previousState);
-
-  <span class="hljs-keyword">if</span> (!equals(previousState, newState)) {
-    <span class="hljs-comment">// add new state to history.</span>
-    <span class="hljs-comment">// Remember our data structures</span>
-    <span class="hljs-comment">// are persistent, and share</span>
-    <span class="hljs-comment">// memory space! :)</span>
-    history = conj(history, newState);
-
-    <span class="hljs-comment">// fire listener callbacks</span>
-    each(listeners, callListener(previousState, newState));
-  }
-};</code></pre>
-
-<ul>
-<li>Good bonus: undo!</li>
-</ul>
-<pre><code class="hljs js"><span class="hljs-comment">// appState.js</span>
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> undo = () =&gt; {
-  <span class="hljs-keyword">if</span> (count(history) &gt; <span class="hljs-number">1</span>) {
-
-    <span class="hljs-keyword">const</span> previousState =
-      peek(history);
-
-    history =
-      subvec(history, <span class="hljs-number">0</span>, count(history) - <span class="hljs-number">1</span>);
-
-    <span class="hljs-keyword">const</span> newState =
-      peek(history);
-
-    each(listeners,
-      callListener(previousState, newState));
-  }
-}</code></pre>
-
-<ul>
-<li>Views can be rendered by functions that take the state value as input. These render functions can also be used as callbacks:</li>
-</ul>
-<pre><code class="hljs js"><span class="hljs-comment">// render.js</span>
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">let</span> renderList = elem =&gt; seq =&gt;
-  elem.innerHTML =
-    reduce(makeLi, <span class="hljs-string">'&lt;ul&gt;'</span>, seq) + <span class="hljs-string">'&lt;/ul&gt;'</span>;
-
-<span class="hljs-comment">// index.js</span>
-
-<span class="hljs-comment">// starts by rendering initial state:</span>
-<span class="hljs-keyword">const</span> initialState =
-  currentState();
-
-renderList
-  (foosElement)
-  (get(initialState, <span class="hljs-string">'foos'</span>));
-
-<span class="hljs-comment">// renders again on state change:</span>
-listen(prop(<span class="hljs-string">'foos'</span>),
-  renderList(foosElement));</code></pre>
-
-<ul>
-<li>User interactions will call the <code>update</code> function to change state. The argument passed is a function that will transform the current state. Let&#39;s call those transformations commands:</li>
-</ul>
-<pre><code class="hljs js"><span class="hljs-comment">// command.js</span>
-<span class="hljs-keyword">const</span> conjItem = item =&gt; coll =&gt;
-  conj(coll, item);
-
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> addFoo = foo =&gt; state =&gt;
-  updateIn(state, [<span class="hljs-string">'foos'</span>], conjItem(foo));
-
-<span class="hljs-comment">// index.js</span>
-
-<span class="hljs-comment">// input</span>
-<span class="hljs-keyword">let</span> newFooElement =
-  <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'new-foo'</span>);
-
-<span class="hljs-comment">// button</span>
-<span class="hljs-keyword">let</span> addFooElement =
-  <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'add-foo'</span>);
-
-addFooElement.onclick = () =&gt;
-  update(addFoo(newFooElement.value));</code></pre>
-
-<p>And that&#39;s it!</p>
-<p>The architecture is really simple, let&#39;s recap it:</p>
-<ul>
-<li>The application state is represented by an immutable object.</li>
-<li>The views are rendered according to the state object.</li>
-<li>Listeners with callbacks are registered. Changes in state cause callbacks to be fired.</li>
-<li>State is changed by calling the update function.</li>
-<li>User interactions or any other event can call the update function.</li>
-</ul>
-<p>##And what did we gain by using immutable data structures?</p>
-<p>My first impression was: it&#39;s simple. After getting used to the Mori functions, it is very straightforward to manipulate the data structures. And the fact that Mori handles memory and performance very well makes the code very direct too.</p>
-<p>Immutable persistent data structures make comparison very cheap, and it proved to be very important to the update function. Memory sharing is also an amazing feature that practically gave &quot;undo&quot; for free.</p>
-<p>So, in the end immutable data structures made it easy, explicit and performant to implement application state as series of values.</p>
-<p>##Next steps</p>
-<p>I chose Mori because it&#39;s an interface for clojurescript native data structures. <a href="http://clojure.org/">Clojure</a> is an amazing language, and I&#39;m starting to study and experiment with it now.</p>
-<p>Staying in javascript, it would also be interesting to get a look at <a href="https://facebook.github.io/immutable-js/">immutable.js</a>. It&#39;s maintained by facebook, and seems to play very well with React.</p>
-]]></description>
-            <guid isPermaLink="false">Immutable Data Structures and Javascript</guid>
-            <pubDate>Sat, 04 Jul 2015 00:00:00 GMT</pubDate>
         </item>
     </channel>
 </rss>
