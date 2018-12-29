@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Learning Elm, part 1 | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>Learning Elm, part 1</h1>
+        <div class="lead">Understanding The Benefits Of A Strong Type System</div>
+        <p><em>This is part 1 of a series:</em></p>
+<ul>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">Part 2: Understanding The Benefits Of A Strong Type System</a></li>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-3/">Part 3: Building A Real Application</a></li>
+<li><a href="http://lucasmreis.github.io/blog/learning-elm-part-4/">Part 4: Property Based Testing And Better Modelling</a></li>
+</ul>
+<p>A big concern when working with Javascript is <em>reliability</em>. Reliability in the sense of being completely sure about what a piece of code does, and knowing that changing one part won&#39;t break another part. A key concept is <em>error feedback cycle</em>: how soon can you catch errors in your code?</p>
+<p>There are a lot of ways to deal with that. &quot;Linters&quot; and comprehensive tests are a good start, and they are already a reality for most serious projects today. Using functional programming concepts like pure functions can also help a lot by simplifying your tests, and make it easier to reason about your project.</p>
+<p>Another trend I see is using <em>types</em>, mostly through TypeScript and Facebook Flow. They claim that, by programming with types, you can have a compiler that helps you get the code right. Not only that, the compiler will catch a lot of errors early in the process, so the error feedback cycle gets much shorter.</p>
+<p>So I decided to experiment with a typed language that compiles to Javascript. In a continuum of less to more code reliability (enforced or not by types), I compiled these players:</p>
+<ol>
+<li>Plain Javascript</li>
+<li>Facebook Flow</li>
+<li>TypeScript</li>
+<li>PureScript</li>
+<li>Elm</li>
+</ol>
+<p>Elm is the most &quot;hardcore typed language&quot; of the list, meaning that you can&#39;t even call Javascript code from Elm and vice-versa - you have to communicate through message passing. On the other hand, Elm would be the language that would provide the most &quot;type benefits&quot; of the list.</p>
+<p>That&#39;s why I decided to start my investigations on reliability with Elm. Let&#39;s start by implementing a relatively simple algorithm, and then we&#39;ll move on to more real-life situations.</p>
+<h2 id="the-spec">The Spec</h2>
+<p>I will write an algorithm that spells out a playing card abbreviation. Some examples:</p>
+<pre><code class="hljs"><span class="hljs-string">"3S"</span> -&gt; <span class="hljs-string">"Three of Spade"</span>
+<span class="hljs-string">"10H"</span> -&gt; <span class="hljs-string">"Ten of Heart"</span>
+<span class="hljs-string">"QC"</span> -&gt; <span class="hljs-string">"Queen of Club"</span>
+<span class="hljs-string">"AD"</span> -&gt; <span class="hljs-string">"Ace of Diamonds"</span>
+<span class="hljs-string">"3T"</span> -&gt; <span class="hljs-string">"-- unknown card --"</span></code></pre>
+
+<p>I will write the algorithm using the <a href="http://elm-lang.org/examples/hello-html">Try Elm website</a>. Now let&#39;s start!</p>
+<h2 id="modelling-with-types">Modelling With Types</h2>
+<p>I&#39;ve read a lot about types in Haskell, OCaml and F#, but never had the chance to program anything using that kind of strong type system. I&#39;ve been using dynamic languages (Javascript and Clojure) for the last few years, so it feel a little weird to think of types first.</p>
+<p>Disclaimer: I&#39;ll try to be as practical as I can. I&#39;ll try not to say &quot;Monad&quot; like everybody knows what it means, for instance :) An intermediate developer should be ok. If you have any questions, please feel free to ask in the comments.</p>
+<p>Back to the problem, I&#39;ve come with the following initial representation of the cards:</p>
+<pre><code class="hljs">type Value = Jack |<span class="hljs-string"> Queen </span>|<span class="hljs-string"> King </span>|<span class="hljs-string"> Ace </span>|<span class="hljs-string"> Num Int
+type Suit = Club </span>|<span class="hljs-string"> Diamond </span>|<span class="hljs-string"> Spade </span>|<span class="hljs-string"> Heart</span></code></pre>
+Both types are *union types*. That means that a Suit can either be a Club, Diamond, Spade or Heart. And a Value can be a Jack, a Queen, a King, an Ace or a Num with an integer. So, a Num 2 or Num 5 is a valid Value.
+
+That seems like a nice model for our problem. Now let's implement the functions that print a card.
+
+## Printing a Card
+
+I'll first print a Suit. It's a no brainer:
+
+<pre><code class="hljs"><span class="hljs-built_in">print</span>Suit suit = toString suit</code></pre>
+
+<p>I&#39;m testing it by replacing the following values in the last line:</p>
+<pre><code class="hljs"><span class="hljs-import"><span class="hljs-keyword">import</span> Html <span class="hljs-keyword">exposing</span> <span class="hljs-container">(text)</span></span>
+
+<span class="hljs-comment">-- code (...)</span>
+
+<span class="hljs-title">main</span> =
+  <span class="hljs-type">Spade</span>
+    |&gt; printSuit
+    |&gt; text</code></pre>
+
+<p>The <code>|&gt;</code> operator chains function calls. In the above line I get Spade, call <code>printSuit</code> with it as a parameter, then get the result of that computation and call the function <code>text</code> with it. It shows &quot;Spade&quot; in the output screen, so it works! :)</p>
+<p>To print a Value, calling <code>toString</code> is not enough. I need to handle the <code>Num Int</code> case differently. I&#39;ll use <em>pattern matching</em> to do that:</p>
+<pre><code class="hljs">printValue <span class="hljs-keyword">value</span> =
+  case <span class="hljs-keyword">value</span> <span class="hljs-keyword">of</span>
+    <span class="hljs-type">Num</span> <span class="hljs-number">2</span> -&gt;
+      <span class="hljs-string">"Two"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">3</span> -&gt;
+      <span class="hljs-string">"Three"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">4</span> -&gt;
+      <span class="hljs-string">"Four"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">5</span> -&gt;
+      <span class="hljs-string">"Five"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">6</span> -&gt;
+      <span class="hljs-string">"Six"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">7</span> -&gt;
+      <span class="hljs-string">"Seven"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">8</span> -&gt;
+      <span class="hljs-string">"Eight"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">9</span> -&gt;
+      <span class="hljs-string">"Nine"</span>
+
+    <span class="hljs-type">Num</span> <span class="hljs-number">10</span> -&gt;
+      <span class="hljs-string">"Ten"</span>
+
+    _ -&gt;
+      toString <span class="hljs-keyword">value</span></code></pre>
+
+<p>A little boring, but I went through every case possible - unless someone enters a number less than 2 or more than 10. I&#39;ll deal with that in the function that actually creates the card.</p>
+<p>To print the whole card, I&#39;ll make a function that concatenates a list that consists of: the value string, <code>&quot; of &quot;</code> and the suit string. I&#39;ll represent a card as a tuple <code>(Value, Suit)</code>:</p>
+<pre><code class="hljs"><span class="hljs-built_in">print</span>Card (value, suit) =
+  [<span class="hljs-built_in">print</span>Value value, <span class="hljs-string">" of "</span>, <span class="hljs-built_in">print</span>Suit suit] |&gt; String.concat
+
+main =
+  (Num <span class="hljs-number">10</span>, Spade)
+    |&gt; <span class="hljs-built_in">print</span>Card
+    |&gt; text
+
+-- Ten of Spade</code></pre>
+
+<p>The code above works, and I can be sure that all the combinations of Value and Suit will print well. That&#39;s really good.</p>
+<p>I&#39;ll add another layer of safety and documentation by writing the type signatures of the functions. I catch myself writing &quot;type signatures&quot; as comments even to my Javascript code from time to time, and it helps when dealing with a piece of code months later. I&#39;m starting to believe that having a compiler that ensures that your type signatures are in sync with the implementations can help a lot with maintainability.</p>
+<p><code>printCard</code> signature is: <code>printCard : (Value, Suit) -&gt; String</code>, but I think we can be more expressive if it is <code>printCard : Card -&gt; String</code>. That is possible with Elm, by writing a <em>type alias</em>:</p>
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">Card</span> = <span class="hljs-container">(<span class="hljs-type">Value</span>, <span class="hljs-type">Suit</span>)</span></span>
+
+(...)
+
+<span class="hljs-title">printCard</span> : <span class="hljs-type">Card</span> -&gt; <span class="hljs-type">String</span>
+<span class="hljs-title">printCard</span> (value, suit) =
+  [printValue value, <span class="hljs-string">" of "</span>, printSuit suit] |&gt; <span class="hljs-type">String</span>.concat
+
+<span class="hljs-title">main</span> =
+  (<span class="hljs-type">Num</span> <span class="hljs-number">10</span>, <span class="hljs-type">Spade</span>)
+    |&gt; printCard
+    |&gt; text
+
+<span class="hljs-comment">-- Ten of Spade</span></code></pre>
+
+<p>So, if I have a valid card, I can print it. Nice. Now let&#39;s parse the original abbreviation string.</p>
+<h2 id="parsing-a-suit-and-a-value-from-a-string">Parsing A Suit And A Value From A String</h2>
+<p>First I&#39;ll parse the suit. My first take is:</p>
+<pre><code class="hljs">parseSuit : Char<span class="hljs-function"> -&gt;</span> Suit
+parseSuit char =
+  <span class="hljs-keyword">case</span> char <span class="hljs-keyword">of</span>
+    <span class="hljs-string">'C'</span><span class="hljs-function"> -&gt;</span> Club
+    <span class="hljs-string">'D'</span><span class="hljs-function"> -&gt;</span> Diamond
+    <span class="hljs-string">'S'</span><span class="hljs-function"> -&gt;</span> Spade
+    <span class="hljs-string">'H'</span><span class="hljs-function"> -&gt;</span> Heart</code></pre>
+
+<p>When I compile it - even before calling this function anywhere - the compiler screams an error. This is the message I get:</p>
+<pre><code class="hljs">MISSING PATTERNS
+This `<span class="hljs-keyword">case</span>` does <span class="hljs-operator">not</span> have branches <span class="hljs-keyword">for</span> all possibilities.
+
+<span class="hljs-number">11</span>| <span class="hljs-keyword">case</span> <span class="hljs-keyword">char</span> <span class="hljs-operator">of</span>
+<span class="hljs-number">12</span>| <span class="hljs-string">'C'</span> -&gt; Club
+<span class="hljs-number">13</span>| <span class="hljs-string">'D'</span> -&gt; Diamond
+<span class="hljs-number">14</span>| <span class="hljs-string">'S'</span> -&gt; Spade
+<span class="hljs-number">15</span>| <span class="hljs-string">'H'</span> -&gt; Heart
+You need <span class="hljs-built_in">to</span> account <span class="hljs-keyword">for</span> <span class="hljs-operator">the</span> following values:
+
+ &lt;values besides <span class="hljs-string">'C'</span>, <span class="hljs-string">'D'</span>, <span class="hljs-string">'H'</span>, <span class="hljs-operator">and</span> <span class="hljs-string">'S'</span>&gt;
+
+Add <span class="hljs-operator">a</span> branch <span class="hljs-built_in">to</span> cover this pattern!
+
+If you are seeing this error <span class="hljs-keyword">for</span> <span class="hljs-operator">the</span> <span class="hljs-keyword">first</span> <span class="hljs-built_in">time</span>, check out these hints:
+&lt;<span class="hljs-keyword">https</span>://github.com/elm-lang/elm-compiler/blob/<span class="hljs-number">0.16</span><span class="hljs-number">.0</span>/hints/missing-patterns.md&gt;
+The recommendations about wildcard patterns <span class="hljs-operator">and</span> `Debug.crash` are important!</code></pre>
+
+<p>Oh my god, now that&#39;s an error message! First of all, the subject of the error is already outstanding: I coded that the function receives a Char as a parameter, and I did not handle all the Char cases. That means the compiler is preventing me from having code that behaves unexpectedly. What would be the return value if an <code>&#39;X&#39;</code> was passed? That case needs to be handled.</p>
+<p>But, better than that, I really like how <em>didatic</em> the message was. Not only does it give some tips, it gives a link to a page teaching the subject! I&#39;ve read that <a href="https://twitter.com/czaplic?lang=en">Evan Czaplicki</a>, the language designer, is working hard on making the error messages better. Good job!</p>
+<p>By reading that link, I learned that the best way to deal with this in this case is by using a Maybe type. Maybe is native to Elm, and represented by:</p>
+<pre><code class="hljs">type Maybe <span class="hljs-literal">a</span>
+  = Just <span class="hljs-literal">a</span>
+  | Nothing</code></pre>
+
+<p>Maybe represents a value that may or may not exist. So I&#39;ll make the assumption that if the Char inputted by the user is not one of the four, the Suit will not exist and will be represented by a Nothing:</p>
+<pre><code class="hljs">parseSuit : Char<span class="hljs-function"> -&gt;</span> Maybe Suit
+parseSuit s =
+  <span class="hljs-keyword">case</span> s <span class="hljs-keyword">of</span>
+    <span class="hljs-string">'C'</span><span class="hljs-function"> -&gt;</span> Just Club
+    <span class="hljs-string">'D'</span><span class="hljs-function"> -&gt;</span> Just Diamond
+    <span class="hljs-string">'S'</span><span class="hljs-function"> -&gt;</span> Just Spade
+    <span class="hljs-string">'H'</span><span class="hljs-function"> -&gt;</span> Just Heart
+    _<span class="hljs-function"> -&gt;</span> Nothing
+
+main =
+  <span class="hljs-string">'C'</span>
+    |&gt; parseSuit
+    |&gt; toString
+    |&gt; text
+
+-- Just Club</code></pre>
+
+<p>The best part of using <em>a maybe</em> is that the functions that deal with the value returned by the parsers <em>will have to deal with the fact that they may not exist</em>. This will be enforced by the compiler, and is one way of making sure we have to explicitly deal with errors or unexpected behaviors in the code. I&#39;ll talk more about that later. Let&#39;s now write the Value parser.</p>
+<p>A simple implementation would be:</p>
+<pre><code class="hljs">parseValue : <span class="hljs-built_in">String</span> <span class="hljs-subst">-&gt; </span>Maybe Value
+parseValue v =
+  <span class="hljs-keyword">case</span> v of
+    <span class="hljs-string">"J"</span> <span class="hljs-subst">-&gt;
+      </span>Just Jack
+
+    <span class="hljs-string">"Q"</span> <span class="hljs-subst">-&gt;
+      </span>Just Queen
+
+    <span class="hljs-string">"K"</span> <span class="hljs-subst">-&gt;
+      </span>Just King
+
+    <span class="hljs-string">"A"</span> <span class="hljs-subst">-&gt;
+      </span>Just Ace
+
+    _ <span class="hljs-subst">-&gt;
+      </span><span class="hljs-built_in">String</span><span class="hljs-built_in">.</span>toInt v</code></pre>
+
+<p>But the compiler screams that <code>String.toInt</code> does not return a Maybe Value. It returns a Result String Int which is described by <code>type Result error value = Ok value | Err error</code>. Let&#39;s extract this case to a different function so we can manage better <code>toInt</code>:</p>
+<pre><code class="hljs"><span class="hljs-title">parseNumValue</span> : <span class="hljs-type">String</span> -&gt; <span class="hljs-type">Maybe</span> <span class="hljs-type">Value</span>
+<span class="hljs-title">parseNumValue</span> v =
+  <span class="hljs-keyword">case</span> <span class="hljs-type">String</span>.toInt v <span class="hljs-keyword">of</span>
+    <span class="hljs-type">Ok</span> num -&gt;
+      <span class="hljs-keyword">if</span> (num &gt;= <span class="hljs-number">2</span> &amp;&amp; num &lt;= <span class="hljs-number">10</span>) <span class="hljs-keyword">then</span>
+        <span class="hljs-type">Just</span> (<span class="hljs-type">Num</span> num)
+      <span class="hljs-keyword">else</span>
+        <span class="hljs-type">Nothing</span>
+
+    <span class="hljs-type">Err</span> _ -&gt;
+      <span class="hljs-type">Nothing</span>
+
+
+<span class="hljs-title">parseValue</span> : <span class="hljs-type">String</span> -&gt; <span class="hljs-type">Maybe</span> <span class="hljs-type">Value</span>
+<span class="hljs-title">parseValue</span> v =
+  <span class="hljs-keyword">case</span> v <span class="hljs-keyword">of</span>
+    <span class="hljs-string">"J"</span> -&gt;
+      <span class="hljs-type">Just</span> <span class="hljs-type">Jack</span>
+
+    <span class="hljs-string">"Q"</span> -&gt;
+      <span class="hljs-type">Just</span> <span class="hljs-type">Queen</span>
+
+    <span class="hljs-string">"K"</span> -&gt;
+      <span class="hljs-type">Just</span> <span class="hljs-type">King</span>
+
+    <span class="hljs-string">"A"</span> -&gt;
+      <span class="hljs-type">Just</span> <span class="hljs-type">Ace</span>
+
+    _ -&gt;
+      parseNumValue v
+
+<span class="hljs-title">main</span> =
+  <span class="hljs-string">"10"</span>
+    |&gt; parseValue
+    |&gt; toString
+    |&gt; text
+
+<span class="hljs-comment">-- Just (Num 10)</span></code></pre>
+
+<p>This is one of the most interesting parts of the code we are writing. <code>parseNumValue</code> is the function that <em>guarantees</em> that a card will have a minimum value of 2 and a maximum of 10. This together with wrapping it in a Maybe, and using the Card type, is a guarantee that, whenever I have a Card variable, it&#39;s going to be a valid Card. There&#39;s no way to represent an invalid card, or to process an invalid card at some point of the code.</p>
+<p>Now we can parse a Value and a Suit. The next step is parsing the whole abbreviation, like <code>&quot;10H&quot;</code> or <code>&quot;KS&quot;</code>.</p>
+<h2 id="parsing-an-abbreviation-string">Parsing An Abbreviation String</h2>
+<p>We need to separate the abbreviation string into a value string and a suit character. Now this is a fun function:</p>
+<pre><code class="hljs">divideCardString : <span class="hljs-built_in">String</span> <span class="hljs-subst">-&gt; </span>(Maybe <span class="hljs-built_in">String</span>, Maybe Char)
+divideCardString str =
+  <span class="hljs-keyword">let</span>
+    chars = <span class="hljs-built_in">String</span><span class="hljs-built_in">.</span>toList str
+
+    suit = chars
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>reverse
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>head
+
+    value = chars
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>reverse
+      |&gt; <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>tail
+      |&gt; Maybe<span class="hljs-built_in">.</span><span class="hljs-built_in">map</span> <span class="hljs-built_in">List</span><span class="hljs-built_in">.</span>reverse
+      |&gt; Maybe<span class="hljs-built_in">.</span><span class="hljs-built_in">map</span> <span class="hljs-built_in">String</span><span class="hljs-built_in">.</span>fromList
+
+  <span class="hljs-keyword">in</span>
+    (value, suit)
+
+main =
+  <span class="hljs-string">"AH"</span>
+    |&gt; divideCardString
+    |&gt; toString
+    |&gt; text
+
+-- (Just <span class="hljs-string">"A"</span>, Just <span class="hljs-string">'H'</span>)</code></pre>
+
+<p>Let&#39;s break it into parts. First, there&#39;s the <code>let</code> keyword. It is used to compute temporary variables that will be returned after the <code>in</code> keyword.</p>
+<p>The first variable is <code>chars</code>. It&#39;s the List representation of the input string. It&#39;s inferred as a List of Char.</p>
+<p>To compute the next variables, I did not choose the most efficient way, and that can be &quot;homework&quot; for the reader :) <code>suit</code> is the head of the reverse of the list; in other words, it&#39;s the last Char. Note that <code>List.head</code> returns a Maybe, because the list may be empty!</p>
+<p><code>value</code> is the rest of the string. It&#39;s the tail of the reverse of the list, reversed again, and transformed in a String again. That&#39;s definitely not performant, but fun :) <code>List.tail</code> returns a Maybe List, so, to apply <code>List.reverse</code> and <code>String.formList</code>, I had to use <code>Maybe.map</code>. Maybe.map is the way to apply a function to the value inside a Maybe.</p>
+<p>Now the function that takes this tuple and returns a Maybe Card:</p>
+<pre><code class="hljs">parseCardTuple : <span class="hljs-function"><span class="hljs-params">(Maybe String, Maybe Char)</span> -&gt;</span> Maybe Card
+parseCardTuple (value, suit) =
+  <span class="hljs-keyword">case</span> ( value |&gt; Maybe.andThen parseValue, suit |&gt; Maybe.andThen parseSuit ) <span class="hljs-keyword">of</span>
+    <span class="hljs-function"><span class="hljs-params">(Just v, Just s)</span> -&gt;</span>
+      Just (v, s)
+
+    _<span class="hljs-function"> -&gt;</span>
+      Nothing
+
+main =
+  (Just <span class="hljs-string">"7"</span>, Just <span class="hljs-string">'D'</span>)
+    |&gt; parseCardTuple
+    |&gt; toString
+    |&gt; text
+
+-- Just ((Num <span class="hljs-number">7</span>,Diamond))</code></pre>
+
+<p><code>Maybe.andThen</code> is used when using <code>Maybe.map</code> returns a Maybe of a Maybe. <code>andThen</code> is for Maybes what <code>flatten</code> is for Arrays :)</p>
+<p>The nice part of this function is that we called functions inside the <code>case of</code> syntax. So, if both parses are successful, I&#39;ll return a Just Card. If anything goes wrong, be it that there was no String to begin with, or one of the parses returned Nothing, our function itself will return Nothing.</p>
+<p>Now our algorithm is ready! Let&#39;s glue all the parts together.</p>
+<h2 id="the-final-function">The Final function</h2>
+<p>The final function is just a composition of the ones we just built:</p>
+<pre><code class="hljs">spellCard : <span class="hljs-built_in">String</span> -&gt; <span class="hljs-built_in">String</span>
+spellCard <span class="hljs-keyword">str</span> =
+  <span class="hljs-keyword">str</span>
+    |&gt; divideCardString
+    |&gt; parseCardTuple
+    |&gt; printCard</code></pre>
+
+<p>It does not compile. The compiler tells us that <code>parseCardTuple</code> returns a Maybe Card, and <code>printCard</code> was expecting a Card. We already know how to solve it, we just change it to <code>Maybe.map printCard</code>. The problem is that the function would still return a Maybe String, and we want to extract a String from it.</p>
+<p>The <code>Maybe</code> module has a function for that: <code>Maybe.withDefault</code>. It accepts a default value and a Maybe. If the Maybe is a Just, it returns the value inside the Just. If it&#39;s a Nothing, it returns the default value. Here is the official implementation of <a href="https://github.com/elm-lang/core/blob/master/src/Maybe.elm#L51"><code>Maybe.withDefault</code></a>:</p>
+<pre><code class="hljs"><span class="hljs-title">withDefault</span> : a -&gt; <span class="hljs-type">Maybe</span> a -&gt; a
+<span class="hljs-title">withDefault</span> <span class="hljs-default"><span class="hljs-keyword">default</span> maybe =</span>
+  <span class="hljs-keyword">case</span> maybe <span class="hljs-keyword">of</span>
+    <span class="hljs-type">Just</span> value -&gt; value
+    <span class="hljs-type">Nothing</span> -&gt; <span class="hljs-default"><span class="hljs-keyword">default</span></span></code></pre>
+
+<p>Using it, our final function is described as:</p>
+<pre><code class="hljs">spellCard : String -&gt; String
+spellCard str =
+  str
+    <span class="hljs-string">|&gt; divideCardString</span>
+    <span class="hljs-string">|&gt; parseCardTuple</span>
+    <span class="hljs-string">|&gt; Maybe.map printCard</span>
+    <span class="hljs-string">|&gt; Maybe.withDefault "</span>-- unknown card --<span class="hljs-string">"</span>
+
+
+main =
+  <span class="hljs-string">"AH"</span>
+    <span class="hljs-string">|&gt; spellCard</span>
+    <span class="hljs-string">|&gt; text</span>
+
+-- Ace of Heart</code></pre>
+
+<p>It&#39;s done!</p>
+<h2 id="but-specs-change-">But Specs Change...</h2>
+<p>And we have to deal with it. One of the promises of strong type systems is that they make the code much easier and safer to change / refactor. I work daily with a big Javascript application, and I think that&#39;s one of the most painful points now. Changing any part of the code requires a lot of attention, and a lot of faith in the tests. Just changing a function is never the answer, and we have to be extra careful not to insert &quot;hidden bugs&quot; by creating new unexpected cases.</p>
+<p>Let&#39;s suppose we want to include the Joker card:</p>
+<pre><code class="hljs"><span class="hljs-string">"J"</span> -&gt; <span class="hljs-string">"Joker"</span></code></pre>
+
+<p>The first thing I notice is that our model is not sufficient anymore. A card is not a tuple of value and suit; now we also have a joker. I&#39;m gonna change the <code>Card</code> type, and run the compiler to see what it says:</p>
+<pre><code class="hljs"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span> = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span> | <span class="hljs-type">Joker</span></span></code></pre>
+
+<p>The compiler complains that <code>printCard</code> does not print a Card, it prints a tuple. Let&#39;s change it:</p>
+<pre><code class="hljs">printCard : <span class="hljs-type">Card</span> -&gt; <span class="hljs-type">String</span>
+printCard card =
+  case card <span class="hljs-keyword">of</span>
+    <span class="hljs-type">OrdinaryCard</span> <span class="hljs-keyword">value</span> suit -&gt;
+      [printValue <span class="hljs-keyword">value</span>, <span class="hljs-string">" of "</span>, printSuit suit] |&gt; <span class="hljs-type">String</span>.concat
+
+  <span class="hljs-type">Joker</span> -&gt;
+    <span class="hljs-string">"Joker"</span></code></pre>
+
+<p>The other error the compiler caught was that <code>parseCardTuple</code> does not return a Card. Now it&#39;s time to pause a little and think about the parsers.</p>
+<p>The Joker abbreviation is only a <code>&quot;J&quot;</code>, so it does not make sense to call <code>divideCardString</code> with it! If I have a <code>&quot;J&quot;</code>, I should return a Just Joker. To do that, I&#39;m gonna implement a new function:</p>
+<pre><code class="hljs">parseCardString : <span class="hljs-built_in">String</span> -&gt; Maybe Card
+parseCardString <span class="hljs-keyword">str</span> =
+  case <span class="hljs-keyword">str</span> of
+    <span class="hljs-string">"J"</span> -&gt;
+      Just Joker
+
+    _ -&gt;
+      <span class="hljs-keyword">str</span>
+        |&gt; divideCardString
+        |&gt; parseCardTuple</code></pre>
+
+<p>It handles the case <code>&quot;J&quot;</code> separately, and calls our previous function if it&#39;s not a Joker. Now we only have to change <code>parseCardTuple</code> to return an OrdinaryCard instead of the tuple in case of success:</p>
+<pre><code class="hljs">parseCardTuple : <span class="hljs-function"><span class="hljs-params">(Maybe String, Maybe Char)</span> -&gt;</span> Maybe Card
+parseCardTuple (value, suit) =
+  <span class="hljs-keyword">case</span> ( value |&gt; Maybe.andThen parseValue, suit |&gt; Maybe.andThen parseSuit ) <span class="hljs-keyword">of</span>
+    <span class="hljs-function"><span class="hljs-params">(Just v, Just s)</span> -&gt;</span>
+      Just (OrdinaryCard v s) -- <span class="hljs-keyword">not</span> a tuple
+
+  _<span class="hljs-function"> -&gt;</span>
+    Nothing</code></pre>
+
+<p>And change <code>spellCard</code>:</p>
+<pre><code class="hljs">spellCard : <span class="hljs-keyword">String</span> -&gt; <span class="hljs-keyword">String</span>
+spellCard <span class="hljs-built_in">str</span> =
+  <span class="hljs-built_in">str</span>
+    |&gt; parseCardString
+    |&gt; Maybe.<span class="hljs-built_in">map</span> printCard
+    |&gt; Maybe.withDefault <span class="hljs-string">"-- unknown card --"</span>
+
+main =
+  <span class="hljs-string">"J"</span>
+    |&gt; spellCard
+    |&gt; <span class="hljs-built_in">text</span>
+
+-- Joker</code></pre>
+
+<p>That was very easy, and I really liked the compiler&#39;s help.</p>
+<h2 id="first-impressions-of-elm">First Impressions Of Elm</h2>
+<p>It&#39;s a simple algorithm, and it&#39;s just a pure function. I still can&#39;t tell if a big web application Elm codebase will feel the same way, so let&#39;s all take these conclusions with a grain of salt - it&#39;s just a first impression.</p>
+<p>First: the code really feels <em>reliable</em>. Even though I do not have any unit tests, I&#39;m sure it works as expected, with no errors or difficult-to-spot runtime exceptions. In a more serious setting, I would write three or four unit tests and that&#39;s it. Reliability is probably the number one factor that&#39;s making me research other front end languages, and Elm&#39;s strong type system seems to be a clean path towards that.</p>
+<p>Second: the code feels <em>maintainable</em>. I may have spent a little more time implementing the first version of the function than I would with Javascript. But I found that implementing the new spec was very easy and direct, maintaining the reliability feeling I had when I started coding the function.</p>
+<p>Third: it was <em>fun</em>. Fun is sometimes overlooked when talking about technologies, but it should not be. Not only does it help keep the engineers engaged, it&#39;s usually a good signal that we are dealing with a smart and productive tool. No one finds using a dumb and clumsy tool fun, am I right? :)</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>I really liked this first contact with Elm, and I&#39;m going to continue investigating it.</p>
+<p>As a next step, I will implement a web app that uses our function. I&#39;ll have to deal with Elm&#39;s tooling outside the online REPL, and I&#39;ll have to deal with asynchronous events from user interaction.</p>
+<p>Then I&#39;ll implement a web app that communicates with a server. I&#39;, curious to see how easy it&#39;ll be to write &quot;impure&quot; code in Elm.</p>
+<p>If you have had any experiences with Elm, good or bad, feel free to post it in the comments section!</p>
+<h2 id="the-final-code">The Final Code</h2>
+<p>You can copy and paste the following code to the online REPL and play a little bit with Elm:</p>
+<pre><code class="hljs">import Html exposing (text)
+import <span class="hljs-built_in">String</span>
+
+<span class="hljs-keyword">type</span> <span class="hljs-title">Value</span> = Jack | Queen | King | Ace | Num Int
+<span class="hljs-keyword">type</span> <span class="hljs-title">Suit</span> = Club | Diamond | Spade | Heart
+<span class="hljs-keyword">type</span> <span class="hljs-title">Card</span> = OrdinaryCard Value Suit | Joker
+
+
+parseSuit : Char -&gt; Maybe Suit
+parseSuit s =
+  case s of
+    <span class="hljs-string">'C'</span> -&gt; Just Club
+    <span class="hljs-string">'D'</span> -&gt; Just Diamond
+    <span class="hljs-string">'S'</span> -&gt; Just Spade
+    <span class="hljs-string">'H'</span> -&gt; Just Heart
+    _ -&gt; Nothing
+
+
+parseNumValue : <span class="hljs-built_in">String</span> -&gt; Maybe Value
+parseNumValue v =
+  case <span class="hljs-built_in">String</span>.toInt v of
+    <span class="hljs-built_in">Ok</span> num -&gt;
+      <span class="hljs-keyword">if</span> (num &gt;= <span class="hljs-number">2</span> &amp;&amp; num &lt;= <span class="hljs-number">10</span>) then
+        Just (Num num)
+      <span class="hljs-keyword">else</span>
+        Nothing
+
+    <span class="hljs-built_in">Err</span> _ -&gt;
+      Nothing
+
+
+parseValue : <span class="hljs-built_in">String</span> -&gt; Maybe Value
+parseValue v =
+  case v of
+    <span class="hljs-string">"J"</span> -&gt;
+      Just Jack
+
+    <span class="hljs-string">"Q"</span> -&gt;
+      Just Queen
+
+    <span class="hljs-string">"K"</span> -&gt;
+      Just King
+
+    <span class="hljs-string">"A"</span> -&gt;
+      Just Ace
+
+    _ -&gt;
+      parseNumValue v
+
+
+divideCardString : <span class="hljs-built_in">String</span> -&gt; (Maybe <span class="hljs-built_in">String</span>, Maybe Char)
+divideCardString <span class="hljs-keyword">str</span> =
+  <span class="hljs-keyword">let</span>
+    chars = <span class="hljs-built_in">String</span>.toList <span class="hljs-keyword">str</span>
+
+    suit = chars
+      |&gt; List.reverse
+      |&gt; List.head
+
+    value = chars
+      |&gt; List.reverse
+      |&gt; List.tail
+      |&gt; Maybe.map List.reverse
+      |&gt; Maybe.map <span class="hljs-built_in">String</span>.fromList
+
+  <span class="hljs-keyword">in</span>
+    (value, suit)
+
+
+parseCardTuple : (Maybe <span class="hljs-built_in">String</span>, Maybe Char) -&gt; Maybe Card
+parseCardTuple (value, suit) =
+  case (value `Maybe.andThen` parseValue, suit `Maybe.andThen` parseSuit) of
+    (Just v, Just s) -&gt;
+      Just (OrdinaryCard v s) -- not a tuple
+
+    _ -&gt;
+      Nothing
+
+
+parseCardString : <span class="hljs-built_in">String</span> -&gt; Maybe Card
+parseCardString <span class="hljs-keyword">str</span> =
+  case <span class="hljs-keyword">str</span> of
+    <span class="hljs-string">"J"</span> -&gt;
+      Just Joker
+
+    _ -&gt;
+      <span class="hljs-keyword">str</span>
+        |&gt; divideCardString
+        |&gt; parseCardTuple
+
+
+printSuit : Suit -&gt; <span class="hljs-built_in">String</span>
+printSuit suit = toString suit
+
+
+printValue : Value -&gt; <span class="hljs-built_in">String</span>
+printValue value =
+  case value of
+    Num <span class="hljs-number">2</span> -&gt;
+      <span class="hljs-string">"Two"</span>
+
+    Num <span class="hljs-number">3</span> -&gt;
+      <span class="hljs-string">"Three"</span>
+
+    Num <span class="hljs-number">4</span> -&gt;
+      <span class="hljs-string">"Four"</span>
+
+    Num <span class="hljs-number">5</span> -&gt;
+      <span class="hljs-string">"Five"</span>
+
+    Num <span class="hljs-number">6</span> -&gt;
+      <span class="hljs-string">"Six"</span>
+
+    Num <span class="hljs-number">7</span> -&gt;
+      <span class="hljs-string">"Seven"</span>
+
+    Num <span class="hljs-number">8</span> -&gt;
+      <span class="hljs-string">"Eight"</span>
+
+    Num <span class="hljs-number">9</span> -&gt;
+      <span class="hljs-string">"Nine"</span>
+
+    Num <span class="hljs-number">10</span> -&gt;
+      <span class="hljs-string">"Ten"</span>
+
+    _ -&gt;
+      toString value
+
+
+printCard : Card -&gt; <span class="hljs-built_in">String</span>
+printCard card =
+  case card of
+    OrdinaryCard value suit -&gt;
+      [printValue value, <span class="hljs-string">" of "</span>, printSuit suit] |&gt; <span class="hljs-built_in">String</span>.concat
+
+  Joker -&gt;
+    <span class="hljs-string">"Joker"</span>
+
+
+spellCard : <span class="hljs-built_in">String</span> -&gt; <span class="hljs-built_in">String</span>
+spellCard <span class="hljs-keyword">str</span> =
+  <span class="hljs-keyword">str</span>
+    |&gt; parseCardString
+    |&gt; Maybe.map printCard
+    |&gt; Maybe.withDefault <span class="hljs-string">"-- unknown card --"</span>
+
+
+main =
+  <span class="hljs-string">"J"</span>
+    |&gt; spellCard
+    |&gt; text</code></pre>
+        <div class="signature">April 21, 2016.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'learning-elm-part-1';
+          var disqus_title = 'Learning Elm, part 1';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

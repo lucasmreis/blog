@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Learning ReasonML, part 2 | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>Learning ReasonML, part 2</h1>
+        <div class="lead">Integrating ReasonML Into a React Application</div>
+        <p>When learning a new language, it&#39;s great to have the opportunity to write a small module and be able to integrate it with a real world application. Fortunately, one of the main objectives of the ReasonML team is smooth JS integration, so let&#39;s see if it delivers!</p>
+<h2 id="the-project">The Project</h2>
+<p>Let&#39;s start with an existing React application. <a href="https://github.com/lucasmreis/learning-reasonml/tree/master/part-2">Here&#39;s the code</a>, and <a href="https://simple-deck-example.netlify.com/">here&#39;s the working app</a>. The app &quot;creates&quot; a deck of cards using <a href="http://deckofcardsapi.com/">this great open API</a>, and then, the user can draw three cards at a time using a button. The cards are drawn face down, and turn face up when clicked.</p>
+<p>This project is interesting because it has some key real world features: global and local state handling, and remote data fetching both on startup and user interaction. In this post I&#39;ll integrate ReasonML code in three different ways: first with a function (the one we <a href="http://lucasmreis.github.io/blog/learning-reasonml-part-1/">wrote in the first part of this series</a>), then with a stateless React component, and finally with a stateful React component.</p>
+<h2 id="having-reasonml-files-in-a-js-project">Having ReasonML Files In A JS Project</h2>
+<p>We want our workflow to be as simple as possible. I like the idea of creating <code>.re</code> files throughout the project where I need them, and automatically compiling them to <code>.bs.js</code> files in the same location. To achieve that, let&#39;s first install <code>bs-platform</code> to <a href="https://github.com/lucasmreis/learning-reasonml/tree/master/part-2">our react application</a> with npm:</p>
+<pre><code class="hljs">$ npm install --<span class="hljs-built_in">save</span>-<span class="hljs-built_in">dev</span> bs-platform</code></pre>
+
+<p>Then we create <code>bsconfig.json</code> in the root folder:</p>
+<pre><code class="hljs json">{
+  "<span class="hljs-attribute">name</span>": <span class="hljs-value"><span class="hljs-string">"simple-deck"</span></span>,
+  "<span class="hljs-attribute">version</span>": <span class="hljs-value"><span class="hljs-string">"0.1.0"</span></span>,
+  "<span class="hljs-attribute">sources</span>": <span class="hljs-value">[
+    {
+      "<span class="hljs-attribute">dir</span>": <span class="hljs-value"><span class="hljs-string">"src"</span></span>,
+      "<span class="hljs-attribute">subdirs</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
+    </span>}
+  ]</span>,
+  "<span class="hljs-attribute">package-specs</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">module</span>": <span class="hljs-value"><span class="hljs-string">"es6"</span></span>,
+    "<span class="hljs-attribute">in-source</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
+  </span>}</span>,
+  "<span class="hljs-attribute">suffix</span>": <span class="hljs-value"><span class="hljs-string">".bs.js"</span></span>,
+  "<span class="hljs-attribute">bs-dependencies</span>": <span class="hljs-value">[]</span>,
+  "<span class="hljs-attribute">namespace</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+  "<span class="hljs-attribute">refmt</span>": <span class="hljs-value"><span class="hljs-number">3</span>
+</span>}</code></pre>
+
+<p>In this file we&#39;re saying that we should compile every file in the <code>src</code> folder and subfolders. Also, since our project is a <a href="https://github.com/facebook/create-react-app">Create React App</a> project that uses webpack for bundling, we&#39;re compiling to ES6 modules. I found that the official documentation <a href="https://bucklescript.github.io/docs/en/build-configuration.html">has a good section on the config file</a>.</p>
+<p>Now we only need to update the npm scripts to take ReasonML into account:</p>
+<pre><code class="hljs js">(...)
+
+<span class="hljs-string">"scripts"</span>: {
+    <span class="hljs-string">"start:reason"</span>: <span class="hljs-string">"bsb -make-world -w"</span>,
+    <span class="hljs-string">"build"</span>: <span class="hljs-string">"bsb -make-world &amp;&amp; react-scripts build"</span>,
+
+(...)</code></pre>
+
+<p>Open two terminals, run <code>npm start</code> in one of them and <code>npm run start:reason</code> in the other one, and we&#39;re ready to start writing ReasonML in our React project!</p>
+<h2 id="integrating-a-function">Integrating A Function</h2>
+<p>First, let&#39;s look at the structure of the application:</p>
+<ul>
+<li>The app follows CRA initial structure: all application code is inside the <code>src</code> folder, and the React setup is in the <code>index.js</code> file.</li>
+<li><code>App.js</code> is the main container; it fetches data from the deck API, stores it, and exposes a <code>draw</code> action that fetches three new cards:</li>
+</ul>
+<pre><code class="hljs js"><span class="hljs-comment">// State shape:</span>
+<span class="hljs-comment">// { status: 'CREATING_DECK' }</span>
+<span class="hljs-comment">// { status: 'WAITING_FOR_USER', deckId, cards: [{ image, code }], remaining }</span>
+<span class="hljs-comment">// { status: 'DRAWING_CARDS', deckId, cards, remaining }</span>
+<span class="hljs-comment">// { status: 'FINISHED', cards }</span>
+<span class="hljs-comment">// { status: 'ERROR' }</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Component</span> </span>{
+  state = { status: <span class="hljs-string">"CREATING_DECK"</span> };
+
+  componentDidMount() {
+    <span class="hljs-comment">// fetch a new deck of cards</span>
+    <span class="hljs-comment">// if success, set state to WAITING_FOR_USER</span>
+    <span class="hljs-comment">// else set state to ERROR</span>
+  }
+
+  draw = <span class="hljs-keyword">async</span> () =&gt; {
+    <span class="hljs-comment">// set state to DRAWING_CARDS</span>
+    <span class="hljs-comment">// fetch three new cards</span>
+    <span class="hljs-comment">// if success, set state to:</span>
+    <span class="hljs-comment">// - WAITING_FOR_USER if there are still remaining cards in the deck</span>
+    <span class="hljs-comment">// - FINISHED if there are not</span>
+    <span class="hljs-comment">// else set state to ERROR</span>
+  };
+
+  render() {
+    <span class="hljs-comment">// render action button that triggers the draw action on click</span>
+    <span class="hljs-comment">// render collection of Card components</span>
+  }
+}</code></pre>
+
+<ul>
+<li>The Card component is defined in the <code>components/Card/index.js</code> file:</li>
+</ul>
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-string">"./Card.css"</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">const</span> flippedClass = <span class="hljs-keyword">this</span>.state.flipped ? <span class="hljs-string">"Card flipped"</span> : <span class="hljs-string">"Card"</span>;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">{flippedClass}</span> <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+          <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">{code}</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">{imageSource}</span> /&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
+  }
+}
+
+<span class="hljs-keyword">export</span> { Card };</code></pre>
+
+<p>Each card has a <code>flipped</code> boolean state that is initialized as true. The card is rendered either in a flipped state or normal state using CSS classes. <code>flipped</code> changes when the user clicks the card. Simple, direct React code.</p>
+<p>An initial, super low risk place to integrate ReasonML could be the image&#39;s alt attribute. <code>code</code> is a value returned from the Deck API, that looks like &quot;6C&quot;, &quot;QH&quot; or &quot;AD&quot;. In <a href="http://lucasmreis.github.io/blog/learning-reasonml-part-1/">part 1 of our series</a> we implemented a function that transforms a string like this into a complete &quot;Six of Clubs&quot; or &quot;Queen of Hearts&quot;, so let&#39;s use it!</p>
+<p>Create a <code>ParseAndRenderCard.re</code> file in the same folder as the Card component, and copy and paste the code into it. If Bucklescript is setup correctly and running, you should already be seeing a <code>ParseAndRenderCard.bs.js</code> file in the same folder (I&#39;m a little bit scared with how fast this compiler is, hehe). I added this to the end of the file to be able to export the function:</p>
+<pre><code class="hljs js">(...)
+
+<span class="hljs-keyword">let</span> parseAndRender = cardStr =&gt;
+  cardStr
+  |&gt; Parser.parseCard
+  |&gt; Option.map(RenderToString.renderCard)
+  |&gt; Option.withDefault(RenderToString.defaultErrorCard);</code></pre>
+
+<p>And we can see that the end of the compiled file looks something like this:</p>
+<pre><code class="hljs js">(...)
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseAndRender</span>(<span class="hljs-params">cardStr</span>) </span>{
+  <span class="hljs-keyword">return</span> withDefault(defaultErrorCard, map(renderCard, parseCard(cardStr)));
+}
+
+<span class="hljs-keyword">export</span> {
+  Parser         ,
+  RenderToString ,
+  Option         ,
+  parseAndRender ,
+}</code></pre>
+
+<p><code>parseAndRender</code> was exactly what we needed. Now, on the <code>Card/index.js</code> file, import the function and use it:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> { parseAndRender } <span class="hljs-keyword">from</span> <span class="hljs-string">"./ParseAndRenderCard.bs"</span>;
+
+(...)
+
+render() {
+  (...)
+
+    &lt;img alt={parseAndRender(code)} src={imageSource} /&gt;
+
+  (...)
+}</code></pre>
+
+<p>And we&#39;re done! That&#39;s it, we added a ReasonML function to our JS app, in three simple steps:</p>
+<ol>
+<li>Install and setup the Bucklescript/ReasonML compiler</li>
+<li>Write a ReasonML function in <code>.re</code> files alongside your js files, and let the compiler generate the <code>.js</code> files</li>
+<li>Import the generated JS function into your code</li>
+</ol>
+<p>ML languages like ReasonML are great for writing intricate logic, so I think that writing functions in them and importing to your React project can already bring benefits. But let&#39;s take it a step further and write a whole stateless component in ReasonML.</p>
+<p>The final code for the project with a ReasonML function integration <a href="https://github.com/lucasmreis/learning-reasonml/tree/integrating_function/part-2">can be found here</a>.</p>
+<h2 id="integrating-a-stateless-component">Integrating A Stateless Component</h2>
+<p>Now let&#39;s create a React component using ReasonML. As always, let&#39;s start simple - I think a stateless component is a good opportunity for that. First of all, we need to refactor our Card component - let&#39;s use the Container / View pattern <a href="http://lucasmreis.github.io/blog/simple-react-patterns/">described in this blog post</a>. Remember the card component:</p>
+<pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">const</span> flippedClass = <span class="hljs-keyword">this</span>.state.flipped ? <span class="hljs-string">"Card flipped"</span> : <span class="hljs-string">"Card"</span>;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">{flippedClass}</span> <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+          <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">{parseAndRender(code)}</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">{imageSource}</span> /&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
+  }
+}</code></pre> 
+
+<p>The refactor is straightforward:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> CardView = ({ code, imageSource, flipped, onClick }) =&gt; (
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">{flipped</span> ? "<span class="hljs-attribute">Card</span> <span class="hljs-attribute">flipped</span>" <span class="hljs-attribute">:</span> "<span class="hljs-attribute">Card</span>"} <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{onClick}</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">{parseAndRender(code)}</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">{imageSource}</span> /&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+)</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+        <span class="hljs-attribute">code</span>=<span class="hljs-value">{code}</span>
+        <span class="hljs-attribute">imageSource</span>=<span class="hljs-value">{imageSource}</span>
+        <span class="hljs-attribute">flipped</span>=<span class="hljs-value">{this.state.flipped}</span>
+        <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>
+      /&gt;</span>
+    )</span>;
+  }
+}</code></pre>
+
+<p>We&#39;re going to rewrite the CardView component. We&#39;re going to use the <a href="https://reasonml.github.io/reason-react/">ReasonReact</a> wrapper from React, which is the current standard way of writing React in ReasonML. After <code>npm install --save reason-react</code>, change the <code>bsconfig.json</code> file to include these two properties:</p>
+<pre><code class="hljs js">{
+  (...) 
+
+  <span class="hljs-string">"reason"</span>: { <span class="hljs-string">"react-jsx"</span>: <span class="hljs-number">2</span> },
+  <span class="hljs-string">"bs-dependencies"</span>: [<span class="hljs-string">"reason-react"</span>],
+
+  (...)
+}</code></pre>
+
+<p>Now we&#39;re ready to start coding. Create a <code>CardView.re</code> file in the Card folder, and copy this code into it:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> component = ReasonReact.statelessComponent(<span class="hljs-string">"CardView"</span>);
+
+<span class="hljs-keyword">let</span> make = (~code, ~imageSource, ~flipped, ~onClick, _children) =&gt; {
+  ...component,
+  render: _self =&gt;
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">(flipped</span> ? "<span class="hljs-attribute">Card</span> <span class="hljs-attribute">flipped</span>" <span class="hljs-attribute">:</span> "<span class="hljs-attribute">Card</span>") <span class="hljs-attribute">onClick</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card front"</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">img</span> <span class="hljs-attribute">alt</span>=<span class="hljs-value">(ParseAndRenderCard.parseAndRender(code))</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">imageSource</span> /&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"Card back"</span> /&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+};</span></code></pre>
+
+<p>Let me explain what&#39;s going on here. Every component in ReasonReact is defined by a <code>make</code> function. This function receives props and children as input, and returns a record. In our case, we created a &quot;base&quot; stateless record with the <code>statelessComponent</code> function, and our <code>make</code> function returns it with the <code>render</code> field being overriden.</p>
+<p>It feels a little bit like a regular javascript React component, with some interesting differences:</p>
+<ul>
+<li>The components props are defined as <a href="https://reasonml.github.io/docs/en/function.html">labeled parameters</a></li>
+<li>The <code>_</code> prefix was used as a convention for unused parameters</li>
+<li>We don&#39;t need to enclose the passed props in <code>{</code> and <code>}</code>. Example: <code>src=imageSource</code></li>
+<li>We can use shorthand names for props. Example: <code>onClick</code> in the first <code>div</code></li>
+</ul>
+<p>The rest feels pretty similar to Javascript, with the benefits of Ocaml&#39;s strong type. Sweet!</p>
+<p>This is all we would need if we were using this component inside ReasonML. But since we&#39;re going to call it inside a regular javascript React component, we need to have an extra step. ReasonReact has a <code>wrapReasonForJs</code> function that serves this purpose:</p>
+<pre><code class="hljs js">let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =&gt;
+    make(
+      ~code=jsProps##code,
+      ~imageSource=jsProps##imageSource,
+      ~flipped=Js.to_bool(jsProps##flipped),
+      ~onClick=jsProps##onClick,
+      [||]
+    )
+);</code></pre> 
+
+<p>The <code>wrapReasonForJs</code> function receives a component as a parameter, and a function that maps those dynamic js props to ReasonML typed props. The component should be the base one we used in our make function. The function should call make itself, with the transformed props that were passed to the component in JS. Some comments on it:</p>
+<ul>
+<li><code>~component</code> is a shorthand for <code>~component=component</code></li>
+<li><code>##</code> is the way to get the value of a property in a regular JS object. So <code>jsProps##code</code> is compiled to <code>jsProps.code</code></li>
+<li>Boolean ReasonML types are <em>not</em> represented as <code>true</code> or <code>false</code> in Javascript! That&#39;s why we need to use <code>Js.to_bool</code> to convert <code>jsProps##flipped</code></li>
+<li>Arrays are represented by <code>[|</code> and <code>|]</code> in ReasonML. If we use <code>[</code> and <code>]</code>, we&#39;re actually creating a <em>list</em>. The <a href="https://reasonml.github.io/docs/en/list-and-array.html">docs explain the difference well</a>, and I suggest you play a little with both in <a href="https://reasonml.github.io/en/try.html">Try Reason</a> to see the differences in the compiled code!</li>
+</ul>
+<p>Now we can go to our <code>Card/index.html</code> file, erase the previous CardView component, and use our brand new ReasonML one:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">"react"</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-string">"./Card.css"</span>;
+<span class="hljs-keyword">import</span> CardView <span class="hljs-keyword">from</span> <span class="hljs-string">"./CardView.bs"</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Card</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  state = {
+    flipped: <span class="hljs-literal">true</span>
+  };
+
+  flip = () =&gt; {
+    <span class="hljs-keyword">this</span>.setState({ flipped: !<span class="hljs-keyword">this</span>.state.flipped });
+  };
+
+  render() {
+    <span class="hljs-keyword">const</span> { code, imageSource } = <span class="hljs-keyword">this</span>.props;
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+        <span class="hljs-attribute">code</span>=<span class="hljs-value">{code}</span>
+        <span class="hljs-attribute">imageSource</span>=<span class="hljs-value">{imageSource}</span>
+        <span class="hljs-attribute">flipped</span>=<span class="hljs-value">{this.state.flipped}</span>
+        <span class="hljs-attribute">onClick</span>=<span class="hljs-value">{this.flip}</span>
+      /&gt;</span>
+    )</span>;
+  }
+}
+
+<span class="hljs-keyword">export</span> { Card };</code></pre>
+
+<p>And that&#39;s it - our application should be running flawlessly with the new code!</p>
+<h2 id="integrating-a-stateful-component">Integrating A Stateful Component</h2>
+<p>Stateful components in ReasonReact are interesting - we define the way state is updated by defining actions and a reducer. Sounds familiar, right? Yes, there&#39;s a mini-redux in every component :) It&#39;s a great pattern, and feels even better with the compiler help from the strong types.</p>
+<p>Our stateful component is simple: our cards start out face down, and if a user clicks one of them, they&#39;re flipped over. So let&#39;s start by creating a <code>CardContainer.re</code> file alongside <code>CardView.re</code>, and describe our action and our state:</p>
+<pre><code class="hljs js">type action =
+  | Flip;
+
+type state = {flipped: bool};</code></pre>
+
+<p>Our action is usually defined as a <a href="https://reasonml.github.io/docs/en/variant.html">Variant</a>. In our case, the only action the user can take is flipping a card, so we only have the one case <code>Flip</code>. Our state is going to be a record with a single boolean field, that represents a card being flipped or not. </p>
+<p>Now we can define our component. Remember, first we create a base component record, and then a make function. For stateful components we use <code>ReasonReact.reducerComponent</code> base and we need to override not only <code>render</code>, but also <code>initialState</code> and <code>reducer</code>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> component = ReasonReact.reducerComponent(<span class="hljs-string">"CardContainer"</span>);
+
+<span class="hljs-keyword">let</span> make = (~code, ~imageSource, _self) =&gt; {
+  ...component,
+  initialState: () =&gt; {flipped: <span class="hljs-literal">true</span>},
+  reducer: (_action, state) =&gt; ReasonReact.Update({flipped: ! state.flipped}),
+  render: self =&gt;
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+      <span class="hljs-attribute">code</span>
+      <span class="hljs-attribute">imageSource</span>
+      <span class="hljs-attribute">flipped</span>=<span class="hljs-value">self.state.flipped</span>
+      <span class="hljs-attribute">onClick</span>=<span class="hljs-value">(_event</span> =&gt;</span> self.send(Flip))
+    /&gt;
+};</span></code></pre>
+
+<p><code>initialState</code> is a simple function that returns a record of the type <code>state</code>. In our case, our cards start flipped. </p>
+<p><code>reducer</code> is a function that takes an action and the current state, and returns a value of the <code>ReasonReact.update</code> variant type. We&#39;re returning the <code>ReasonReact.Update(state)</code> case, which results in a simple state update without side effects, which is what we want to happen when the user flips a card. We&#39;ll talk more about the <code>ReasonReact.update</code> type in the next part of this series!</p>
+<p>The last part of this component is the callback defined for <code>onClick</code>. We&#39;re using <code>self.send</code>, which in fact &quot;sends&quot; the <code>Flip</code> action to the reducer. And our component is complete!</p>
+<p>See that our render function is making reference to <code>CardView</code>. Since we&#39;re in ReasonML land, we do not need a wrapper for the card view anymore, so we can delete it from the <code>CardView</code> file. But since the card container will be imported in JS, we need to wrap it instead:</p>
+<pre><code class="hljs js">let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =&gt;
+    make(~code=jsProps##code, ~imageSource=jsProps##imageSource, [||])
+  );</code></pre>
+
+<p>That&#39;s all we need. The whole file should look like this now:</p>
+<pre><code class="hljs js">type action =
+  | Flip;
+
+type state = {flipped: bool};
+
+<span class="hljs-keyword">let</span> component = ReasonReact.reducerComponent(<span class="hljs-string">"CardContainer"</span>);
+
+<span class="hljs-keyword">let</span> make = (~code, ~imageSource, _self) =&gt; {
+  ...component,
+  initialState: () =&gt; {flipped: <span class="hljs-literal">true</span>},
+  reducer: (_action, state) =&gt; ReasonReact.Update({flipped: ! state.flipped}),
+  render: self =&gt;
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardView</span>
+      <span class="hljs-attribute">code</span>
+      <span class="hljs-attribute">imageSource</span>
+      <span class="hljs-attribute">flipped</span>=<span class="hljs-value">self.state.flipped</span>
+      <span class="hljs-attribute">onClick</span>=<span class="hljs-value">(_event</span> =&gt;</span> self.send(Flip))
+    /&gt;
+};
+
+let default =
+  ReasonReact.wrapReasonForJs(~component, jsProps =&gt;
+    make(~code=jsProps##code, ~imageSource=jsProps##imageSource, [||])
+  );</span></code></pre>
+
+<p>Now we can import this component directly into our <code>Card/index.js</code> file:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// Card/index.js</span>
+<span class="hljs-keyword">import</span> <span class="hljs-string">"./Card.css"</span>;
+<span class="hljs-keyword">import</span> CardContainer <span class="hljs-keyword">from</span> <span class="hljs-string">"./CardContainer.bs"</span>;
+
+<span class="hljs-keyword">export</span> { CardContainer <span class="hljs-keyword">as</span> Card };</code></pre>
+
+<p>If you prefer, instead of importing the CSS file here, you could add a <code>[%%raw &quot;import &#39;./Card.css&#39;&quot;];</code> line at the beginning of the <code>CardView.re</code> file, with the same effect.</p>
+<p>The final code for the integration with the stateful component <a href="https://github.com/lucasmreis/learning-reasonml/tree/integrating_stateful_2/part-2">can be found here</a>.</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>That&#39;s the third strong typed language I&#39;ve used for front end programming, after Elm and F#. First of all, it confirms my feeling that <em>this is the way to go</em>. Javascript&#39;s dynamic nature gives you a lot of power, but when we&#39;re writing larger and larger applications, these types give you a much saner environment. Refactoring does not feel so scary, tooling helps you much more, things are better documented, and so on.</p>
+<p>Now, comparing ReasonML to the other two languages. Elm&#39;s architecture (shared by F# within the <a href="https://fable-elmish.github.io/elmish/">Fable-Elmish framework</a>) is really simple and powerful. It has influenced the entire front end world, and ReasonReact&#39;s reducer components were definitely inspired by it. In Elm, state and action handling is done separately from the visual components, in kind of a &quot;global&quot; way. In contrast, ReasonReact embraces the React way of doing things, which is the &quot;everything is a component&quot; mentality. The interesting part is: the reducer components feel a lot like Elm, so in practice, a ReasonReact application feels like composing small Elm applications! By doing that, it&#39;s also pretty easy to not only integrate your ReasonML code into your React application, but it&#39;s also relatively easy to get all the benefits from modern tooling, like code splitting and dynamically importing components. This and the fact that the generated JS code is really well optimized are the great benefits of ReasonML over the other two.</p>
+<p>Where do Elm and F# perform better than ReasonML? Elm is still the safer option out there, due to the stricter JS integration. It&#39;s much, much easier to avoid runtime errors with Elm. Also, it has great docs and well thought out standard libraries. F# has the benefit that it can be used both on the frontend and backend of your application, and you can have access to a lot of the .Net features with it. And, as a personal note, I understand the decision to make ReasonML&#39;s syntax more &quot;javascript-like&quot;, but I feel both Elm&#39;s and F#&#39;s syntax are way better and more pleasurable to work with.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>In the third part of this series I&#39;ll try to <a href="https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js">rewrite <code>App.js</code> with ReasonReact</a>! Let&#39;s see how the language feels when we need to perform side effects, work with JSON data, and do some async work. See you there!</p>
+
+        <div class="signature">January 17, 2018.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'learning-reasonml-part-2';
+          var disqus_title = 'Learning ReasonML, part 2';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

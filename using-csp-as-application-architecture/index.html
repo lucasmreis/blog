@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Using CSP As Application Architecture | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>Using CSP As Application Architecture</h1>
+        <div class="lead">Process based client-side web applications</div>
+        <p>Since I started studying and working on a Clojure project, I&#39;ve been using the <code>core.async</code> library. It&#39;s a really simple and powerful way of dealing with concurrency, which is also used in the Go language. It&#39;s an implementation of <a href="https://en.wikipedia.org/wiki/Communicating_sequential_processes">Communicating Sequential Processes</a>, and now with ES6 generators we can use it in Javascript too! In this post, I&#39;ll be using <a href="https://github.com/ubolonton/js-csp">js-csp</a>.  Check out my <a href="../quick-introduction-to-csp-in-javascript/">Introduction to CSP in Javascript</a> - it can be considered &quot;Part 1&quot; of this post.</p>
+<p>When I came across <a href="https://github.com/levand/quiescent">Quiescent&#39;s</a> <a href="https://github.com/levand/todomvc/tree/gh-pages/architecture-examples/quiescent">TodoMVC implementation</a>, I saw the power of CSP as a front end application framework <em>itself</em>. This post describes an expanded version of the architecture of that TodoMVC app.</p>
+<h2 id="the-architecture">The Architecture</h2>
+<p>The application has an object called <strong>state</strong>. The state holds the information needed to render the screen. </p>
+<p>There&#39;s a <strong>render process</strong>, that triggers a React render (or whatever view framework you want to use) whenever a new state object is put into the <strong>render channel</strong>.</p>
+<p>There are <strong>update processes</strong>, that transform state according to the data put into the <strong>update channels</strong>. After transforming the state, the update processes put the new state in the render channel.</p>
+<p>There are <strong>complex actions processes</strong>, that are asynchronous processes that can trigger multiple update processes. It usually involves communication with the server, or any action that takes time to complete.</p>
+<p>It&#39;s that simple. Those are the basic processes in the framework. Of course, it is possible to run more processes, like a router or websocket process, but let&#39;s start with the basic ones.</p>
+<h2 id="application-config">Application Config</h2>
+<p>First of all let&#39;s create the application config object. An example would be:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// index.js</span>
+<span class="hljs-keyword">import</span> {chan, go, take, put, putAsync, buffers} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">const</span> loadApp = () =&gt; ({
+  state: {
+    words: [<span class="hljs-string">'first'</span>, <span class="hljs-string">'second'</span>, <span class="hljs-string">'last'</span>],
+    current: <span class="hljs-number">0</span>,
+    loading: <span class="hljs-literal">false</span>
+  },
+  updates: {
+    channels: {
+      view: chan(),
+      add: chan(),
+      loading: chan()
+    },
+    consumers: {
+      view: Updates.view,
+      add: Updates.add,
+      loading: Updates.loading
+    }
+  },
+  complexActions: {
+    channels: {
+      dbInsert: chan()
+    },
+    consumers: {
+      dbInsert: ComplexActions.dbInsert
+    }
+  },
+  renderCh: chan()
+});</code></pre>
+
+<p>And our <code>start</code> function:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app <span class="hljs-comment">// for debugging</span>
+};
+
+start();</code></pre>
+
+<p>The config object has the <code>state</code>, the render channel <code>renderCh</code>, and the <code>updates</code> and <code>complexActions</code> channels and consumers. I&#39;m going to explain those later.</p>
+<p>The <code>start</code> function loads the config, and will start all the processes. I like to put the loaded app in the <code>window</code> object, so I can play with it in the browser console, very much like Clojure&#39;s command line.</p>
+<p>Get your build flow running (I like to use <a href="../npm-is-an-amazing-build-tool/">npm as a build tool</a>) and let&#39;s dive into the update processes.</p>
+<h2 id="updates">Updates</h2>
+<p>Let&#39;s pick one functionality in our app: adding a new word to the <code>state.words</code> list. First, let&#39;s implement the function that receives the old state and the word to add, and then returns the new state with the word added:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// updates.js</span>
+
+<span class="hljs-comment">// util functions</span>
+<span class="hljs-keyword">const</span> clone = obj =&gt; <span class="hljs-built_in">JSON</span>.parse(<span class="hljs-built_in">JSON</span>.stringify(obj)); <span class="hljs-comment">// naive but cool!</span>
+
+<span class="hljs-keyword">const</span> assoc = (obj, prop, value) =&gt; {
+  <span class="hljs-keyword">const</span> cl = clone(obj);
+  cl[prop] = value;
+  <span class="hljs-keyword">return</span> cl;
+};
+
+<span class="hljs-comment">// update function</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> loading = (state, loadingState) =&gt;
+  assoc(state, <span class="hljs-string">'loading'</span>, loadingState);</code></pre>
+
+<p>Every update function will receive two parameters: the state and the data used in the transformation.  Then it will return a new state. Since it&#39;s a pure function, <em>it&#39;s very simple to unit test</em>.</p>
+<p>Now let&#39;s write a function to initiate a process that takes data from the <code>updates.channels.loading</code> channel, and transforms <code>state</code>:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// index.js</span>
+
+<span class="hljs-keyword">const</span> initLoadingUpdate = app =&gt; {
+  <span class="hljs-keyword">const</span> updateFn = app.updates.consumers.loading;
+  <span class="hljs-keyword">const</span> ch = app.updates.channels.loading;
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-comment">// the process will go on forever</span>
+    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+      <span class="hljs-comment">// the process pauses waiting for a</span>
+      <span class="hljs-comment">// value to be put in the channel</span>
+      <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
+
+      <span class="hljs-comment">// logging</span>
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`On update channel [ loading ] received value [ <span class="hljs-subst">${JSON.stringify(value)}</span> ]`</span>);
+
+      <span class="hljs-comment">// updates the state</span>
+      app.state = updateFn(app.state, value);
+    }
+  });
+};</code></pre>
+
+<p>And we can call it in the <code>start</code> function:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app <span class="hljs-comment">// for debugging</span>
+
+  initLoadingUpdate(app);
+};
+
+start();
+
+<span class="hljs-comment">// for debugging</span>
+<span class="hljs-built_in">window</span>.csp = <span class="hljs-built_in">require</span>(<span class="hljs-string">'js-csp'</span>);</code></pre>
+
+<p>Let&#39;s test it in the browser. Write in the console:</p>
+<pre><code class="hljs js">&gt; app.state.loading
+&lt; <span class="hljs-literal">false</span>
+
+&gt; csp.putAsync(app.updates.channels.loading, <span class="hljs-literal">true</span>)
+&lt; On update channel [ loading ] received value [ <span class="hljs-literal">true</span> ]
+
+&gt; app.state.loading
+&lt; <span class="hljs-literal">true</span></code></pre>
+
+<p>It works! :)</p>
+<p>But we&#39;ll have many update processes. In this application we have three: <code>view</code>, <code>add</code> and <code>loading</code>. The first changes the word being shown in the screen (by changing <code>state.current</code>), and the second adds a new word. First, the functions:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// update.js</span>
+
+<span class="hljs-comment">// util function</span>
+<span class="hljs-keyword">const</span> append = (array, value) =&gt; {
+  <span class="hljs-keyword">const</span> cl = clone(array);
+  cl.push(value);
+  <span class="hljs-keyword">return</span> cl;
+};
+
+<span class="hljs-comment">// update functions</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> view = (state, direction) =&gt; {
+  <span class="hljs-keyword">const</span> nextCurrent = direction === <span class="hljs-string">'next'</span> ?
+    <span class="hljs-built_in">Math</span>.min(state.current + <span class="hljs-number">1</span>, state.words.length - <span class="hljs-number">1</span>) :
+    <span class="hljs-built_in">Math</span>.max(state.current - <span class="hljs-number">1</span>, <span class="hljs-number">0</span>);
+
+  <span class="hljs-keyword">return</span> assoc(state, <span class="hljs-string">'current'</span>, nextCurrent);
+};
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> add = (state, newWord) =&gt;
+  assoc(state, <span class="hljs-string">'words'</span>, append(state.words, newWord));</code></pre>
+
+<p>And let&#39;s change <code>initLoadingUpdate</code> to <code>initUpdates</code>, which loads a process for each update:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initUpdates = app =&gt; {
+  <span class="hljs-built_in">Object</span>.keys(app.updates.consumers).forEach(k =&gt; {
+    <span class="hljs-keyword">const</span> updateFn = app.updates.consumers[k];
+    <span class="hljs-keyword">const</span> ch = app.updates.channels[k];
+    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+        <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`On update channel [ <span class="hljs-subst">${k}</span> ] received value [ <span class="hljs-subst">${JSON.stringify(value)}</span> ]`</span>);
+        app.state = updateFn(app.state, value);
+      }
+    });
+  });
+};
+
+<span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app; <span class="hljs-comment">// for debugging and testing</span>
+
+  initUpdates(app);
+};</code></pre>
+
+<p>In the console, use <code>csp.putAsync</code> to put data into channels and check the transformations being done in <code>app.state</code>!</p>
+<h2 id="complex-actions">Complex Actions</h2>
+<p>Sometimes one action cannot be translated in a simple update function. Take, for example, an action that inserts data into a db through a web server. It will set loading to true, make the request, update the state, and set loading to false. </p>
+<p>These are what I&#39;m calling <em>complex actions</em>: functions that call more than one update over a period of time. They also receive two parameters: the update channels and the data required for the action.</p>
+<p>For instance, let&#39;s think of the complex action that changes the nickname of person with a given person ID:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> changeNickname = (updateChannels, {personId, newNickname}) =&gt; {
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-comment">// do stuff and put in update channels</span>
+  });
+};</code></pre>
+
+<p>For now, let&#39;s implement a &quot;fake&quot; complex action:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// complexActions.js</span>
+<span class="hljs-keyword">import</span> {go, put, timeout} <span class="hljs-keyword">from</span> <span class="hljs-string">'js-csp'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> dbInsert = (updateChannels, newWord) =&gt; {
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">yield</span> put(updateChannels.loading, <span class="hljs-literal">true</span>);
+
+    <span class="hljs-comment">// do something costly</span>
+    <span class="hljs-keyword">yield</span> timeout(<span class="hljs-number">1000</span>);
+    <span class="hljs-keyword">yield</span> put(updateChannels.add, newWord);
+
+    <span class="hljs-keyword">yield</span> put(updateChannels.loading, <span class="hljs-literal">false</span>);
+  });
+};</code></pre>
+
+<p>It&#39;s not as simple to unit test a complex action, but it&#39;s not complicated either. You just create the update channels and check the values passed to them. </p>
+<p>And now let&#39;s take a look at the <code>initComplexActions</code>, which is very similar to <code>initUpdates</code>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initComplexActions = app =&gt; {
+  <span class="hljs-built_in">Object</span>.keys(app.complexActions.consumers).forEach(k =&gt; {
+    <span class="hljs-keyword">const</span> complexActionFn = app.complexActions.consumers[k];
+    <span class="hljs-keyword">const</span> ch = app.complexActions.channels[k];
+    go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+        <span class="hljs-keyword">const</span> value = <span class="hljs-keyword">yield</span> take(ch);
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`On complex action channel [ <span class="hljs-subst">${k}</span> ] received value [ <span class="hljs-subst">${JSON.stringify(value)}</span> ]`</span>);
+        complexActionFn(app.updates.channels, value);
+      }
+    });
+  });
+};
+
+<span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app;
+
+  initUpdates(app);
+  initComplexActions(app);
+};</code></pre>
+
+<p>Now go to the browser console and type:</p>
+<pre><code class="hljs js">&gt; csp.putAsync(app.complexActions.channels.dbInsert, <span class="hljs-string">'another'</span>)
+&lt; On complex action channel [ dbInsert ] received value [ <span class="hljs-string">"another"</span> ]
+&lt; On update channel [ loading ] received value [ <span class="hljs-literal">true</span> ]
+<span class="hljs-comment">// after 1000 miliseconds...</span>
+&lt; On update channel [ add ] received value [ <span class="hljs-string">"another"</span> ]
+&lt; On update channel [ loading ] received value [ <span class="hljs-literal">false</span> ]
+
+&gt; app.state.words
+&lt; [<span class="hljs-string">"first"</span>, <span class="hljs-string">"second"</span>, <span class="hljs-string">"last"</span>, <span class="hljs-string">"another"</span>]</code></pre>
+
+<p>And that&#39;s exactly what we wanted. </p>
+<h2 id="rendering">Rendering</h2>
+<p>Rendering process works as follows:</p>
+<ol>
+<li>When a state is received in the <code>app.renderCh</code> channel, it triggers the rendering function. In our case it will be React, but it could be any other view framework.</li>
+<li>The process will be &quot;busy&quot; until the next animation frame. That means it will not trigger the rendering function if a new state is received and rendering is taking place.</li>
+<li>If a new state is put in the channel, and there&#39;s already a state waiting to be rendered, the older state will be discarded, and only the new state will be rendered. </li>
+</ol>
+<p>Let&#39;s start with number 3. That logic is ready for us in the <code>js-csp</code> library (and in <code>core async</code> too). Change the definition of <code>app.renderCh</code> to:</p>
+<pre><code class="hljs js">renderCh: chan(buffers.sliding(<span class="hljs-number">1</span>))</code></pre>
+
+<p>This means that the channel will hold 1 value at a time, and, if another value is put in the channel, the last one will be discarded and the new value will be available. This is the <em>sliding strategy</em>.</p>
+<p>Now, to the render process:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initRender = (app, element) =&gt; {
+  <span class="hljs-comment">// render initial state</span>
+  putAsync(app.renderCh, app.state);
+
+  go(<span class="hljs-function"><span class="hljs-keyword">function</span>* (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>) {
+      <span class="hljs-keyword">const</span> state = <span class="hljs-keyword">yield</span> take(app.renderCh);
+
+      <span class="hljs-comment">// little trick to "synchronize" async functions,</span>
+      <span class="hljs-comment">// explained below</span>
+      <span class="hljs-keyword">const</span> finishRender = chan();
+
+      <span class="hljs-comment">// render passing state and channels, so</span>
+      <span class="hljs-comment">// the user can trigger updates and </span>
+      <span class="hljs-comment">// complex actions from the interface</span>
+      React.render(
+
+        <span class="hljs-comment">// main component</span>
+        &lt;Main
+          appState = {app.state}
+          updateChannels = {app.updates.channels}
+          complexActionsChannels = {app.complexActions.channels} /&gt;,
+
+        <span class="hljs-comment">// DOM element to mount</span>
+        element,
+
+        <span class="hljs-comment">// callback to rendering, explained below</span>
+        () =&gt; <span class="hljs-built_in">window</span>.requestAnimationFrame(() =&gt; putAsync(finishRender, {})));
+      <span class="hljs-comment">// waits for a value in the finishRender channel</span>
+      <span class="hljs-keyword">yield</span> take(finishRender);
+    }
+  });
+};</code></pre>
+
+<p>The first thing the process does is to take a value from the render channel. Then, the <code>finishRender</code> channel is created. This is a trick so the process wait for the <code>React.render</code> and <code>window.requestAnimationFrame</code> functions to continue.</p>
+<p>Both functions are async, and don&#39;t block the main thread when called. That means that right after <code>React.render</code> is called, the expression <code>yield take(finishRender);</code> will be evaluated. That way the process will be paused until any value is put in the <code>finishRender</code> channel.</p>
+<p><code>React.render</code> accepts a callback, and then calls <code>window.requestAnimationFrame</code>. This function waits for the next browser rendering frame and calls another callback.</p>
+<p>Whenever the render is started, it waits for the next animation frame to get a new state to render. This way we make sure no unnecessary renders are triggered! Cool, isn&#39;t it?</p>
+<p>A little modification is needed in the <code>initUpdates</code> process: the new state should be put in the render channel:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// ...</span>
+app.state = updateFn(app.state, value);
+<span class="hljs-keyword">yield</span> put(app.renderCh, app.state);
+<span class="hljs-comment">// ...</span></code></pre>
+
+<p>We start <code>initRender</code> by calling it in the <code>start</code> function:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> start = () =&gt; {
+  <span class="hljs-keyword">let</span> app = loadApp();
+  <span class="hljs-built_in">window</span>.app = app;
+
+  initUpdates(app);
+  initComplexActions(app);
+  initRender(app, <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'main'</span>));
+};</code></pre>
+
+<p>Go to the console and write the following command to add a thousand new words, and see how efficiently it&#39;s rendered:</p>
+<pre><code class="hljs js">&gt; <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">1000</span>; i++) 
+  { csp.putAsync(app.updates.channels.add, <span class="hljs-string">'word'</span> + i); }</code></pre>
+
+<h2 id="the-finished-application">The Finished Application</h2>
+<p>The code for the final application can be seen <a href="https://github.com/lucasmreis/csp-architecture/tree/master/src">here</a>, and it can be seen running <a href="http://lucasmreis.github.io/csp-architecture/#">here</a>. Be sure to open the console, inspect the <code>app</code> object, and play with the channels!</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>CSP is a simple, powerful and time-tested way of dealing with asynchronous programming. Using it as an application framework is very rewarding. The architecture is robust, and seems to scale well. I&#39;m certainly going to use it in other projects, and I encourage everyone to try it!</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>I&#39;d like to battle test the framework within a bigger project, to really get a sense of how it will behave. </p>
+<p>Most client-side application demands could be translated as an update or complex action, at least the ones triggered by the user. But some could be implemented as ever running processes, initiated in the <code>start</code> function. For instance, a simple router could be written as:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">const</span> initHistory = app =&gt; {
+  <span class="hljs-comment">// a nav channel could handle</span>
+  <span class="hljs-comment">// the state transformations</span>
+  <span class="hljs-comment">// caused by changing the route.</span>
+  <span class="hljs-comment">//</span>
+  <span class="hljs-comment">// hash changes =&gt; nav channel</span>
+  <span class="hljs-built_in">window</span>.addEventListener(<span class="hljs-string">'hashchange'</span>, () =&gt; {
+    <span class="hljs-keyword">const</span> screen = <span class="hljs-built_in">window</span>.location.hash.slice(<span class="hljs-number">2</span>);
+    <span class="hljs-keyword">const</span> current = get(app.state, <span class="hljs-string">'screen'</span>);
+    <span class="hljs-keyword">if</span> (screen !== current) {
+      putAsync(app.updates.channels.nav, screen);
+    }
+  });
+}</code></pre>
+
+<p>I would also like to experiment this way with web sockets.</p>
+<p>If any of you want to exchange some ideas about using CSP as a framework with javascript, or any other flavor of front end programming, feel free to email me at <a href="mailto:lucasmreis@gmail.com">lucasmreis@gmail.com</a>.</p>
+
+        <div class="signature">October 2, 2015.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'using-csp-as-application-architecture';
+          var disqus_title = 'Using CSP As Application Architecture';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

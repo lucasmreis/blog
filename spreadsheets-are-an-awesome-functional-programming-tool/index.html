@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Spreadsheets Are An Awesome Functional Programming Tool | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>Spreadsheets Are An Awesome Functional Programming Tool</h1>
+        <div class="lead">And more thoughts on handling application state</div>
+        <p>I worked for three years as a Risk Management Consultant.   That, as you can imagine, meant I spent a lot of time working with spreadsheets.
+For the most part, Excel was the main spreadsheet platform that was used by the businesses that I interacted with.</p>
+<p>I remember reading somewhere &quot;spreadsheets are functional programming!&quot;, but for some reason I was never very interested in going further until I watched <a href="https://www.youtube.com/watch?v=0CKru5d4GPk">Felienne Hermans&#39; talk on Strange Loop 2004</a>, where she implements selection sort with a spreadsheet and, believe it or not, even showed an implementation of a Turing machine with spreadsheets!</p>
+<p>In general, every cell of a spreadsheet is either a <em>value</em> or a <em>pure function that takes other cells as inputs</em>. If we restrict it to only that, we can say that a spreadsheet is a platform for functional programming. In this post, I&#39;ll describe my experimentation with a Google Spreadsheet to model user interactions and state handling.</p>
+<h2 id="state-handling-when-there-are-no-mutable-variables">State handling when there are no mutable variables</h2>
+<p>If we only use pure functions to build our programs, we can benefit from a lot of cool things like modularity, lazy evaluation, and so on. It is relatively easy if we are implementing a mathematical model, or a compiler, for instance. They have well defined inputs and outputs, but things start getting more complex if we have a program that runs for a period of time, and reacts to user interaction. Is it possible to maintain purity in such a scenario?</p>
+<p>The standard way of dealing with it is by mutating objects according to user interactions. It can be done in a lot of ways, and in my main project we are <a href="../a-more-functional-approach-to-angular/">keeping all state in a single object, and reacting to changes in it</a>. We find it much more manageable than the standard object oriented way, which deals with a lot of &quot;models&quot; that keep hidden internal local state.</p>
+<p>This time I&#39;m gonna try to handle state by using <em>streams</em>. That means that I&#39;ll model user interactions <em>and</em> application state as streams of information.</p>
+<h2 id="state-and-interaction-as-functions-of-time">State and interaction as functions of time</h2>
+<p>So, let&#39;s start with a basic spec: the user inserts a string, and we have an application state that reacts to it by replicating this input. Let&#39;s call it Foo:</p>
+<pre><code class="hljs">t = given moment <span class="hljs-keyword">in</span> time
+
+<span class="hljs-keyword">user</span>Foo(t) = <span class="hljs-keyword">user</span> string input <span class="hljs-keyword">in</span> t
+
+<span class="hljs-keyword">state</span>Foo(t) = foo <span class="hljs-keyword">state</span> <span class="hljs-keyword">in</span> t</code></pre>
+
+<p>So, what I&#39;m doing here is <em>thinking of both interactions and application state as functions of time</em>. Let&#39;s detail more <code>stateFoo</code>:</p>
+<pre><code class="hljs">stateFoo<span class="hljs-list">(<span class="hljs-keyword">t</span>)</span> = f<span class="hljs-list">(<span class="hljs-keyword">userFoo</span><span class="hljs-list">(<span class="hljs-keyword">t</span>)</span>)</span></code></pre>
+
+<p>In this case, the application state will depend only on the current user interaction. To keep it really simple, let&#39;s define:</p>
+<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = <span class="hljs-keyword">user</span>Foo(t)</code></pre>
+
+<p>And now let&#39;s implement it in a spreadsheet!</p>
+<h2 id="modelling-time-in-a-spreadsheet">Modelling time in a spreadsheet</h2>
+<p>Back in my consultant days, I was dealing with a lot of <a href="http://en.wikipedia.org/wiki/Time_series">time series analyses</a>, and the way we were dealing with time was simple: one line for every event. Let&#39;s start with sixteen &quot;time samples&quot; and some user interactions:</p>
+<p><img src="../assets/userFoo.png" alt="Time and UserFoo(t)"></p>
+<p>That means that on time <code>t = 2</code> the user submitted the input &quot;aaa&quot;, when <code>t = 4</code> the user submitted the input &quot;bbb&quot; and so on.</p>
+<p><code>stateFoo</code> can be implemented then as a new column:</p>
+<p><img src="../assets/stateFoo.png" alt="Simple stateFoo(t)"></p>
+<p>That function (&quot;formula&quot; in spreadsheet) is repeated for every line, so every cell in the <code>stateFoo</code> column equals the corresponding cell from the same line in the <code>userFoo</code> column.</p>
+<p>That was really simple and easy! Now let&#39;s implement a more interesting spec. Let the application state be the <em>last</em> Foo that was input by the user. Now, <code>stateFoo</code> does not only depend on <code>userFoo</code>, but it also depends on the past value of <code>stateFoo</code> itself!</p>
+<pre><code class="hljs"><span class="hljs-keyword">state</span>Foo(t) = f(
+  <span class="hljs-keyword">user</span>Foo(t),
+  <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>))
+
+<span class="hljs-keyword">state</span>Foo(t) =
+  if (<span class="hljs-keyword">user</span>Foo(t) is blank)
+    return <span class="hljs-keyword">state</span>Foo(t - <span class="hljs-number">1</span>)
+  else
+    return <span class="hljs-keyword">user</span>Foo(t)</code></pre>
+
+<p>So, if the user inputs something, <code>stateFoo</code> changes. If the user does not input anything, <code>stateFoo</code> repeats its last value. We can see it in the spreadsheet:</p>
+<p><img src="../assets/stateFoo2.png" alt="stateFoo(t) with memory"></p>
+<p>Now state looks more like the state we usually have in applications. Let&#39;s bring one more complexity: let the state carry <em>all previous values</em>.
+I want the state to be a string that&#39;s the concatenation of every past user input, joined by <code>&quot;;&quot;</code>. A good start would be:</p>
+<p><img src="../assets/stateFoo3.png" alt="Naive complex stateFoo(t)"></p>
+<p>We can see the problem: as soon as the user inputs the first string, the state becomes <code>; aaa</code>. That error propagates to all future states. There are a lot of ways to solve this issue, but I&#39;ll use the one that I think is the simplest: I&#39;ll implement a new column that concatenates <code>&quot;;&quot;</code> to every past state, unless it is empty. So, if we have to concatenate a new input, we concatenate to this value:</p>
+<p><img src="../assets/stateFoo4.png" alt="Temp column for complex stateFoo(t)"></p>
+<p><img src="../assets/stateFoo5.png" alt="Final column for complex stateFoo(t)"></p>
+<p>And there we have it; a state that reflects the whole application history.</p>
+<h2 id="interaction-between-streams">Interaction between streams</h2>
+<p>Let&#39;s recap: a stream is a function of time; given time = <code>t</code>, a stream would have the value <code>f(t)</code>. We are modelling user input as streams. Application state would then be transformations of user input streams.</p>
+<p>One nice property of streams is that they can also be transformations of other streams, and past values of themselves. Let&#39;s illustrate this with another application state: the Bars.</p>
+<p>The Bars work the same way as the Foos, but with one additional spec: the user can only add a new Bar after the Foo <code>requiredFoo</code> is input:</p>
+<pre><code class="hljs"><span class="hljs-keyword">state</span>Bar(t) = f(
+  <span class="hljs-keyword">user</span>Bar(t),
+  <span class="hljs-keyword">state</span>Bar(t - <span class="hljs-number">1</span>),
+  <span class="hljs-keyword">state</span>Foo(t));</code></pre>
+
+<p>Back to our spreadsheet, let&#39;s implement the user interactions streams again:</p>
+<p><img src="../assets/stateBar.png" alt="userBar(t)"></p>
+<p>The interaction between Foos and Bars will be done with the <code>hasRequiredFoo</code> stream:</p>
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> contains <span class="hljs-string">"requiredFoo"</span></code></pre>
+
+<p>For simplicity, let&#39;s assume <code>contains</code> means &quot;has substring <code>&quot;requiredFoo&quot;</code>&quot;:</p>
+<p><img src="../assets/stateBar2.png" alt="hasRequiredFoo(t)"></p>
+<p>And <code>stateBar</code> logic would be:</p>
+<pre><code class="hljs"><span class="hljs-function"><span class="hljs-title">stateFoo</span><span class="hljs-params">(t)</span></span> =
+  <span class="hljs-keyword">if</span> (<span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span> is blank or
+      not <span class="hljs-function"><span class="hljs-title">hasRequiredFoo</span><span class="hljs-params">(t)</span></span>)
+    return <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>
+  <span class="hljs-keyword">else</span>
+    return concat(
+      <span class="hljs-function"><span class="hljs-title">userBar</span><span class="hljs-params">(t)</span></span>,
+      <span class="hljs-function"><span class="hljs-title">stateBar</span><span class="hljs-params">(t - <span class="hljs-number">1</span>)</span></span>)</code></pre>
+
+<p><img src="../assets/stateBar3.png" alt="stateBar(t)">
+<em>(in the above image, the &quot;C&quot; column refers to userBar)</em></p>
+<p>And it&#39;s ready! :)</p>
+<p>Now just the inputs and application state streams:</p>
+<p><img src="../assets/finalStates.png" alt="Final inputs and states"></p>
+<h2 id="conclusions">Conclusions</h2>
+<p>I found this experiment very helpful and even entertaining! Now I understand what &quot;spreadsheets are functional programming!&quot; means, and I agree with it. Actually, I think spreadsheets could be a nice learning environment to start &quot;thinking functionally&quot;. It certainly helped me learn the &quot;state as streams&quot; concept.</p>
+<p>Everybody interested in the subject should watch <a href="https://www.youtube.com/watch?v=0CKru5d4GPk">Felienne Hermans&#39; talk on Strange Loop 2004</a>. That was her PhD research subject, and she brings spreadsheet programming to a whole new level.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>The next obvious step for me is implement the &quot;state as streams&quot; concept using javascript. There are libraries that claim to help with this, like <a href="http://reactivex.io/">RxJS</a>, <a href="https://baconjs.github.io/">BaconJS</a> and the more recent <a href="https://github.com/paldepind/flyd">Flyd</a>. I&#39;ve also been reading about a beta framework based on RxJS and <a href="https://github.com/Matt-Esch/virtual-dom">virtual-dom</a> called <a href="https://github.com/staltz/cycle">CycleJS</a>, which looks promising.</p>
+<p>The link to the complete spreadsheet used in this post is <a href="http://goo.gl/i1g3uP">here</a>.</p>
+
+        <div class="signature">May 1, 2015.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'spreadsheets-are-an-awesome-functional-programming-tool';
+          var disqus_title = 'Spreadsheets Are An Awesome Functional Programming Tool';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

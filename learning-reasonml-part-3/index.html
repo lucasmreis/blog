@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Learning ReasonML, part 3 | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>Learning ReasonML, part 3</h1>
+        <div class="lead">Implementing Side Effects</div>
+        <p>In the <a href="http://lucasmreis.github.io/blog/learning-reasonml-part-2/">last part of this series,</a> we wrote some simple React components with ReasonML. In this third part, we&#39;re going to write a component that not only has state, but also <em>generates side effects</em> through fetching an external API.</p>
+<h2 id="modelling-user-actions">Modelling User Actions</h2>
+<p>This is the <a href="https://github.com/lucasmreis/learning-reasonml/blob/master/part-2/src/App.js">application&#39;s main module</a>, which contains the side effects:</p>
+<pre><code class="hljs js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Component</span> </span>{
+  componentDidMount() {
+    <span class="hljs-comment">// fetch API to create deck</span>
+  }
+
+  render() {
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App"</span>&gt;</span>
+        {this.renderMainAction()}
+        {this.renderCards()}
+      <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+    )</span>;
+  }
+
+  renderMainAction() {
+    <span class="hljs-comment">// render button</span>
+    <span class="hljs-comment">// disable it depending on current state</span>
+  }
+
+  renderCards() {
+    <span class="hljs-comment">// render list of cards</span>
+  }
+
+  draw = <span class="hljs-keyword">async</span> () =&gt; {
+    <span class="hljs-comment">// fetch API do draw cards</span>
+    <span class="hljs-comment">// pass as a callback to the main action button</span>
+}</code></pre>
+
+<p>We can see that there are two main actions that trigger side effects: creating a deck on mounting, and drawing new cards on button click. Remember that side effects of this nature - fetching something from a network - have to take into account that things can get <em>slow</em> and they can <em>fail</em>. Having said that, we usually model actions with side effects as <em>three different</em> actions:</p>
+<pre><code class="hljs js">type action =
+  <span class="hljs-comment">/* Create Deck */</span>
+  | CreateDeck
+  | DeckCreated(deck)
+  | CreateDeckFailed
+  <span class="hljs-comment">/* Draw Cards */</span>
+  | DrawCards(deck)
+  | CardsDrawn(deck)
+  | DrawCardsFailed
+  | DeckFinished(list(card));</code></pre>
+
+<p>I added a <code>DeckFinished</code> action so our application can transition to a finished state that only shows the cards, and do not show the action button anymore.</p>
+<p>Some actions have data related to them: <code>deck</code> and <code>list(cards)</code>. These types are related to the action state, and are inspired by the API response:</p>
+<pre><code class="hljs js">type card = {
+  image: string,
+  code: string
+};
+
+type deck = {
+  deckId: string,
+  remaining: int,
+  cards: list(card)
+};</code></pre>
+
+<p>The <code>deckId</code> info is used to draw cards from the same deck that was created in the beginning of the application lifecycle. <code>remaining</code> is the information we use to decide if we already drew all the cards. For instance, we check <code>remaining</code> to decide if we issue a <code>CardsDrawn</code> action or <code>DeckFinished</code>.</p>
+<p><strong>Note:</strong> I like to follow this <code>CQRS</code> convention of <a href="http://cqrs.nu/Faq">writing events in the past tense, and commands in the imperative</a>. In summary, it means that an action that&#39;s written in the imperative will <em>trigger</em> a side effect, and its results are unknown. And actions that are written in the past tense are actions that will trigger a deterministic state change when they happen - there are no unknowns regarding events.</p>
+<p><strong>Note 2:</strong> The <code>*Failed</code> actions are not carrying any data with them - that&#39;s because this simple app is just showing a generic message when an error occurs. This isn&#39;t what we would do in a large scale app!</p>
+<h2 id="modelling-the-application-state">Modelling The Application State</h2>
+<p>Depending on the actions issued, our application will be in a different state:</p>
+<p><img src="../assets/learning-reasonml-state-chart.png" alt="State Chart"></p>
+<p>The states can then be represented by:</p>
+<pre><code class="hljs js">type state =
+  | CreatingDeck
+  | WaitingForUser(deck)
+  | DrawingCards(deck)
+  | NoMoreCardsToDraw(list(card))
+  | <span class="hljs-built_in">Error</span>;</code></pre>
+
+<p>Now let&#39;s write the function that, given an action and the previous state, returns a data structure of the type <code>ReasonReact.update</code>. You can think of the update type as either a &quot;new state&quot; or &quot;new state + function that perform side effects&quot;. This function will be used as the <code>reducer</code> field in our component:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> reducer = (action, _state) =&gt;
+  <span class="hljs-keyword">switch</span> action {
+  | CreateDeck =&gt;
+    ReasonReact.UpdateWithSideEffects(CreatingDeck, createDeckSideEffects)
+  | DeckCreated(deck) =&gt; ReasonReact.Update(WaitingForUser(deck))
+  | CreateDeckFailed =&gt; ReasonReact.Update(<span class="hljs-built_in">Error</span>)
+  | DrawCards(stateDeck) =&gt;
+    ReasonReact.UpdateWithSideEffects(
+      DrawingCards(stateDeck),
+      drawCardsSideEffects(stateDeck)
+    )
+  | CardsDrawn(deck) =&gt; ReasonReact.Update(WaitingForUser(deck))
+  | DrawCardsFailed =&gt; ReasonReact.Update(<span class="hljs-built_in">Error</span>)
+  | DeckFinished(cards) =&gt; ReasonReact.Update(NoMoreCardsToDraw(cards))
+  };</code></pre>
+
+<p>This function is simple. You can see that every event returned a <code>ReasonReact.Update</code> with a new state, and every command returned a <code>ReasonReact.UpdateWithSideEffects</code> with a new state and another function that will trigger side effects. Let&#39;s have a look at those functions now.</p>
+<h2 id="side-effects">Side Effects</h2>
+<p>Let&#39;s start writing the <code>createDeckSideEffects</code> function. ReasonReact&#39;s side-effect functions receive the components <code>self</code> as the parameter, and need to return <code>unit</code>. This is what the function should do:</p>
+<ul>
+<li>Fetch the API to create a deck</li>
+<li>Decode the API response to a <code>deck</code> type</li>
+<li>Dispatch a <code>DeckCreated(deck)</code> action with the decoded deck</li>
+<li>If there is an error, dispatch a <code>CreateDeckFailed</code> action</li>
+</ul>
+<p>We&#39;re going to use the <code>bs-fetch</code> <a href="https://github.com/reasonml-community/bs-fetch">package</a>. After installing it, let&#39;s use it to fetch the API:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>);</code></pre>
+
+<p>The <code>fetch</code> function returns a Promise. We can use the native <code>Js.Promise</code> module to deal with the response:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+  |&gt; Js.Promise.then_(Fetch.Response.json);</code></pre>
+
+<p>Ok, now the function has the signature <code>unit =&gt; Js.Promise.t(Js.Json.t)</code>. We&#39;re almost there - we just need to decode the json object to a <code>deck</code> record. Let&#39;s use the <code>@glennsl/bs-json</code> <a href="https://github.com/glennsl/bs-json">package</a>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCreatedDeck = json =&gt; {
+  deckId: json |&gt; Json.Decode.field(<span class="hljs-string">"deck_id"</span>, Json.Decode.string),
+  remaining: json |&gt; Json.Decode.field(<span class="hljs-string">"remaining"</span>, Json.Decode.int),
+  cards: []
+};
+
+<span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+  |&gt; Js.Promise.then_(Fetch.Response.json)
+  |&gt; Js.Promise.then_(json =&gt; decodeCreatedDeck(json) |&gt; Js.Promise.resolve);</code></pre>
+
+<p>The <code>Json.Decode</code> functions are straightforward: they try to find the property in the json input object, and then try to convert it to the given type. If they fail, they raise an exception. We&#39;re hard coding cards as <code>[]</code> because we know that no cards are drawn when the deck is created.</p>
+<p><strong>Note:</strong> If you&#39;re used to Elm, that sounds weird - we would use <a href="https://reasonml.github.io/docs/en/variant.html#option">option types</a> everywhere, and take care of the errors explicitly, near the functions calls. That is probably the safest, most explicit choice. If we&#39;re dealing with exceptions, be careful, since they are implicit, and it&#39;s easy to forget to deal with them properly. In a React application, that usually means you should at least have an <a href="https://reactjs.org/docs/error-boundaries.html">error boundary component</a> catching them.</p>
+<p>Back to our functions, they are too verbose. Let&#39;s solve this. We can actually say &quot;I&#39;m going to use functions from this module in this piece of code&quot; in ReasonML, in a couple of ways, and this makes our code less verbose. One good technique is using the <code>open</code> keyword, and letting the formatter do its work. For example, rewrite the <code>decodeCreateDeck</code> as:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCreatedDeck = json =&gt; {
+  open Json.Decode;
+  {
+    deckId: json |&gt; field(<span class="hljs-string">"deck_id"</span>, string),
+    remaining: json |&gt; field(<span class="hljs-string">"remaining"</span>, int),
+    cards: []
+  };
+};</code></pre>
+
+<p>We&#39;re telling the compiler that, in the scope, we&#39;re going to call functions inside the <code>Json.Decode</code> module. We can now call <code>field</code>, <code>string</code>, and <code>int</code> directly. That&#39;s the <a href="https://en.wikibooks.org/wiki/F_Sharp_Programming/Modules_and_Namespaces">standard way to use a module in F#</a>. After saving the file, the formatter changes it to:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCreatedDeck = json =&gt;
+  Json.Decode.{
+    deckId: json |&gt; field(<span class="hljs-string">"deck_id"</span>, string),
+    remaining: json |&gt; field(<span class="hljs-string">"remaining"</span>, int),
+    cards: []
+  };</code></pre>
+
+<p>This means &quot;you can use functions from this module when defining this record&quot;. I don&#39;t believe this syntax is better all the time, but fortunately there&#39;s a <a href="https://github.com/facebook/reason/pull/1826">PR open to not reformat &quot;open&quot; statements</a>.</p>
+<p>We can also open the Js.Promise module in <code>createDeckSideEffects</code>:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = () =&gt;
+  Js.Promise.(
+    Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+    |&gt; then_(Fetch.Response.json)
+    |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+  );</code></pre>
+
+<p>We&#39;re doing good now. Our function is almost there, now we need to wrap <code>deck</code> into a <code>DeckCreated</code> action, and <code>self.send</code> it:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = self =&gt;
+  Js.Promise.(
+    Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+    |&gt; then_(Fetch.Response.json)
+    |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+    |&gt; then_(deck =&gt; DeckCreated(deck) |&gt; self.send |&gt; resolve)
+  );</code></pre>
+
+<p>There&#39;s a problem here - the compiler is complaining that there&#39;s no <code>send</code> field defined in <code>self</code>. We need to open the ReasonReact module here too, so the compiler understands this function is going to be used in a React component:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = self =&gt;
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+      |&gt; then_(Fetch.Response.json)
+      |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+      |&gt; then_(deck =&gt; DeckCreated(deck) |&gt; self.send |&gt; resolve)
+    )
+  );</code></pre>
+
+<p>Now our code is compiling (as an observation: this is a situation where I think the &quot;open&quot; keyword would lead to better code). One interesting observation is that the functions inside <code>then_</code> need to return a Promise, so that&#39;s why there&#39;s a <code>|&gt; resolve</code> in every callback. Javascript&#39;s <code>.then</code> does some extra work, so you don&#39;t need to do that, but I believe that in a strongly typed situation it&#39;s best to stick to simpler constraints.</p>
+<p>We&#39;re fetching the API, decoding the response, and sending an action as a result. We only need to deal with a possible error, and make sure our function returns <code>unit</code> so it&#39;s accepted in the <code>reducer</code> function we wrote before:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> createDeckSideEffects = self =&gt;
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch(<span class="hljs-string">"https://deckofcardsapi.com/api/deck/new/shuffle/"</span>)
+      |&gt; then_(Fetch.Response.json)
+      |&gt; then_(json =&gt; decodeCreatedDeck(json) |&gt; resolve)
+      |&gt; then_(deck =&gt; DeckCreated(deck) |&gt; self.send |&gt; resolve)
+      |&gt; <span class="hljs-keyword">catch</span>(_error =&gt; self.send(CreateDeckFailed) |&gt; resolve)
+      |&gt; ignore
+    )
+  );</code></pre>
+
+<p>And we&#39;re done! The next side-effects function is more complicated, but we have the knowledge to understand it now:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> decodeCard = json =&gt;
+  Json.Decode.{
+    code: json |&gt; field(<span class="hljs-string">"code"</span>, string),
+    image: json |&gt; field(<span class="hljs-string">"image"</span>, string)
+  };
+
+<span class="hljs-comment">/* the decodeCard decoder can be used in another
+   decoder to deal with nested objects: */</span>
+<span class="hljs-keyword">let</span> decodeDeck = json =&gt;
+  Json.Decode.{
+    deckId: json |&gt; field(<span class="hljs-string">"deck_id"</span>, string),
+    remaining: json |&gt; field(<span class="hljs-string">"remaining"</span>, int),
+    cards: json |&gt; field(<span class="hljs-string">"cards"</span>, list(decodeCard))
+  };
+
+<span class="hljs-comment">/* helper function to decide whether we should dispatch
+   a CardsDrawn or a DeckFinished action: */</span>
+<span class="hljs-keyword">let</span> drawnOrFinished = (current, received) =&gt;
+  <span class="hljs-keyword">if</span> (received.remaining &gt; <span class="hljs-number">0</span>) {
+    CardsDrawn({...received, cards: current.cards @ received.cards});
+  } <span class="hljs-keyword">else</span> {
+    DeckFinished(current.cards);
+  };
+
+<span class="hljs-comment">/* the Pervasives module contains the min function. If we
+   have less than 3 remaining cards, only draw the
+   remaining quantity from the API:   */</span>
+<span class="hljs-keyword">let</span> number_of_cards_per_draw = <span class="hljs-number">3</span>;
+
+<span class="hljs-keyword">let</span> drawQuantity = deck =&gt;
+  Pervasives.min(deck.remaining, number_of_cards_per_draw) |&gt; Js.Int.toString;
+
+<span class="hljs-keyword">let</span> drawCardsSideEffects = (currentDeck, self) =&gt;
+  ReasonReact.(
+    Js.Promise.(
+      Fetch.fetch(
+        <span class="hljs-string">"https://deckofcardsapi.com/api/deck/"</span>
+        ++ currentDeck.deckId
+        ++ <span class="hljs-string">"/draw/?count="</span>
+        ++ drawQuantity(currentDeck)
+      )
+      |&gt; then_(Fetch.Response.json)
+      |&gt; then_(json =&gt; decodeDeck(json) |&gt; resolve)
+      |&gt; then_(receivedDeck =&gt;
+           drawnOrFinished(currentDeck, receivedDeck) |&gt; self.send |&gt; resolve
+         )
+      |&gt; ignore
+    )
+  );</code></pre>
+
+<p>That&#39;s it, now our <code>reducer</code> function compiles! All our side effects are there, now let&#39;s implement the rendering of our main component.</p>
+<h2 id="rendering-the-different-states">Rendering The Different States</h2>
+<p>Let&#39;s start by defining the render functions for the different states. For example, the loading state:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderParagraph = () =&gt; (
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span> (ReasonReact.stringToElement("Loading...")) <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>
+)</span>;</code></pre>
+
+<p>As we saw before, we need the <code>stringToElement</code> function to render strings in the DOM. Since our error state is also a simple paragraph, we can reuse some logic:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderParagraph = text =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">p</span>&gt;</span> (ReasonReact.stringToElement(text)) <span class="hljs-tag">&lt;/<span class="hljs-title">p</span>&gt;</span>;</span>
+
+<span class="hljs-keyword">let</span> renderLoading = () =&gt; renderParagraph(<span class="hljs-string">"Loading..."</span>);
+
+<span class="hljs-keyword">let</span> renderError = () =&gt;
+  renderParagraph(<span class="hljs-string">"There was an error. Please refresh and try again!"</span>);</code></pre>
+
+<p>In the <code>NoMoreCardsToDraw(cards)</code> state, we only want to render a given list of cards:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> renderCards = cards =&gt; {
+  <span class="hljs-keyword">let</span> cardElements =
+    List.map(c =&gt; <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">CardContainer</span> <span class="hljs-attribute">code</span>=<span class="hljs-value">c.code</span> <span class="hljs-attribute">imageSource</span>=<span class="hljs-value">c.image</span> /&gt;</span>, cards)
+    |&gt; Array.of_list
+    |&gt; ReasonReact.arrayToElement;
+  <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App card-list"</span>&gt;</span> cardElements <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span>
+};</code></pre>
+
+<p>There&#39;s no &quot;listToElement&quot; function in ReasonReact, so we have to manually convert the list to array with the <code>Array.of_list</code> function.</p>
+<p>Up until now we&#39;re good: all the rendering functions only receive a piece of data and render it. The next views are a little bit more complicated: in both <code>WaitingForUser(deck)</code> and <code>DrawingCards(deck)</code> we want to show the cards and the main action button, either in a disabled or enabled state. So let&#39;s build a function that takes a <code>deck</code> record, a <code>send</code> function and a <code>disabledButton</code> boolean as parameters:</p>
+<pre><code class="hljs js"><span class="hljs-comment">/* the disableButton parameter is labelled for no
+   particular reason, just style */</span>
+<span class="hljs-keyword">let</span> renderButtonAndCards = (deck, send, ~disabledButton) =&gt;
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">button</span>
+      <span class="hljs-attribute">className</span>=<span class="hljs-value">"App main-action"</span>
+      <span class="hljs-attribute">disabled</span>=<span class="hljs-value">(Js.Boolean.to_js_boolean(disabledButton))</span>
+      <span class="hljs-attribute">onClick</span>=<span class="hljs-value">(_ev</span> =&gt;</span> send(DrawCards(deck)))&gt;
+      (ReasonReact.stringToElement("Draw " ++ drawQuantity(deck)))
+    <span class="hljs-tag">&lt;/<span class="hljs-title">button</span>&gt;</span>
+    (renderCards(deck.cards))
+  <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>;</span></code></pre>
+
+<p>Let&#39;s see what&#39;s happening here. First, we need to call <code>Js.Boolean.to_js_boolean</code> for the disabled attribute. Remember, ReasonML represents booleans as numbers, and whenever we interop with JS or the DOM, we need to convert them to proper JS booleans. We&#39;re calling the <code>send</code> function on the button click, with the <code>DrawCards(deck)</code> action, and also reusing our <code>renderCards</code> function we just defined.</p>
+<p>Now we can write our main render function:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> render = self =&gt;
+  ReasonReact.(
+    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">className</span>=<span class="hljs-value">"App"</span>&gt;</span>
+      (
+        switch self.state {
+        | CreatingDeck =&gt; renderLoading()
+        | WaitingForUser(deck) =&gt;
+          renderButtonAndCards(deck, self.send, ~disabledButton=false)
+        | DrawingCards(deck) =&gt;
+          renderButtonAndCards(deck, self.send, ~disabledButton=true)
+        | NoMoreCardsToDraw(cards) =&gt; renderCards(cards)
+        | Error =&gt; renderError()
+        }
+      )
+    <span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  )</span>;</code></pre>
+
+<p>Simple, right? We open the ReasonReact module, so the compiler understands both <code>self.state</code> and <code>self.send</code>. We render a container div, and then we pattern match on the state and call the desired render function.</p>
+<h2 id="glueing-the-pieces-together">Glueing The Pieces Together</h2>
+<p>It&#39;s simple to construct our component now:</p>
+<pre><code class="hljs js"><span class="hljs-keyword">let</span> component = ReasonReact.reducerComponent(<span class="hljs-string">"App"</span>);
+
+<span class="hljs-keyword">let</span> make = _self =&gt; {
+  ...component,
+  reducer,
+  render,
+  initialState: () =&gt; CreatingDeck,
+  didMount: self =&gt; {
+    self.send(CreateDeck);
+    ReasonReact.NoUpdate;
+  }
+};
+
+<span class="hljs-comment">/* wrap it so we don't need to change index.js: */</span>
+<span class="hljs-keyword">let</span> <span class="hljs-keyword">default</span> = ReasonReact.wrapReasonForJs(~component, _jsProps =&gt; make([||]));</code></pre>
+
+<p>And we&#39;re done! The application is compiling and running. You can see the <a href="https://github.com/lucasmreis/learning-reasonml/blob/integrating_side_effects/part-2/src/App.re">final file here</a>.</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>Rewriting a React application in ReasonML is an interesting experience. The types and the compiler make you think harder about both the application state and the user actions. <em>You are forced to think better about your design</em>. And this is definitely a good thing; most of the problems we find in software today can be traced to issues not raised properly in <em>design time</em>.</p>
+<p>Another interesting (<a href="http://lucasmreis.github.io/blog/learning-elm-part-1/#first-impressions-of-elm">and predictable</a>) effect is how much more <em>reliable</em> the applications seem to be. Even though it still doesn&#39;t have tests, I feel I need <em>fewer</em> tests than if it was only the JS version! A lot of the unit tests in every JS project are actually trying to protect the application from type errors, since <a href="https://rollbar.com/blog/top-10-javascript-errors/">they seem to be the main source of error</a>. So, by using a strong typed language, that&#39;s a whole category of errors that we can be much more confident about.</p>
+<p>I&#39;ll definitely continue to look into ReasonML. It gives me the benefits of Elm and F#, and seems closer to the React world that I use in my in my day to day work. Not only do I think it&#39;s easier to integrate with the current mainstream front-end ecossystem, I also believe it presents a greater chance to convince your company to use a different language than JS :)</p>
+
+        <div class="signature">March 16, 2018.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'learning-reasonml-part-3';
+          var disqus_title = 'Learning ReasonML, part 3';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

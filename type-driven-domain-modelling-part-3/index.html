@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Type Driven Domain Modelling, part 3 | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>Type Driven Domain Modelling, part 3</h1>
+        <div class="lead">One More Spec Change With F#</div>
+        <p><em>This is part 3 of a series:</em></p>
+<ul>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-1/">Part 1: Types And Property Testing</a></li>
+<li><a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/">Part 2: Evolving Models</a></li>
+</ul>
+<p>In this third part of the series, we will add a feature to the basket read model: every line will be more explicit about whether or not it&#39;s being promoted, and what the discount is.</p>
+<h2 id="spec">Spec</h2>
+<p>Lines in the basket will have one total value if there are no promotions applied. In cases where a promotion is applied, lines in the basket will list the <em>original</em> total value (before discount), the resulting <em>discount</em>, and the <em>final</em> total value after subtracting the discount from the original total.</p>
+<h2 id="evolving-the-types">Evolving The Types</h2>
+<p>To achieve the new spec, we don&#39;t need to change the Product or the Event. Or In <em>CQRS</em> terms, we don&#39;t need to change the <em>Command</em> side, only the <em>Read</em> side.</p>
+<p>Let&#39;s first define a type <code>ReadTotal</code>, that expresses the totals we need to show the user according to the new spec:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">ReadTotal</span> </span>=
+    | NotPromoted <span class="hljs-keyword">of</span> Price
+    | Promoted <span class="hljs-keyword">of</span> original: Price * discount: Price * final: Price</code></pre>
+
+<p>There we have it: a <code>NotPromoted</code> total that only stores the price, or a <code>Promoted</code> total, that stores the price before, the discount, and the price after the promotion (<code>original</code>, <code>discount</code>, and <code>final</code>).</p>
+<p>Now let&#39;s see it in our read models:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Line</span> </span>= {
+    productSku: Sku
+    quantity: Qty
+    lineTotal: ReadTotal
+}
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Basket</span> </span>= {
+    lines: Line list
+    total: ReadTotal
+}
+
+<span class="hljs-keyword">let</span> empty = { lines = [] ; total = NotPromoted <span class="hljs-number">0</span> }</code></pre>
+
+<p>That&#39;s everything we need with our types, now let&#39;s go to the functions.</p>
+<h2 id="adapting-the-functions">Adapting The Functions</h2>
+<p>First, I&#39;m going to rename <code>promotedTotal</code> to <code>promotedFinalTotal</code> - that&#39;s more descriptive of what the function does now:</p>
+<pre><code class="hljs fsharp"><span class="hljs-comment">// only changed the function's name</span>
+<span class="hljs-keyword">let</span> promotedFinalTotal quantity price promotion =
+    <span class="hljs-keyword">let</span> promotedQty = quantity / promotion.promoQty
+    <span class="hljs-keyword">let</span> promotedTotal = promotedQty * promotion.promoPrice
+
+    <span class="hljs-keyword">let</span> notPromotedQty = quantity % promotion.promoQty
+    <span class="hljs-keyword">let</span> notPromotedTotal = notPromotedQty * price
+
+    promotedTotal + notPromotedTotal</code></pre>
+
+<p>And then we reimplement <code>promotedTotal</code>. This function will calculate the promoted total, and the total without promotion. If the values are different, it returns a <code>Promoted</code>. If the values are not different, it returns a <code>NotPromoted</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> promotedTotal quantity price promotion =
+    <span class="hljs-keyword">let</span> final = promotedFinalTotal quantity price promotion
+    <span class="hljs-keyword">let</span> original = quantity * price
+
+    <span class="hljs-keyword">if</span> final &lt;&gt; original
+    <span class="hljs-keyword">then</span> Promoted(original, original - final, final)
+    <span class="hljs-keyword">else</span> NotPromoted(final)</code></pre>
+
+<p>Easy! Now we adapt the <code>lineTotal</code> function to return <code>ReadTotal</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> lineTotal quantity product =
+    <span class="hljs-keyword">match</span> product.promotion <span class="hljs-keyword">with</span>
+    | None -&gt; NotPromoted(quantity * product.price)
+    | Some promotion -&gt; promotedTotal quantity product.price promotion</code></pre>
+
+<p>And we&#39;re done with all the line refactoring :) If we compile the project now, we see that we only have to adapt <code>basketTotal</code> to sum the totals of all the lines. Let&#39;s do it.</p>
+<h2 id="summing-readtotals">Summing ReadTotals</h2>
+<p>Let&#39;s have a look at the current <code>basketTotal</code> implementation:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> basketTotal lines =
+    lines
+    |&gt; List.map (<span class="hljs-keyword">fun</span> l -&gt; l.lineTotal)
+    |&gt; List.sum</code></pre>
+
+<p><code>List.sum</code> is a simple function that sums all the ints from a list. Another way we could sum the ints could be:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> basketTotal lines =
+    lines
+    |&gt; List.map (<span class="hljs-keyword">fun</span> l -&gt; l.lineTotal)
+    |&gt; List.fold (+) <span class="hljs-number">0</span></code></pre>
+
+<p>This works the same way, but exposes a more generic syntax that we can take advantage of. <code>(+)</code> is the function that sums two ints, and <code>0</code> is an &quot;initial&quot; int; that means that in order to adapt this function to <code>ReadTotal</code> instead of int we only need to implement a function that sums two <code>ReadTotal</code> and an initial total!</p>
+<p>To sum two <code>ReadTotal</code>, we have to take into account that both could be either <code>NotPromoted</code> or <code>Promoted</code>. I&#39;ll implement it as four case pattern match, and if you have a better idea, please write it in the comments!</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> sumTotals t1 t2 =
+    <span class="hljs-keyword">match</span> t1, t2 <span class="hljs-keyword">with</span>
+    | NotPromoted v1, NotPromoted v2 -&gt;
+        NotPromoted(v1 + v2)
+
+    | NotPromoted v, Promoted(o, d, f) -&gt;
+        Promoted(v + o, d, v + f)
+
+    | Promoted(o, d, f), NotPromoted v -&gt;
+        Promoted(v + o, d, v + f)
+
+    | Promoted(o1, d1, f1), Promoted(o2, d2, f2) -&gt;
+        Promoted(o1 + o2, d1 + d2, f1 + f2)
+
+<span class="hljs-keyword">let</span> basketTotal lines =
+    lines
+    |&gt; List.map (<span class="hljs-keyword">fun</span> l -&gt; l.lineTotal)
+    |&gt; List.fold sumTotals (NotPromoted <span class="hljs-number">0</span>)</code></pre>
+
+<p>And our new domain is ready! Just run the <code>Experiments.fsx</code> script we <a href="http://lucasmreis.github.io/blog/type-driven-domain-modelling-part-2/">wrote in Part 2</a>, and see the results :)</p>
+<h2 id="updating-the-tests">Updating The Tests</h2>
+<p>For the &quot;promoted line total&quot; test, we need now to build both the <code>Promoted</code> and <code>NotPromoted</code> expected results:</p>
+<pre><code class="hljs fsharp">testProperty <span class="hljs-string">"promoted line total"</span> &lt;| <span class="hljs-keyword">fun</span> (N : Qty) -&gt;
+    <span class="hljs-keyword">let</span> price = <span class="hljs-number">10</span>
+    <span class="hljs-keyword">let</span> promotedPrice = <span class="hljs-number">7</span>
+
+    <span class="hljs-keyword">let</span> promoQty = N + <span class="hljs-number">2</span>us
+    <span class="hljs-keyword">let</span> promotion = { promoQty = promoQty ; promoPrice = promotedPrice }
+    <span class="hljs-keyword">let</span> promoted = promotedTotal promoQty price promotion
+
+    <span class="hljs-keyword">let</span> notPromoQty = N + <span class="hljs-number">1</span>us
+    <span class="hljs-keyword">let</span> notPromoted = promotedTotal notPromoQty price promotion
+
+    <span class="hljs-keyword">let</span> promotedExpected = Promoted(promoQty * price, promoQty * price - promotedPrice , promotedPrice)
+    <span class="hljs-keyword">let</span> notPromotedExpected = NotPromoted(notPromoQty * price)
+
+    Expect.equal promoted promotedExpected <span class="hljs-string">"same price as promotion"</span>
+    Expect.equal notPromoted notPromotedExpected <span class="hljs-string">"multiplied by regular price"</span></code></pre>
+
+<p>We can also test that adding any quantity of non-promoted products to a basket with non-promoted lines results in a non-promoted basket:</p>
+<pre><code class="hljs fsharp">testProperty <span class="hljs-string">"not promoted products added to not promoted"</span> &lt;| <span class="hljs-keyword">fun</span> (N : Qty) -&gt;
+    <span class="hljs-keyword">let</span> initial = {
+        lines = [{ productSku = <span class="hljs-string">"a"</span> ; quantity = <span class="hljs-number">3</span>us ; lineTotal = NotPromoted <span class="hljs-number">30</span> }]
+        total = NotPromoted <span class="hljs-number">30</span>
+    }
+    <span class="hljs-keyword">let</span> prod = { sku = <span class="hljs-string">"sku"</span> ; price = <span class="hljs-number">10</span> ; promotion = None }
+    <span class="hljs-keyword">let</span> event = AddToBasket(prod, <span class="hljs-number">1</span>us)
+
+    <span class="hljs-keyword">let</span> basket =
+        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
+        |&gt; List.map (<span class="hljs-keyword">fun</span> _ -&gt; event)
+        |&gt; List.fold update initial
+
+    <span class="hljs-keyword">let</span> isNotPromoted =
+        <span class="hljs-keyword">match</span> basket.total <span class="hljs-keyword">with</span>
+        | NotPromoted _ -&gt; <span class="hljs-keyword">true</span>
+        | Promoted _ -&gt; <span class="hljs-keyword">false</span>
+
+    Expect.isTrue isNotPromoted <span class="hljs-string">"should stay not promoted"</span></code></pre>
+
+<p>We can also test that adding any quantity of not promoted products to a basket with a promoted line results in a promoted basket, with the same discount as before:</p>
+<pre><code class="hljs fsharp">testProperty <span class="hljs-string">"not promoted products added to promoted"</span> &lt;| <span class="hljs-keyword">fun</span> (N : Qty) -&gt;
+    <span class="hljs-keyword">let</span> initial = {
+        lines = [{ productSku = <span class="hljs-string">"a"</span> ; quantity = <span class="hljs-number">3</span>us ; lineTotal = Promoted(<span class="hljs-number">30</span>, <span class="hljs-number">11</span>, <span class="hljs-number">19</span>) }]
+        total = Promoted(<span class="hljs-number">30</span>, <span class="hljs-number">11</span>, <span class="hljs-number">19</span>)
+    }
+    <span class="hljs-keyword">let</span> prod = { sku = <span class="hljs-string">"sku"</span> ; price = <span class="hljs-number">10</span> ; promotion = None }
+    <span class="hljs-keyword">let</span> event = AddToBasket(prod, <span class="hljs-number">1</span>us)
+
+    <span class="hljs-keyword">let</span> basket =
+        [<span class="hljs-number">1.</span>.(int N + <span class="hljs-number">1</span>)]
+        |&gt; List.map (<span class="hljs-keyword">fun</span> _ -&gt; event)
+        |&gt; List.fold update initial
+
+    <span class="hljs-keyword">let</span> isPromoted =
+        <span class="hljs-keyword">match</span> basket.total <span class="hljs-keyword">with</span>
+        | NotPromoted _ -&gt; <span class="hljs-keyword">false</span>
+        | Promoted(_, discount, _) -&gt;
+            <span class="hljs-comment">// asserting here; I know, not very elegant :(</span>
+            Expect.equal discount <span class="hljs-number">11</span> <span class="hljs-string">"discount is the same"</span>
+            <span class="hljs-keyword">true</span>
+
+    Expect.isTrue isPromoted <span class="hljs-string">"should stay promoted"</span></code></pre>
+
+<p>I think these tests are enough to have a lot of confidence in the code, but of course they don&#39;t assure absolute correctness. So, if you have any other ideas for interesting properties to test, please write it in the comment section!</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>Now we have a function that transforms a list of events into a relatively complex basket. I really like how the code is very declarative, and is also self explanatory. The type system contributes to that. This, combined with the property tests, makes me feel very confident in the <em>correctness</em> of this code.</p>
+<p>As a side note, I&#39;m completely sold on ML languages now :). Not only do I tend to find my code more reliable and safe, it&#39;s also more concise <em>and</em> readable. After these last months experimenting with Elm and F#, I think that ML languages take all the benefits of a dynamic functional language like Clojure to a whole new level.</p>
+<p>The final code for the domain is <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Domain.fs">here</a>, and the final code for the tests are <a href="https://github.com/lucasmreis/basket-promotions-kata/blob/master/BasketPromotions/Tests.fs">here</a>.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>That is my &quot;planned last part&quot; of this series. But this exercise could go in two different directions from here: either building an actual application using this domain model, a web API for example, or evolving the domain model, by adding either new commands or read models. Feel free to share any ideas you have!</p>
+
+        <div class="signature">February 28, 2017.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'type-driven-domain-modelling-part-3';
+          var disqus_title = 'Type Driven Domain Modelling, part 3';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

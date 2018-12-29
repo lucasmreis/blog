@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>From Elm To Fable | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>From Elm To Fable</h1>
+        <div class="lead">Trying F# In The Frontend</div>
+        <p>A few months ago I started a <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">quest to gain reliability in frontend development</a>. I chose Elm as my starting point, from this list:</p>
+<ol>
+<li>Plain Javascript</li>
+<li>Facebook Flow</li>
+<li>TypeScript</li>
+<li>PureScript</li>
+<li>Elm</li>
+</ol>
+<p>This was a ranking from &quot;not reliable&quot; to &quot;reliable&quot; frontend languages, mainly taking <em>types</em> into consideration. After programming with Elm a bit (and fiding it awesome :) ), I started looking for <a href="http://lucasmreis.github.io/blog/does-elm-harmonize-with-f/#/">other languages with similar characteristics</a>. That was when I found F#, and I&#39;m really impressed by it.</p>
+<p>It turns out that there is an F# to JS compiler called <a href="http://fable.io/">Fable</a>. In the ranking, it would be between Typescript and Purescript, because it trades a bit of its &quot;safety&quot; for an easier Javascript interop.</p>
+<p>In this post I&#39;ll &quot;convert&quot; the <a href="http://lucasmreis.github.io/blog/learning-elm-part-3/">star wars app I wrote in Elm</a> to Fable, and then I&#39;ll refactor it. Along the way, I&#39;ll compare the experience to both Elm and regular Javascript workflows.</p>
+<p>For this post, I&#39;ll presume some familiarity with Elm or other ML languages, mainly that you understand how <em>discriminated unions</em> and <em>pattern matching</em> work. I wrote about these subjects in <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">part one of the Learning Elm series</a>. Scott Wlaschin has one of the best blogs on typed functional programming that I&#39;ve come across, and has written a <a href="https://fsharpforfunandprofit.com/posts/discriminated-unions/">great article on F# discriminated unions</a>.</p>
+<p>Let&#39;s get started!</p>
+<h2 id="starting-a-new-fable-project">Starting A New Fable Project</h2>
+<p>Elm is very &quot;beginner friendly&quot; - <em>it has always been one of its main goals</em>. This makes it very easy to start out playing with the language, be it with <a href="http://elm-lang.org/try">Try Elm online</a> or using <a href="https://github.com/elm-lang/elm-reactor">Elm Reactor</a> locally. Fable works more like a regular Javascript transpiler; so we need to do the initial pumbling, and then run our project through a local server.</p>
+<p>Fortunately, it&#39;s simple. This is what I did: first, I wrote an index.html file that imports a <code>build/bundle.js</code> script:</p>
+<pre><code class="hljs html"><span class="hljs-doctype">&lt;!doctype html&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">meta</span> <span class="hljs-attribute">http-equiv</span>=<span class="hljs-value">'Content-Type'</span> <span class="hljs-attribute">content</span>=<span class="hljs-value">'text/html; charset=utf-8'</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">title</span>&gt;</span>Star Wars - Fable<span class="hljs-tag">&lt;/<span class="hljs-title">title</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">div</span> <span class="hljs-attribute">id</span>=<span class="hljs-value">"app"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-title">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-title">script</span> <span class="hljs-attribute">src</span>=<span class="hljs-value">"build/bundle.js"</span>&gt;</span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-title">script</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">html</span>&gt;</span></code></pre>
+
+<p>Then I globally installed the Fable compiler, and locally installed the <code>fable-core</code> and <code>fable-compiler</code> packages in the project:</p>
+<pre><code class="hljs bash">$ npm install -g fable-compiler
+$ npm init
+$ npm install --save fable-core fable-compiler</code></pre>
+
+<p>Before writing the first F# file, please install the <a href="http://ionide.io/">Ionide extension</a> to VS Code or Atom. It is very powerful, and makes the developing experience very pleasurable. The compiler realtime help is even <em>better</em> than Elm&#39;s! I&#39;ll talk more about this in the conclusion.</p>
+<p>Now we can write a F# file, let&#39;s say in <code>src/Main.fsx</code>:</p>
+<pre><code class="hljs fsharp">#r <span class="hljs-string">"../node_modules/fable-core/Fable.Core.dll"</span>
+
+<span class="hljs-keyword">open</span> Fable.Import.Browser
+
+console.log(<span class="hljs-string">"It's working!"</span>)</code></pre>
+
+<p>I&#39;ll explain the syntax soon. Now we can build the project by using the <code>fable</code> command with some arguments:</p>
+<pre><code class="hljs bash">$ fable src/Main.fsx --outDir ./build --rollup</code></pre>
+
+<p>I&#39;m saying &quot;build the <code>src/Main.fsx</code> file, and save the output in the <code>./build</code> directory, and bundle it using the <a href="http://rollupjs.org/">Rollup bundler!</a>&quot;.</p>
+<p>Now, as a last step, to run the built project, choose your favorite simple local server to serve the index.html. I&#39;ve been using <code>http-server</code> and haven&#39;t had any problems:</p>
+<pre><code class="hljs bash">$ npm install -g http-server
+$ http-server</code></pre>
+
+<p>Just head to <code>http://localhost:8080</code> and we&#39;re running! :)</p>
+<h2 id="the-fsx-file">The .fsx File</h2>
+<p>The <code>Main.fsx</code> file is a F# script. That&#39;s the format we&#39;re going to use in this project. Let me explain our initial script:</p>
+<ul>
+<li>Usually in the beginning of the file, the external dependencies are listed. This is how regular F# dll&#39;s are imported:</li>
+</ul>
+<pre><code class="hljs fsharp">#r <span class="hljs-string">"../node_modules/fable-core/Fable.Core.dll"</span></code></pre>
+
+<p>(If we want to import another .fsx file or a regular .fs F# file we will use the <code>#load</code> command)</p>
+<ul>
+<li>Then import the modules that&#39;ll be used:</li>
+</ul>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">open</span> Fable.Import.Browser</code></pre>
+
+<p>This module imports the browser API, like <code>window</code> or <code>console</code>.</p>
+<ul>
+<li>Now you can write the application code:</li>
+</ul>
+<pre><code class="hljs fsharp">console.log(<span class="hljs-string">"It's working!"</span>)</code></pre>
+
+<p>That&#39;s everything that&#39;s on an fsx file. Now let&#39;s implement the Star Wars app using Fable.</p>
+<h2 id="the-spec">The Spec</h2>
+<p>As a reminder, let me rewrite here the application spec:</p>
+<blockquote>
+<p>The spec is simple: a Star Wars character &quot;card&quot; appears on the left, and corresponding film &quot;cards&quot;, representing the films of the character, are shown on the right.</p>
+<p>Clicking on a film &quot;card&quot; displays it on the left, and a list of the characters that appear in the film are shown on the right. And so on.</p>
+</blockquote>
+<p><img src="../assets/swspec.jpg" alt="Characters And Films"></p>
+<p><em>Characters cards will be yellow, and film cards will be blue. By clicking on a card, it changes from one screen to the other.</em></p>
+<h2 id="the-chosen-framework">The Chosen Framework</h2>
+<p><a href="https://github.com/fable-compiler">Fable&#39;s github page</a> also houses two frameworks: <a href="https://github.com/fable-compiler/fable-elmish">Fable Elmish</a> and <a href="http://fable.io/fable-arch/">Fable Arch</a>. Even though Elmish sounded like the one I would be more familiar with because of previous Elm experience, I chose Arch because it has better documentation - or at least a clear list of sample apps :)</p>
+<p>To use it, just install it as you would any npm library:</p>
+<pre><code class="hljs bash">$ npm install --save fable-arch</code></pre>
+
+<p>An observation: Fable documentation, in general, is still not great. In fact, it&#39;s almost nonexistent if we compare to Elm or to a lot of Javascript libraries and frameworks. But the samples provided are really good and helpful, and I found them the best source for learning Fable in the first moments.</p>
+<p>Another thing worth mentioning: there&#39;s a <a href="https://gitter.im/fable-compiler/Fable">Gitter channel</a> dedicated to Fable. I asked a couple of questions there, and was promptly answered. The people who actually make Fable and the frameworks are there, and they are really trying to help everyone!</p>
+<h2 id="the-character-and-film-modules">The Character And Film Modules</h2>
+<p>First let&#39;s write the Character and Film modules. They only contain Model and View code. Let&#39;s start with the Character model:</p>
+<pre><code class="hljs fsharp">#r <span class="hljs-string">"../node_modules/fable-core/Fable.Core.dll"</span>
+
+<span class="hljs-keyword">module</span> Character =
+    <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Model</span> </span>=
+        { name: string
+          films: string list }</code></pre>
+
+<p>That is straightforward. Only small syntax differences from Elm, like not needing a comma or writing <code>string list</code> instead of <code>List String</code>.</p>
+<p>Now the Character view:</p>
+<pre><code class="hljs fsharp">#load <span class="hljs-string">"../node_modules/fable-arch/Fable.Arch.Html.fs"</span>
+
+<span class="hljs-keyword">open</span> Fable.Arch.Html
+
+(...)
+
+    <span class="hljs-keyword">let</span> mainStyle =
+        Style
+            [ <span class="hljs-string">"background-color"</span>, <span class="hljs-string">"rgba(230, 126, 34,1.0)"</span>
+              <span class="hljs-string">"width"</span>, <span class="hljs-string">"200px"</span>
+              <span class="hljs-string">"height"</span>, <span class="hljs-string">"200px"</span>
+              <span class="hljs-string">"color"</span>, <span class="hljs-string">"white"</span>
+              <span class="hljs-string">"font-family"</span>, <span class="hljs-string">"-apple-system, system, sans-serif"</span>
+              <span class="hljs-string">"margin"</span>, <span class="hljs-string">"20px 0px 0px 20px"</span>
+              <span class="hljs-string">"cursor"</span>, <span class="hljs-string">"pointer"</span> ]
+
+    <span class="hljs-keyword">let</span> nameStyle =
+        Style
+            [ <span class="hljs-string">"padding"</span>, <span class="hljs-string">"20px"</span>
+              <span class="hljs-string">"font-size"</span>, <span class="hljs-string">"18px"</span> ]
+
+    <span class="hljs-keyword">let</span> view model =
+        div
+            [ mainStyle ; onMouseClick (<span class="hljs-keyword">fun</span> _ -&gt; model) ]
+            [ div [ nameStyle ] [ text model.name ] ]</code></pre>
+
+<p>The model code is very similar to the Elm version, but there&#39;s something important to be said here: <em>in F#, all code should be written in compile order</em>. That means that if you use a function or variable in another function, that should be declared earlier in the file. This is different from Elm, and from Javascript (if you declare a function with the <code>function</code> keyword). It seems this is a source of some debate in the F# community, since in regular F# projects you even need to specify the order that the files should be compiled! I have no problem with it. I tend to prefer that the <code>view</code> function comes before the style variables, but I also see that forcing things to be in order can be beneficial to the understanding of the code.</p>
+<p>The Film module is then very similar:</p>
+ <pre><code class="hljs fsharp"><span class="hljs-keyword">module</span> Film =
+    <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Model</span> </span>=
+        { title: string
+          episodeId: int
+          characters: string list }
+
+    <span class="hljs-keyword">let</span> mainStyle =
+        Style
+            [ <span class="hljs-string">"background-color"</span>, <span class="hljs-string">"rgba(52, 152, 219,1.0)"</span>
+              <span class="hljs-string">"width"</span>, <span class="hljs-string">"200px"</span>
+              <span class="hljs-string">"height"</span>, <span class="hljs-string">"200px"</span>
+              <span class="hljs-string">"color"</span>, <span class="hljs-string">"white"</span>
+              <span class="hljs-string">"font-family"</span>, <span class="hljs-string">"-apple-system, system, sans-serif"</span>
+              <span class="hljs-string">"margin"</span>, <span class="hljs-string">"20px 0px 0px 20px"</span>
+              <span class="hljs-string">"cursor"</span>, <span class="hljs-string">"pointer"</span> ]
+
+    <span class="hljs-keyword">let</span> nameStyle =
+        Style
+            [ <span class="hljs-string">"padding"</span>, <span class="hljs-string">"20px"</span>
+              <span class="hljs-string">"font-size"</span>, <span class="hljs-string">"18px"</span> ]
+
+    <span class="hljs-keyword">let</span> numberStyle =
+        Style
+            [ <span class="hljs-string">"padding"</span>, <span class="hljs-string">"20px 20px 0px 20px"</span>
+              <span class="hljs-string">"font-size"</span>, <span class="hljs-string">"60px"</span> ]
+
+    <span class="hljs-keyword">let</span> view model =
+        div
+            [ mainStyle ; onMouseClick (<span class="hljs-keyword">fun</span> _ -&gt; model) ]
+            [ div [ numberStyle ] [ text (model.episodeId.ToString()) ]
+              div [ nameStyle ] [ text model.title ] ]</code></pre>
+
+<h2 id="the-application-model-and-view">The Application Model And View</h2>
+<p>Let&#39;s now define the application model:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Model</span> </span>=
+    | InitialScreen
+    | LoadingFilms <span class="hljs-keyword">of</span> Character.Model
+    | LoadingCharacters <span class="hljs-keyword">of</span> Film.Model
+    | FilmsFromCharacter <span class="hljs-keyword">of</span> Character.Model * Film.Model list
+    | CharactersFromFilm <span class="hljs-keyword">of</span> Film.Model * Character.Model list
+    | ErrorScreen</code></pre>
+
+<p>The application model is a discriminated union, and I just adapted the syntax from the original Elm version. </p>
+<p>Let&#39;s convert the views one by one. First <code>InitialScreen</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> messageStyle =
+    Style
+        [ <span class="hljs-string">"margin"</span>, <span class="hljs-string">"20px 0px 0px 20px"</span>
+          <span class="hljs-string">"width"</span>, <span class="hljs-string">"200px"</span>
+          <span class="hljs-string">"height"</span>, <span class="hljs-string">"200px"</span>
+          <span class="hljs-string">"font-family"</span>, <span class="hljs-string">"-apple-system, system, sans-serif"</span>
+          <span class="hljs-string">"color"</span>, <span class="hljs-string">"rgba(149, 165, 166,1.0)"</span>
+          <span class="hljs-string">"font-size"</span>, <span class="hljs-string">"18px"</span> ]
+
+<span class="hljs-keyword">let</span> messageView t =
+    div [ messageStyle ] [ text t ]
+
+<span class="hljs-keyword">let</span> view model =
+    <span class="hljs-keyword">match</span> model <span class="hljs-keyword">with</span>
+    | InitialScreen -&gt;
+        messageView <span class="hljs-string">"Loading amazing characters and films..."</span>
+
+    | _ -&gt; 
+        div [] []</code></pre>
+
+<p>To render the view, we need to call the run <code>createApp</code>. That&#39;s a little different from Elm&#39;s <code>Program</code>:</p>
+<pre><code class="hljs fsharp">#load <span class="hljs-string">"../node_modules/fable-arch/Fable.Arch.App.fs"</span>
+#load <span class="hljs-string">"../node_modules/fable-arch/Fable.Arch.Virtualdom.fs"</span>
+
+(...)
+
+<span class="hljs-keyword">open</span> Fable.Arch
+<span class="hljs-keyword">open</span> Fable.Arch.App.AppApi
+
+(...)
+
+<span class="hljs-keyword">let</span> update model msg = model , []
+
+<span class="hljs-keyword">let</span> initialModel = InitialScreen
+
+createApp initialModel view update Virtualdom.createRender
+|&gt; withStartNodeSelector <span class="hljs-string">"#app"</span>
+|&gt; start</code></pre>
+
+<p><code>createApp</code> is direct: it needs an initial model, a view function, an update function, and a <em>renderer</em>. The renderer is the engine which will render your application view to the browser dom. Currently we can only use <code>virtual-dom</code>, which is a very fast and mature library, but it seems that <a href="https://github.com/fable-compiler/fable-arch/issues/33">a React renderer is also in the works</a>.</p>
+<p>We need to install <code>virtual-dom</code> in our project:</p>
+<pre><code class="hljs bash">$ npm install --save virtual-dom</code></pre>
+
+<p>Everything is looking good, right? But try compiling it. It doesn&#39;t, and outputs the following error:</p>
+<pre><code class="hljs bash">▶ fable src/Main.fsx --outDir build --rollup
+fable-compiler <span class="hljs-number">0.7</span>.<span class="hljs-number">17</span>: Start compilation...
+Compiled fable-arch/Fable.Arch.Html.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled fable-arch/Fable.Arch.App.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled fable-arch/Fable.Arch.Virtualdom.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Compiled src/Main.js at <span class="hljs-number">11</span>:<span class="hljs-number">35</span>:<span class="hljs-number">51</span> PM
+Bundling...
+[BUNDLE ERROR] <span class="hljs-string">'h'</span> is not exported by node_modules/virtual-dom/index.js (imported by build/fable-arch/Fable.Arch.Virtualdom.js). For <span class="hljs-built_in">help</span> fixing this error see https://github.com/rollup/rollup/wiki/Troubleshooting<span class="hljs-comment">#name-is-not-exported-by-module</span>
+(...)</code></pre>
+
+<p>We&#39;re using Rollup to bundle the files. It turns out that Rollup works well with ES6 modules, but may break when using regular CommonJS modules. Since some libraries are written using CommonJS, we need to deal with these cases properly.</p>
+<p>We need to configure Rollup to see the <code>virtual-dom</code> module and it&#39;s exported functions, so let me introduce you to the <code>fableconfig.json</code> file.</p>
+<p>Instead of calling <code>fable src/Main.fsx --outDir ./build --rollup</code> every time, we can put the compiling configuration inside <code>fableconfig.json</code>. For example, if we have this config:</p>
+<pre><code class="hljs json">{
+ "<span class="hljs-attribute">outDir</span>": <span class="hljs-value"><span class="hljs-string">"build"</span></span>,
+ "<span class="hljs-attribute">projFile</span>": <span class="hljs-value"><span class="hljs-string">"./src/Main.fsx"</span></span>,
+ "<span class="hljs-attribute">sourceMaps</span>": <span class="hljs-value"><span class="hljs-literal">true</span>
+</span>}</code></pre>
+
+<p>We can just run <code>fable</code> or <code>fable --watch</code> in the terminal and get the same output plus a sourcemap.</p>
+<p>Now we can add the Rollup CommonJS configuration:</p>
+<pre><code class="hljs json">{
+  "<span class="hljs-attribute">outDir</span>": <span class="hljs-value"><span class="hljs-string">"build"</span></span>,
+  "<span class="hljs-attribute">projFile</span>": <span class="hljs-value"><span class="hljs-string">"./src/Main.fsx"</span></span>,
+  "<span class="hljs-attribute">sourceMaps</span>": <span class="hljs-value"><span class="hljs-literal">true</span></span>,
+  "<span class="hljs-attribute">rollup</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">plugins</span>": <span class="hljs-value">[
+      [<span class="hljs-string">"commonjs"</span>, {
+        "<span class="hljs-attribute">namedExports</span>": <span class="hljs-value">{
+          "<span class="hljs-attribute">virtual-dom</span>": <span class="hljs-value">[ <span class="hljs-string">"h"</span>, <span class="hljs-string">"create"</span>, <span class="hljs-string">"diff"</span>, <span class="hljs-string">"patch"</span> ]
+        </span>}
+      </span>}]
+    ]
+  </span>}
+</span>}</code></pre>
+
+<p>This step is a small complication in our build system. It&#39;s definitely more complex than anything related to an Elm project build, but, on the other hand, it&#39;s the effect of using a very good and used <em>Javascript</em> tool. Efficient bundles are a central and important issue in frontend projects, and since we cannot escape it, I actually like that we are using a good tool for that.</p>
+<h2 id="messages-and-the-rest-of-the-views">Messages And The Rest Of The Views</h2>
+<p>Before building the other views, let&#39;s define the application Messages. As a reminder: a message is a description of a user action or an event that happens in the application. It is a model of the state <em>transitions</em>. Converting the original messages we have:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Msg</span> </span>=
+    | LoadCharacters <span class="hljs-keyword">of</span> Film.Model
+    | ToCharactersFromFilm <span class="hljs-keyword">of</span> Film.Model * Character.Model list
+    | LoadFilms <span class="hljs-keyword">of</span> Character.Model
+    | ToFilmsFromCharacter <span class="hljs-keyword">of</span> Character.Model * Film.Model list
+    | FetchFail</code></pre>
+
+<p>Now let&#39;s write one more case for the main view function: </p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> view model =
+    <span class="hljs-keyword">match</span> model <span class="hljs-keyword">with</span>
+    | InitialScreen -&gt;
+        messageView <span class="hljs-string">"Loading amazing characters and films..."</span>
+
+    | LoadingFilms ch -&gt;
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ Character.view ch
+              messageView (<span class="hljs-string">"Loading "</span> + ch.name + <span class="hljs-string">" films..."</span>) ]</code></pre>
+
+<p><code>LoadingFilms</code> shows one character and is waiting for the related films to load. If you hover on the <code>view</code> function declaration - or if you are using Ionide, it&#39;s already showing - you&#39;ll see that the function type signature is:</p>
+<pre><code class="hljs fsharp">Model -&gt; DomNode&lt;Character.Model&gt;</code></pre>
+
+<p>That means that <code>view</code> is a function that receives a Model and sends messages of type <code>Character.Model</code>. This occurs because of the attribute <code>onMouseClick (fun _ -&gt; model)</code> we wrote in the <code>Character.view</code> that we are calling in this function.</p>
+<p>The thing is, we want to send messages of the type <code>Msg</code> we just defined. An error occurs if we add the <code>FilmsFromCharacter</code> case, that calls <code>Film.view</code>:</p>
+<pre><code class="hljs fsharp">(...)
+
+    | FilmsFromCharacter (ch, fs) -&gt;
+        <span class="hljs-keyword">let</span> filmsView = List.map Film.view fs
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ Character.view ch
+              div [] filmsView ]</code></pre>
+
+<pre><code class="hljs bash">$ fable
+[ERROR] F<span class="hljs-comment"># project contains errors:</span>
+Type mismatch. Expecting a
+    <span class="hljs-string">'DomNode&lt;Character.Model&gt; list'</span>    
+but given a
+    <span class="hljs-string">'DomNode&lt;Film.Model&gt; list'</span>    
+The <span class="hljs-built_in">type</span> <span class="hljs-string">'Character.Model'</span> does not match the <span class="hljs-built_in">type</span> <span class="hljs-string">'Film.Model'</span></code></pre>
+
+<p>So, <code>Film.view</code> sends messages of type <code>Film.Model</code>. These are not compatible with <code>Character.Model</code>, which was the message being sent by the function before we wrote the case. This is a great example of the power of F#&#39;s type inference; I don&#39;t know if you noticed, but we haven&#39;t written any type signature so far :) It&#39;s rarely needed in F#, and I still feel the same type power and safety that I felt in Elm. </p>
+<p>To make sure that our main <code>view</code> only produces messages of type <code>Msg</code>, we need to <em>map</em> both the Character&#39;s and Film&#39;s <code>view</code> functions to produce it:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> mappedCharacterView model =
+    <span class="hljs-keyword">let</span> characterView = Character.view model
+    Html.map LoadFilms characterView
+
+<span class="hljs-keyword">let</span> mappedFilmView model =
+    <span class="hljs-keyword">let</span> filmView = Film.view model
+    Html.map LoadCharacters filmView</code></pre>
+
+<p>Now, just for fun, let&#39;s refactor <code>mappedCharacterView</code>. First of all, we can identify a <em>pipeline</em> there: we transform our model with the <code>view</code> function and then we map it to <code>LoadFilms</code> message. That translates directly to code:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> mappedCharacterView model =
+    model
+    |&gt; Character.view
+    |&gt; Html.map LoadFilms</code></pre>
+
+<p>Which is already simple and clear. There&#39;s another F# operator, the <code>&gt;&gt;</code>. It composes two functions into another one, in the same order as <code>|&gt;</code>. The next rewrite has the same behavior:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> mappedCharacterView model =
+    <span class="hljs-keyword">let</span> transform = Character.view &gt;&gt; Html.map LoadFilms
+    transform model</code></pre>
+
+<p>When I see a function like that, I immediately think that <code>model</code> and <code>transform</code> are temporary variables that do not add a lot to readability. So I think this is a nice case where a <a href="http://lucasmreis.github.io/blog/pointfree-javascript/">point free function</a> is simple:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> mappedCharacterView =
+    Character.view &gt;&gt; Html.map LoadFilms
+
+<span class="hljs-keyword">let</span> mappedFilmView =
+    Film.view &gt;&gt; Html.map LoadCharacters</code></pre>
+
+<p>And now we can convert all the views of the application:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> view model =
+    <span class="hljs-keyword">match</span> model <span class="hljs-keyword">with</span>
+    | InitialScreen -&gt;
+        messageView <span class="hljs-string">"Loading amazing characters and films..."</span>
+
+    | LoadingFilms ch -&gt;
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ mappedCharacterView ch
+              messageView (<span class="hljs-string">"Loading "</span> + ch.name + <span class="hljs-string">" films..."</span>) ]
+
+    | FilmsFromCharacter (ch, fs) -&gt;
+        <span class="hljs-keyword">let</span> filmsView = List.map mappedFilmView fs
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ mappedCharacterView ch
+              div [] filmsView ]
+
+    | LoadingCharacters f -&gt;
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ mappedFilmView f
+              messageView (<span class="hljs-string">"Loading "</span> + f.title + <span class="hljs-string">" characters..."</span>) ]
+
+    | CharactersFromFilm (f, chs) -&gt;
+        <span class="hljs-keyword">let</span> chsView = List.map mappedCharacterView chs
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ mappedFilmView f
+              div [] chsView ]
+
+    | ErrorScreen -&gt;
+        messageView <span class="hljs-string">"An error ocurred. Please refresh the page and try again - and may the Force be with you!"</span></code></pre>
+
+<p>The syntax is very clean. I like not having to use commas when changing lines, and don&#39;t mind the occasional parenthesis. I love Elm Format and how it formats your code automatically - F# doesn&#39;t have this, but I don&#39;t feel I lose a lot of time with code formatting to get a good look and feel.</p>
+<p>Now we can try the views with &quot;mock&quot; application states, for instance:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> char:Character.Model =
+    { name = <span class="hljs-string">"Luke Skywalker"</span> ; films = [] }
+
+<span class="hljs-keyword">let</span> film:Film.Model =
+    { title = <span class="hljs-string">"A New Hope"</span> ; episodeId = <span class="hljs-number">4</span> ; characters = [] }
+
+<span class="hljs-keyword">let</span> initialModel =
+    FilmsFromCharacter ( char , [ film ; film ; film ] )</code></pre>
+
+<p>Run <code>fable &amp;&amp; http-server</code> and reload the browser, and you&#39;ll see it!</p>
+<h2 id="the-update-function-and-async-work">The Update Function And Async Work</h2>
+<p>Fable Arch resembles Elm in the sense that the <code>update</code> function returns a new model and a list of &quot;actions&quot;. Actions are functions that receive a <code>handler</code> callback parameter; <code>handler</code> is a function that receives a <code>Msg</code> and feeds it back to the update function.</p>
+<p>Let&#39;s start with the initial work of the application: getting a character from the API, and transitioning from <code>Initial Screen</code> to <code>LoadingFilms of Character.Model</code>. </p>
+<p>We&#39;ll get the entities from the <a href="https://swapi.co/">Star Wars API</a>, so we need to use the browser fetch function. There&#39;s a library called <a href="https://github.com/fable-compiler/fable-powerpack">fable-powerpack</a> that makes it easier to use both fetch and promises with fable:</p>
+<pre><code class="hljs bash">$ npm install --save fable-powerpack</code></pre>
+
+<p>And then we can use the following in our project:</p>
+<pre><code class="hljs fsharp">#r <span class="hljs-string">"../node_modules/fable-powerpack/Fable.PowerPack.dll"</span>
+
+(...)
+
+<span class="hljs-keyword">open</span> Fable.PowerPack
+<span class="hljs-keyword">open</span> Fable.PowerPack.Fetch
+
+(...)
+
+<span class="hljs-keyword">let</span> fetchEntity url =
+    promise {
+        <span class="hljs-keyword">let!</span> fetched = fetch url []
+        <span class="hljs-keyword">let!</span> response = fetched.text()
+        <span class="hljs-keyword">return</span> response }</code></pre>
+
+<p><code>promise { ... }</code> is a F# <em>computation expression</em>. There&#39;s nothing like it in Elm - it&#39;s kind of an ES6 generator, or ES7 async/await. Inside the promise block, code is written sequentially, but runs asynchronously. If you define a promise variable using <code>let!</code>, it will wait for the promise to resolve <em>without blocking the thread</em>, and then continue running the code. The code above could be loosely translated to Javascript as:</p>
+<pre><code class="hljs js"><span class="hljs-comment">// using promises:</span>
+<span class="hljs-keyword">const</span> fetchEntity = url =&gt; fetch(url, {}).then(r =&gt; r.text())
+
+<span class="hljs-comment">// using async/await:</span>
+<span class="hljs-keyword">const</span> fetchEntity = url =&gt; {
+  <span class="hljs-keyword">const</span> fetched = <span class="hljs-keyword">await</span> fetch(url, {})
+  <span class="hljs-keyword">const</span> response = <span class="hljs-keyword">await</span> fetched.text()
+  <span class="hljs-keyword">return</span> response
+}</code></pre>
+
+<p>The only difference is that promises run as soon as they are defined, and computation expressions run only when they are actually used. I find this to be better behaviour, and more compatible with the more &quot;famous&quot; F#&#39;s <code>async { ... }</code>.</p>
+<p>The inferred type is <code>string -&gt; Promise&lt;string&gt;</code>, but we want the function to return either a Character or a Film model. So we need <code>string -&gt; Character.Model</code> and <code>string -&gt; Film.Model</code> parse functions. So, inside the Film module:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">open</span> Fable.Core.JsInterop
+
+(...)
+
+<span class="hljs-keyword">module</span> Film =
+    <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Model</span> </span>=
+        { title: string
+          episodeId: int
+          characters: string list }
+
+    <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">ModelJSON</span> </span>=
+        { title: string
+          episode_id: int
+          characters: string list }
+
+    <span class="hljs-keyword">let</span> parse str =
+        <span class="hljs-keyword">let</span> obj = ofJson&lt;ModelJSON&gt; str
+        { title = obj.title
+          episodeId = obj.episode_id
+          characters = obj.characters }
+
+    (...)</code></pre>
+
+<p>I created a record type for the json, so I could use the function <code>ofJson&lt;&#39;a&gt;</code> to convert a string by finding the json keys that are equivalent to <code>&#39;a</code> keys. Then it builds a regular <code>Film.Model</code> with the result.</p>
+<p>This function has the signature <code>string -&gt; Film.Model</code>, but if there&#39;s any error in the process, it <em>raises an exception</em>. I&#39;m not an exception fan (it&#39;s not explicit in the type signature!), but it&#39;ll work here because we&#39;ll put it inside a promise computation expression, and it will behave just like it would in Javascript: it will <em>reject</em>, and we&#39;ll treat it in a <code>Promise.catch</code> expression.</p>
+<p>The Character module ended up being much simpler:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">module</span> Character =
+
+    (...)
+
+    <span class="hljs-keyword">let</span> parse = ofJson&lt;Model&gt;</code></pre>
+
+<p>Since <code>Model</code> already mirrors the json schema of the API :)</p>
+<p>We can now change our <code>fetchEntity</code> function to receive a parser:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> fetchEntity url parser =
+    promise {
+        <span class="hljs-keyword">let!</span> fetched = fetch url []
+        <span class="hljs-keyword">let!</span> response = fetched.text()
+        <span class="hljs-keyword">return</span> response |&gt; parser }</code></pre>
+
+<p>And we can write the <code>getFirstCharacter</code> function that fetches the first character of the application:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> getFirstCharacter handler =
+    fetchEntity <span class="hljs-string">"http://swapi.co/api/people/1/"</span> Character.parse
+    |&gt; Promise.map LoadFilms
+    |&gt; Promise.catch ( <span class="hljs-keyword">fun</span> _ -&gt; FetchFail )
+    |&gt; Promise.map handler
+    |&gt; ignore</code></pre>
+
+<p>It receives <code>handler</code> as a parameter, which is a function that will receive a <code>Msg</code> and feed it back to the appication. <code>ignore</code> is just a function that returns <code>unit</code>, which is F#&#39;s &quot;void&quot;. </p>
+<p>The handler is receiving both <code>LoadFilms</code> and <code>FetchFail</code> messages, so let&#39;s implement an initial update function that changes the application state properly, and also call <code>getCharacter</code> in <code>createApp</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> update model msg =
+    <span class="hljs-keyword">match</span> msg <span class="hljs-keyword">with</span>
+    | LoadFilms ch -&gt; LoadingFilms ch , []
+    | FetchFail -&gt; ErrorScreen , []
+    | _ -&gt; model , []
+
+(...)
+
+createApp InitialScreen view update Virtualdom.createRender
+|&gt; withStartNodeSelector <span class="hljs-string">"#app"</span>
+|&gt; withInitMessage getFirstCharacter
+|&gt; start</code></pre>
+
+<p>If we run the application, we&#39;ll be able to see the initial screen transitioning to the next screen with real info from the API!</p>
+<p>Now the last two functions: <code>getCharacters</code> and <code>getFilms</code>, that get all the related entities of a character or a film:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> getCharacters (film: Film.Model) handler =
+    film.characters
+    |&gt; List.map ( <span class="hljs-keyword">fun</span> url -&gt; fetchEntity url Character.parse )
+    |&gt; Promise.Parallel
+    |&gt; Promise.map ( <span class="hljs-keyword">fun</span> chs -&gt; ToCharactersFromFilm (film, List.ofArray chs) )
+    |&gt; Promise.catch ( <span class="hljs-keyword">fun</span> _ -&gt; FetchFail )
+    |&gt; Promise.map handler
+    |&gt; ignore</code></pre>
+
+<p>This function fetchs all the entities in parallel, waits for all the promises to resolve, builds a <code>ToCharactersFromFilm</code> message and calls <code>handler</code>.</p>
+<p><code>getFilms</code> is almost mirrored:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> getFilms (character: Character.Model) handler =
+    character.films
+    |&gt; List.map ( <span class="hljs-keyword">fun</span> url -&gt; fetchEntity url Film.parse )
+    |&gt; Promise.Parallel
+    |&gt; Promise.map ( <span class="hljs-keyword">fun</span> fs -&gt; ToFilmsFromCharacter (character, List.ofArray fs) )
+    |&gt; Promise.catch ( <span class="hljs-keyword">fun</span> _ -&gt; FetchFail )
+    |&gt; Promise.map handler
+    |&gt; ignore</code></pre>
+
+<p>Now we&#39;ll finish our update (notice the side-effects listed!):</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> update model msg =
+    <span class="hljs-keyword">match</span> msg <span class="hljs-keyword">with</span>
+    | LoadCharacters f -&gt;
+        LoadingCharacters f , [ getCharacters f ]
+
+    | ToCharactersFromFilm ( f , chs ) -&gt;
+        CharactersFromFilm ( f , chs ), []
+
+    | LoadFilms ch -&gt;
+        LoadingFilms ch , [ getFilms ch ]
+
+    | ToFilmsFromCharacter ( ch , fs ) -&gt;
+        FilmsFromCharacter ( ch , fs ), []
+
+    | FetchFail -&gt;
+        ErrorScreen , []</code></pre>
+
+<p>And that&#39;s it - the application is up and running without any errors. That&#39;s the sensation you have only with a good compiled language: code running and working at the same time, from the very beginning.</p>
+<p>The complete application <a href="https://github.com/lucasmreis/star-wars-fable/blob/master/src/MainFirst.fsx">can be found here</a>.</p>
+<h2 id="bonus-refactoring-">Bonus: Refactoring!</h2>
+<p>There&#39;s one thing that I really don&#39;t like in this solution: the amount of &quot;almost duplicate&quot; code related to Characters and Films. I feel I&#39;m writing everything twice. I think it came from thinking that Character and Film should be separate modules, and I could not figure out at the time a way to have &quot;generic&quot; modules or something of the sort. So I&#39;ll try now to make it better, and find a better abstraction for Character and Film that does not result in &quot;almost duplicate&quot; code.</p>
+<p>I&#39;ll start by defining the models of the entities:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Url</span> </span>= string
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Details</span> </span>=
+    | Character <span class="hljs-keyword">of</span> name: string
+    | Film <span class="hljs-keyword">of</span> title: string * episode: string
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Entity</span> </span>=
+    { related : Url list
+      details : Details }</code></pre>
+
+<p>An entity has a generic list of related entities, and a <code>Details</code> property that holds the actual characteristics of a film or a character. Now that we have a generic entity type, we can simplify the application model:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Model</span> </span>=
+    | InitialScreen
+    | Loading <span class="hljs-keyword">of</span> Entity
+    | List <span class="hljs-keyword">of</span> Entity * Entity list
+    | ErrorScreen</code></pre>
+
+<p>And we can parse the json using the function:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">CharacterResponseJson</span> </span>=
+    { name : string
+      films : string list }
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">FilmResponseJson</span> </span>=
+    { title : string
+      episode_id : int
+      characters : string list }
+
+<span class="hljs-keyword">let</span> <span class="hljs-annotation">[&lt;PassGenericsAttribute&gt;]</span> betterOfJson&lt;<span class="hljs-attribute">'a</span>&gt; text =
+    <span class="hljs-keyword">try</span>
+        <span class="hljs-keyword">let</span> json = ofJson&lt;<span class="hljs-attribute">'a</span>&gt; text
+        Some json
+    <span class="hljs-keyword">with</span> _ -&gt;
+        None
+
+<span class="hljs-keyword">let</span> parse text =
+    <span class="hljs-keyword">let</span> chRecord = betterOfJson&lt;CharacterResponseJson&gt; text
+    <span class="hljs-keyword">let</span> filmRecord = betterOfJson&lt;FilmResponseJson&gt; text
+    <span class="hljs-keyword">match</span> chRecord , filmRecord <span class="hljs-keyword">with</span>
+    | Some ch , _ -&gt;
+        { related = ch.films
+          details = Character ch.name }
+    | _ , Some film -&gt;
+        { related = film.characters
+          details = Film ( film.title , film.episode_id.ToString() ) }
+    | _ -&gt;
+        failwith <span class="hljs-string">"could not parse entity"</span></code></pre>
+
+<p>Let&#39;s pause a little to understand this function. First, I created the record types to reflect the information I&#39;m looking for in the API&#39;s json schema. Then, I created a function called <code>betterOfJson</code> which is just <code>ofJson</code> returning an <code>option</code>. We have to use the <code>[&lt;PassGenericsAttribute&gt;]</code> so this function works properly when transpiled to Javascript. No need to worry about how it works - the compiler tells you where you need to use it! :)</p>
+<p>After that, the parse function is defined. It raises an exception if there&#39;s an error; which, again, I really do not like since it works as a &quot;hidden output&quot;, but we&#39;re going to use it inside a Promise, so it&#39;s not that bad.</p>
+<p>In trying to make this function better, I learned another really amazing F# feature: <em>Partial Active Patterns</em>. I wanted to to have this function written somewhat like this:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> parse text =
+    <span class="hljs-keyword">match</span> text <span class="hljs-keyword">with</span>
+    | IsCharacter ch -&gt; ...
+    | IsFilm film -&gt; ...
+    | _ -&gt; failwith <span class="hljs-string">"could not parse entity"</span></code></pre>
+
+<p>It turns out that there&#39;s a simple way to achieve that:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> (|IsCharacter|_|) text =
+    betterOfJson&lt;CharacterResponseJson&gt; text
+
+<span class="hljs-keyword">let</span> (|IsFilm|_|) text =
+    betterOfJson&lt;FilmResponseJson&gt; text</code></pre>
+
+<p>To build a Partial Active Pattern, you have to write a function that returns an <code>option</code>, and has this <code>(|PatternMatchCase|_|)</code> definition. Now you can use both <code>IsCharacter</code> and <code>IsFilm</code> in a pattern match:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> parse text =
+    <span class="hljs-keyword">match</span> text <span class="hljs-keyword">with</span>
+    | IsCharacter ch -&gt;
+        { related = ch.films
+          details = Character ch.name }
+    | IsFilm film -&gt;
+        { related = film.characters
+          details = Film ( film.title , film.episode_id.ToString() ) }
+    | _ -&gt;
+        failwith <span class="hljs-string">"could not parse entity"</span></code></pre>
+
+<p>This is much simpler. This is another feature of F# that makes it stand out.</p>
+<p>I&#39;m still not 100% happy with an &quot;exception-throwing&quot; function. If someone knows of a better way to deal with JSON parsing, please let me know in the comment section!</p>
+<p>Next, let&#39;s deal with the update part of the application. The messages can be simplified too:</p>
+<pre><code class="hljs fsharp"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Msg</span></span>
+    = Load <span class="hljs-keyword">of</span> Entity
+    | ToList <span class="hljs-keyword">of</span> Entity * Entity list
+    | FetchFail</code></pre>
+
+<p><code>getFirstCharacter</code> is very similar:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> fetchEntity (url:Url) =
+    promise {
+        <span class="hljs-keyword">let!</span> fetched = fetch url []
+        <span class="hljs-keyword">let!</span> response = fetched.text()
+        <span class="hljs-keyword">return</span> parse response }
+
+<span class="hljs-keyword">let</span> getFirstCharacter handler =
+    fetchEntity <span class="hljs-string">"http://swapi.co/api/people/2/"</span>
+    |&gt; Promise.map Load
+    |&gt; Promise.catch ( <span class="hljs-keyword">fun</span> _ -&gt; FetchFail )
+    |&gt; Promise.map handler
+    |&gt; ignore</code></pre>
+
+<p>And now we only need one <code>getRelatedEntities</code> instead of <code>getCharacters</code> and <code>getFilms</code>:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> getRelatedEntities (entity:Entity) handler =
+    List.map fetchEntity entity.related
+    |&gt; Promise.Parallel
+    |&gt; Promise.map ( <span class="hljs-keyword">fun</span> list -&gt; ToList ( entity , List.ofArray list ) )
+    |&gt; Promise.catch ( <span class="hljs-keyword">fun</span> _ -&gt; FetchFail )
+    |&gt; Promise.map handler
+    |&gt; ignore</code></pre>
+
+<p>And our <code>update</code> function became simpler:</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> update model msg =
+    <span class="hljs-keyword">match</span> msg <span class="hljs-keyword">with</span>
+    | Load entity -&gt; Loading entity , [ getRelatedEntities entity ]
+    | ToList ( entity , list ) -&gt; List ( entity , list ) , []
+    | FetchFail -&gt; ErrorScreen , []</code></pre>
+
+<p>From this point on, we only need to implement the view functions. This is the final <code>view</code> function (<code>messageView</code> and <code>entityView</code> were ommited for brevity, but <a href="https://github.com/lucasmreis/star-wars-fable/blob/master/src/Main.fsx#L94">can be found here</a>):</p>
+<pre><code class="hljs fsharp"><span class="hljs-keyword">let</span> view model =
+    <span class="hljs-keyword">match</span> model <span class="hljs-keyword">with</span>
+    | InitialScreen -&gt;
+        messageView <span class="hljs-string">"Loading amazing characters and films..."</span>
+
+    | Loading entity -&gt;
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ mappedEntityView entity ; loadingMessageView entity ]
+
+    | List ( entity , list ) -&gt;
+        <span class="hljs-keyword">let</span> listView = List.map mappedEntityView list
+        div [ Style [ <span class="hljs-string">"display"</span>, <span class="hljs-string">"flex"</span> ] ]
+            [ mappedEntityView entity ; div [] listView ]
+
+    | ErrorScreen -&gt;
+        messageView <span class="hljs-string">"An error ocurred. Please refresh the page and try again - and may the Force be with you!"</span></code></pre>
+
+<p>Much better, right? It&#39;s always a pleasure to refactor code using an ML language :)</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>That&#39;s it - we have a completely refactored working version of the Star Wars app. <a href="https://github.com/lucasmreis/star-wars-fable">The complete code is here</a>, and <a href="https://lucasmreis.github.io/star-wars-fable/">the working app is here</a>.</p>
+<p><a href="http://lucasmreis.github.io/blog/does-elm-harmonize-with-f/#final-conclusions">I&#39;ve compared Elm and F# before</a>, and this experiment compares both <em>in the same domain</em>: frontend web programming. Here are some of my thoughts on the outcome:</p>
+<ul>
+<li>Elm is much friendlier for beginners. It has one way to do almost everything, so there&#39;s not many decisions to make when implementing something - it has more of a &quot;puzzle&quot; feel to it. Also, tools like <a href="http://elm-lang.org/try">Try Elm</a> and <a href="https://github.com/elm-lang/elm-reactor">Elm Reactor</a> make it very simple and fast to begin coding and experimenting with the language.</li>
+<li>On the other hand, Fable does not hide from you the fact that it&#39;s going to compile to Javascript, and because of that, you have a lot of freedom. For instance, I could immediately make the requests parallel, because promises work just like they do in JS. There was <a href="http://lucasmreis.github.io/blog/learning-elm-part-3/#almost-finishing-our-application-">no default way to do this</a> when I implemented the same app in Elm.</li>
+<li>F#&#39;s <em>computation expressions</em> and <em>partial active patterns</em> are really powerful, and make the code more readable and elegant. Actually, it also makes it <em>simpler</em>. There&#39;s nothing like it in Elm.</li>
+<li>F#, when used with the Ionide VS Code plugin, is probably the best coding experience I&#39;ve had to date. Elm comes close (and <code>elm-format</code> is great), but hovering in any variable to understand what it is in realtime is an amazing experience. And the type code lenses are really useful too.</li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<p>I enjoyed the Fable experimentation. I&#39;ll continue to look at it, and probably try something with more JS interop to understand better how it would behave in a more real world scenario.</p>
+<p>Elm still seems the sensible solution if you have a team of people that are <em>learning</em> functional programming. Elm has a lighter cognitive load, since there&#39;s almost only one way of doing it, and the defaults are very good, making it a great learning tool as well. </p>
+<p>Teams looking for more freedom and power, on the other hand, can find it with Fable, while still maintaining most of the reliability and safety from an ML language.</p>
+
+        <div class="signature">December 9, 2016.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'from-elm-to-fable';
+          var disqus_title = 'From Elm To Fable';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>

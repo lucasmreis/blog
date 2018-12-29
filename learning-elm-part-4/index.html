@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Learning Elm, part 4 | Lucas Reis' Blog</title>
+    <link rel="stylesheet" href="../styles/reset.css" type="text/css">
+    <link rel="stylesheet" href="../styles/style.css" type="text/css">
+    <link rel="stylesheet" href="../styles/highlight.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Libre+Baskerville:400,700,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href="../rss.xml" rel="alternate" type="application/rss+xml" title="Lucas Reis' Blog">
+
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../assets/favicon/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/favicon/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/favicon/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/favicon/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../assets/favicon/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../assets/favicon/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../assets/favicon/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../assets/favicon/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../assets/favicon/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="Lucas Reis' Blog"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../assets/favicon/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../assets/favicon/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../assets/favicon/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../assets/favicon/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../assets/favicon/mstile-310x310.png" />
+
+  </head>
+  <body>
+    <div id="container">
+      <header>
+        <ul>
+          <li class="active"><a href="../contents/">Blog</a></li>
+          <li><a href="../">About</a></li>
+        </ul>
+      </header>
+      <div id="main-text">
+            <h1>Learning Elm, part 4</h1>
+        <div class="lead">Property Based Testing And Better Modelling</div>
+        <p>As I said in the conclusion of part 1 of this series, the function I wrote in <a href="http://lucasmreis.github.io/blog/learning-elm-part-1/">that post</a> felt very <em>reliable</em>, in a way that&#39;s difficult to achieve with any javascript code.</p>
+<p>As a reminder, here is the card type used in the code:</p>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span> = <span class="hljs-type">Jack</span> | <span class="hljs-type">Queen</span> | <span class="hljs-type">King</span> | <span class="hljs-type">Ace</span> | <span class="hljs-type">Num</span> <span class="hljs-type">Int</span></span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span> = <span class="hljs-type">Club</span> | <span class="hljs-type">Diamond</span> | <span class="hljs-type">Spade</span> | <span class="hljs-type">Heart</span></span>
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span> = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span> | <span class="hljs-type">Joker</span></span></code></pre>
+
+<p>Looking at these types, a question arises: <em>how can I guarantee that I never end up with an invalid card?</em> By invalid card, I mean something like a thirteen of Clubs, or a minus five of Hearts.</p>
+<h2 id="unit-testing">Unit Testing</h2>
+<p>The &quot;unsafe&quot; part of the type is the type <code>Value</code>. It&#39;s created by the function <code>parseNumValue</code>, which has the type:</p>
+<pre><code class="hljs elm"><span class="hljs-title">parseNumValue</span> : <span class="hljs-type">String</span> -&gt; <span class="hljs-type">Maybe</span> <span class="hljs-type">Value</span></code></pre>
+
+<p>By testing the <code>parseNumValue</code> function, we&#39;ll be able to raise the reliability of the code as a whole.</p>
+<p>Unit testing pure functions is very simple: we define some example cases of the function, and then define the expected return values. Let&#39;s use the library <code>elm-test</code> for our tests.</p>
+<p>Installing Elm Test is easy, <a href="https://github.com/elm-community/elm-test#running-tests-locally">as described here</a>:</p>
+<ol>
+<li>Run <code>npm install -g elm-test</code> if you haven&#39;t already.</li>
+<li><code>cd</code> into the project&#39;s root directory that has your <code>elm-package.json</code>.</li>
+<li>Run <code>elm-test init</code>. It will create a <code>tests</code> directory inside this one, with some files in it.</li>
+<li>Copy all the dependencies from <code>elm-package.json</code> into
+<code>tests/elm-package.json</code>. These dependencies need to stay in sync, so make sure whenever you change your dependencies in your current
+<code>elm-package.json</code>, you make the same change to <code>tests/elm-package.json</code>.</li>
+<li>Run <code>elm-test</code>.</li>
+<li>Edit <code>tests/Tests.elm</code> to introduce new tests.</li>
+</ol>
+<p>After writing the unit tests, this is how my <code>Tests.elm</code> file looks:</p>
+<pre><code class="hljs elm">module Tests exposing (..)
+
+import Test exposing (..)
+import Expect
+import Cards exposing (..)
+
+
+all : Test
+all =
+    describe "parseNumValue"
+        [ test "cannot be less than 2"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "1") Nothing
+        , test "minimum of 2"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "2") (Just (Num 2))
+        , test "maximum of 10"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "10") (Just (Num 10))
+        , test "cannot be more than 10"
+            &lt;| \() -&gt; Expect.equal (parseNumValue "11") Nothing
+        ]</code></pre>
+
+<p>The syntax is direct: you describe a test suite, and then define the tests inside a list. I tested the &quot;corner cases&quot; of the function, to make sure that any value less than 2 or greater than 10 will not be parsed to a Card. I also like that tests in general also work as documentation to show how the function is supposed to behave.</p>
+<p>So, unit tests raise reliability, but could they do better? What would happen if we call the <code>parseNumValue</code> function with the string &quot;100&quot;? Or the string &quot;-22&quot;? Is it possible to write more general tests, that answer the more powerful question <em>can I guarantee that only integers between 2 and 10 get converted to a Value, and no others</em>?</p>
+<h2 id="property-based-testing">Property Based Testing</h2>
+<p>Property Based Testing is very interesting because it allows you to test a whole set of values. For instance, let&#39;s pretend that we have at our disposal the set of all integers. If we transform them into strings, we have the perfect inputs for testing <code>parseNumValue</code>.</p>
+<p>Elm Test has an easy way of doing property based tests. Instead of using the <code>test</code> function, you will use <code>fuzz</code> function, specify a &quot;fuzzer&quot;, and write your test using the generated value as a parameter:</p>
+<pre><code class="hljs elm">(...)
+
+<span class="hljs-import"><span class="hljs-keyword">import</span> Fuzz <span class="hljs-keyword">exposing</span> <span class="hljs-container">(..)</span></span>
+
+(...)
+
+, fuzz int <span class="hljs-string">"parseNumValue"</span>
+    &lt;| \number -&gt;
+        <span class="hljs-keyword">let</span>
+            parsed =
+                number
+                    |&gt; toString
+                    |&gt; parseNumValue
+        <span class="hljs-keyword">in</span>
+            <span class="hljs-keyword">case</span> parsed <span class="hljs-keyword">of</span>
+                <span class="hljs-type">Just</span> (<span class="hljs-type">Num</span> v) -&gt;
+                    <span class="hljs-type">Expect</span>.true
+                        <span class="hljs-string">"Number should be &gt;= 2 and &lt;= 10 when Just Num v"</span>
+                        (v &gt;= <span class="hljs-number">2</span> &amp;&amp; v &lt;= <span class="hljs-number">10</span>)
+
+                _ -&gt;
+                    <span class="hljs-type">Expect</span>.false
+                        <span class="hljs-string">"Number should not be &gt;= 2 and &lt;= 10 when Nothing"</span>
+                        (number &gt;= <span class="hljs-number">2</span> &amp;&amp; number &lt;= <span class="hljs-number">10</span>)</code></pre>
+
+<p>This test is direct: it generates an <code>int</code> and passes it as a parameter to the testing function - that&#39;s why we&#39;re using <code>\number -&gt; ...</code>. Then we convert the number to a string and parse it with our <code>parseNumValue</code> function.</p>
+<p>We are testing for the following: if the result of the parse is a <code>Just (Num v)</code>, then the number was something between two and ten. And, if the result is <code>Nothing</code>, the number was either smaller than 2 or greater than 10.  That is what we are asserting in the pattern matching section of the test.</p>
+<p>How does it work? It&#39;s simple: <code>fuzz int</code> generates a bunch of random integers, and runs a test for each integer generated. That way, it&#39;s almost the same as writing a lot of <code>test</code> functions for a lot of integer values.</p>
+<p><em>Observation</em>: during these tests, I found a little problem: the key values of 1, 2, 10 and 11 were <em>not</em> tested every time. That means I could have a false positive! The fuzz test would say everything is ok, but my function could have an error and I would end up with a <code>Just (Num 11)</code>. The solution to this could be raising the number of random integers tested, but I could not find a way to do it. If you have an idea of how to deal with this situation, please comment below it in the comments section!</p>
+<p>In the end, I maintained the four unit tests that I knew were important cases, and added the fuzz test. <a href="https://github.com/lucasmreis/learning-elm/blob/master/part-4/tests/Tests.elm">Here&#39;s how the final test file looks</a>.</p>
+<p>I believe the solution feels much more reliable with the addition of the property based tests. But one thing still bothers me: the fact that, if I do not use the parsers to build a card, I can still have an invalid card like <code>Just (Num 11)</code>.</p>
+<h2 id="can-we-do-better-">Can We Do Better?</h2>
+<p>Our cards have a small finite domain. Instead of having a <code>Num Int</code> case for the <code>Value</code> type, we could be explicit about every value possible:</p>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Value</span></span>
+    = <span class="hljs-type">Jack</span>
+    | <span class="hljs-type">Queen</span>
+    | <span class="hljs-type">King</span>
+    | <span class="hljs-type">Ace</span>
+    | <span class="hljs-type">Two</span>
+    | <span class="hljs-type">Three</span>
+    | <span class="hljs-type">Four</span>
+    | <span class="hljs-type">Five</span>
+    | <span class="hljs-type">Six</span>
+    | <span class="hljs-type">Seven</span>
+    | <span class="hljs-type">Eight</span>
+    | <span class="hljs-type">Nine</span>
+    | <span class="hljs-type">Ten</span>
+
+
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Suit</span></span>
+    = <span class="hljs-type">Club</span>
+    | <span class="hljs-type">Diamond</span>
+    | <span class="hljs-type">Spade</span>
+    | <span class="hljs-type">Heart</span>
+
+
+<span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">Card</span></span>
+    = <span class="hljs-type">OrdinaryCard</span> <span class="hljs-type">Value</span> <span class="hljs-type">Suit</span>
+    | <span class="hljs-type">Joker</span></code></pre>
+
+<p>This modelling is very simple and direct, but it&#39;s also <em>powerful</em>. It is literally impossible to represent an invalid card. This is what <a href="https://vimeo.com/14313378">Yaron Minsky</a>, <a href="https://vimeo.com/162036084">Mark Seemann</a>, <a href="http://fsharpforfunandprofit.com/posts/designing-with-types-making-illegal-states-unrepresentable/">Scott Wlaschin</a> and <a href="https://www.youtube.com/watch?v=IcgmSRJHu_8">Richard Feldman</a> mean when they say &quot;make illegal states unrepresentable&quot;. All these talks are amazing, and illustrate very well the benefits of having types that simply do not allow invalid models to be represented, and also cover techniques to achieve that.</p>
+<p>And now we have a much more robust set of functions to parse and &quot;pretty print&quot; cards. (<a href="https://github.com/lucasmreis/learning-elm/blob/master/part-4/src/SafeCards.elm">The whole final code with the new types is here</a>).</p>
+<h2 id="is-it-always-a-possibility-">Is It Always A Possibility?</h2>
+<p>I tend to think that we were kind of &quot;lucky&quot; here, in the sense that a normal deck of cards has about nine numbered cards only. It&#39;s easier to enumerate every case in that sense, but I do not know if it would be practical to do that if the numbered cards were in the 2 - 100 range, for example.</p>
+<p>I think that the simple way of dealing with it is to always first try to have all your modeling constraints through types. For example, imagine that the only way to have a user name is through logging in. That means that instead of:</p>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-keyword">alias</span> <span class="hljs-type">User</span> =</span>
+    { isLogged : <span class="hljs-type">Bool</span>
+    , name : <span class="hljs-type">String</span>
+    }</code></pre>
+
+<p>You should have:</p>
+<pre><code class="hljs elm"><span class="hljs-typedef"><span class="hljs-keyword">type</span> <span class="hljs-type">User</span></span>
+    = <span class="hljs-type">NotLogged</span>
+    | <span class="hljs-type">Logged</span> <span class="hljs-type">String</span></code></pre>
+
+<p>With the second modeling, you never have the risk of having a NotLogged user with a name. That means you <em>don&#39;t need a test to assure that a constructed user is invalid</em>. This is what I mean by powerful! :)</p>
+<p>And what do I do if I can&#39;t model my domain that way? For example, what do I do if I have a deck of cards with numbered cards ranging from 2 to 1000? In this case, I think that testing your constructors with property based tests is the way to go.</p>
+<p><em>Observation</em>: even when your typings make illegal states unrepresentable, unit and property based tests are still useful when testing <em>state transitions</em>. In our User example, it&#39;s useful to test if &quot;logging out function results in a NotLogged User&quot;. So, even though good type modeling lowers the need for tests, <em>tests are still useful for making your code reliable</em>.</p>
+<p>One last remark: we could represent our 1000 card deck using only types if we could have a &quot;bounded integer&quot; type, such as, &quot;this is an integer larger than X and smaller than Y&quot;. This would be a type that is <em>dependent on values</em>, and it&#39;s not possible to do in Elm. Actually, it seems it&#39;s not possible to do in any mainstream language. :(</p>
+<p><a href="http://stackoverflow.com/questions/9338709/what-is-dependent-typing">This stack overflow question</a> explains dependent typing very directly, and <a href="https://en.wikipedia.org/wiki/Dependent_type">here&#39;s a list of languages with dependent typing</a> so we can research more about it. <a href="http://www.idris-lang.org/example/">Idris</a> looks particularly nice!</p>
+
+        <div class="signature">November 1, 2016.</div>
+      </div>
+
+      <!-- DISQUS -->
+      <div id="disqus_thread"></div>
+      <script type="text/javascript">
+          /* * * CONFIGURATION VARIABLES * * */
+          var disqus_shortname = 'lucasmreis';
+          var disqus_identifier = 'learning-elm-part-4';
+          var disqus_title = 'Learning Elm, part 4';
+
+          /* * * DON'T EDIT BELOW THIS LINE * * */
+          (function() {
+              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+      </script>
+      <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+      <footer>
+        by Lucas Reis | <a href="https://twitter.com/iamlucasmreis">Twitter</a> | <a href="https://github.com/lucasmreis">GitHub</a> | <a href="https://www.linkedin.com/profile/view?id=133974663">LinkedIn</a>
+      </footer>
+    </div>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60280937-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </body>
+</html>
